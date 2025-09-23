@@ -10,6 +10,6 @@ Polar is an open-source project to show how authentication really works.
 ## Tech Stack
 
 - React with TypeScript
-- Node.js backend (planned)
+- Express.js backend (planned)
 - MongoDB for session storage (planned)
 - Tailwind CSS for styling
