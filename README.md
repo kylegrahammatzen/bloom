@@ -1,15 +1,68 @@
-# Polar
-Polar is an open-source project to show how authentication really works.
+# Bloom
+Educational authentication learning platform that demonstrates how authentication works step by step.
+
+## Getting Started
+
+1. Clone and configure:
+   ```bash
+   git clone https://github.com/kylegrahammatzen/bloom.git
+   cd bloom
+   cp server/.env.example server/.env
+   ```
+
+2. Start MongoDB with Docker:
+   ```bash
+   npm run docker:up
+   ```
+
+3. Install dependencies and start development servers:
+   ```bash
+   # Install all dependencies
+   npm run install:all
+
+   # Start both frontend and backend
+   npm run dev
+   ```
 
 ## Features
 
 - Icebox laboratory for experimenting with different authentication methods
-- Three real-world scenarios (banking, social media, payment processing)
-- Try in browser attacks and inspect tokens/cookies safely
+- Real-time visualization of authentication processes
+- Three security scenarios (banking, social media, payment processing)
+- Safe environment for testing attacks and inspecting tokens/cookies
+- Step-by-step demonstration of password hashing, session management, and CSRF protection
 
 ## Tech Stack
 
-- React with TypeScript
-- Express.js backend (planned)
-- MongoDB for session storage (planned)
-- Tailwind CSS for styling
+- React with TypeScript and Tailwind CSS
+- Express.js with TypeScript backend
+- MongoDB with Mongoose ODM
+- Argon2id for password hashing
+- Express session management with rate limiting
+- Docker for MongoDB development environment
+
+## Project Structure
+
+```
+bloom/
+├── frontend/          # React TypeScript application
+├── server/           # Express.js TypeScript backend
+├── docker-compose.yml # MongoDB and services
+└── package.json      # Root workspace configuration
+```
+
+## Development
+
+```bash
+# Start frontend only
+npm run dev:frontend
+
+# Start backend only
+npm run dev:server
+
+# Build for production
+npm run build
+
+# Run linting
+npm run lint
+```
