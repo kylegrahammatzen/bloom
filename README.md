@@ -1,9 +1,21 @@
 # Bloom
-Educational authentication learning platform that demonstrates how authentication works step by step.
+
+<div align="center">
+
+[![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-17-blue.svg)](https://reactjs.org/)
+[![Express.js](https://img.shields.io/badge/Express.js-4.21-green.svg)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-8.7-green.svg)](https://www.mongodb.com/)
+
+</div>
+
+Bloom is an open-source project to show how authentication really works.
 
 ## Getting Started
 
 1. Clone and configure:
+
    ```bash
    git clone https://github.com/kylegrahammatzen/bloom.git
    cd bloom
@@ -11,11 +23,13 @@ Educational authentication learning platform that demonstrates how authenticatio
    ```
 
 2. Start MongoDB with Docker:
+
    ```bash
    npm run docker:up
    ```
 
 3. Install dependencies and start development servers:
+
    ```bash
    # Install all dependencies
    npm run install:all
@@ -66,3 +80,7 @@ npm run build
 # Run linting
 npm run lint
 ```
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
