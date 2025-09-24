@@ -1,17 +1,18 @@
+/// <reference path="./types/index.d.ts" />
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
-import dotenv from 'dotenv';
 import { connectToDatabase } from './config/database';
 import authRoutes from './routes/auth';
 import labRoutes from './routes/lab';
 import { errorHandler } from './middleware/errorHandler';
 import { rateLimiter } from './middleware/rateLimiter';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
