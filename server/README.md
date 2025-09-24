@@ -1,5 +1,16 @@
 # Bloom Server
-Express.js TypeScript backend for the Bloom authentication learning platform.
+
+<div align="center">
+
+[![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](../LICENSE)
+[![Express.js](https://img.shields.io/badge/Express.js-4.21-green.svg)](https://expressjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-8.7-green.svg)](https://www.mongodb.com/)
+[![Argon2](https://img.shields.io/badge/Argon2-0.40-red.svg)](https://www.npmjs.com/package/argon2)
+
+</div>
+
+Express.js TypeScript backend for Bloom, an open-source project to show how authentication really works.
 
 ## Getting Started
 
