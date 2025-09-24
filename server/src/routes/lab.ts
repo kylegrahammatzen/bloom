@@ -96,7 +96,7 @@ router.post('/password-comparison', async (req: Request, res: Response, next: Ne
       },
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -105,7 +105,7 @@ router.post('/token-analysis', (req: Request, res: Response, next: NextFunction)
   try {
     const { count = 5 } = req.body;
 
-    const tokenAnalysis = {
+    const tokenAnalysis: any = {
       secure_tokens: [],
       insecure_tokens: [],
       entropy_comparison: {},
@@ -163,7 +163,7 @@ router.post('/token-analysis', (req: Request, res: Response, next: NextFunction)
       },
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -172,7 +172,7 @@ router.post('/session-demo', (req: Request, res: Response, next: NextFunction) =
   try {
     const { demo_type = 'lifecycle' } = req.body;
 
-    const sessionDemo = {
+    const sessionDemo: any = {
       session_creation: {
         session_id: generateSecureToken(),
         created_at: new Date().toISOString(),
@@ -260,7 +260,7 @@ router.post('/session-demo', (req: Request, res: Response, next: NextFunction) =
       ],
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -269,7 +269,7 @@ router.post('/attack-simulation', (req: Request, res: Response, next: NextFuncti
   try {
     const { attack_type } = req.body;
 
-    const simulations = {
+    const simulations: any = {
       timing_attack: simulateTimingAttack(),
       csrf_demo: simulateCsrfDemo(),
       password_spraying: simulatePasswordSpraying(),
@@ -289,7 +289,7 @@ router.post('/attack-simulation', (req: Request, res: Response, next: NextFuncti
       });
     }
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 

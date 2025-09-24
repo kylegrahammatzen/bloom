@@ -107,7 +107,7 @@ router.post(
         ...(process.env.NODE_ENV !== 'production' && { verification_token: token }),
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -197,7 +197,7 @@ router.post(
         },
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -220,7 +220,7 @@ router.post('/logout', async (req, res, next) => {
       res.json({ message: 'Logout successful' });
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -276,7 +276,7 @@ router.post('/verify-email', async (req, res, next) => {
       },
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
@@ -330,7 +330,7 @@ router.post(
         ...(process.env.NODE_ENV !== 'production' && { reset_token: token }),
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -409,7 +409,7 @@ router.post(
         message: 'Password reset successful. Please log in with your new password.',
       });
     } catch (error) {
-      next(error);
+      return next(error);
     }
   }
 );
@@ -444,7 +444,7 @@ router.get('/me', async (req, res, next) => {
       },
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
