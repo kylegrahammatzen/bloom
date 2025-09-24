@@ -46,8 +46,14 @@ npm run build
 # Start production server
 npm start
 
-# Run tests
+# Run tests with Vitest
 npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI
+npm run test:ui
 
 # Run linting
 npm run lint
@@ -123,26 +129,43 @@ SESSION_SECRET=your-super-secret-session-key-change-in-production
 FRONTEND_URL=http://localhost:3000
 ```
 
-## Database Models
+## Database Setup
 
-### User
-- Email, password hash, salt, verification status
-- Login attempt tracking and account locking
-- Instance methods for security operations
+The server automatically connects to MongoDB on startup. No manual schema creation is required - Mongoose will automatically create collections when documents are first inserted.
 
-### Session
-- Session ID, user association, expiration
-- User agent and IP tracking for security
-- Automatic cleanup via TTL indexes
+### Database Connection
+- Connects to MongoDB using Mongoose ODM
+- Automatic connection pooling and error handling
+- Collections are created dynamically when first used
+- Indexes are automatically created based on schema definitions
 
-### Token
-- Hashed tokens for email verification and password reset
-- Single-use with expiration
-- Type-based categorization
+For detailed database schema information, see [schema.md](schema.md).
+
+## Testing
+
+The server includes comprehensive tests using Vitest:
+
+- Unit Tests: Authentication utilities, middleware functions, database models
+- Integration Tests: Complete API endpoint testing with MongoDB Memory Server
+- Security Tests: Password hashing, rate limiting, session management
+- Coverage: All core authentication flows and edge cases
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode for development
+npm run test:watch
+
+# Run tests with interactive UI
+npm run test:ui
+```
 
 ## Development Notes
 
-- All routes include proper TypeScript typing
-- Rate limiting prevents brute force attacks
-- Educational endpoints demonstrate security concepts safely
-- Follows Copenhagen Book security recommendations
+- Database Schema: MongoDB collections are created automatically on startup
+- Type Safety: All routes include proper TypeScript typing
+- Security: Rate limiting prevents brute force attacks
+- Education: Laboratory endpoints demonstrate security concepts safely
+- Standards: Follows Copenhagen Book security recommendations
+- Testing: Comprehensive test suite with Vitest and MongoDB Memory Server
