@@ -1,5 +1,15 @@
 # Bloom Frontend
-React TypeScript application for the Bloom authentication learning platform.
+
+<div align="center">
+
+[![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](../LICENSE)
+[![React](https://img.shields.io/badge/React-17-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-blue.svg)](https://tailwindcss.com/)
+
+</div>
+
+React TypeScript frontend for Bloom, an open-source project to show how authentication really works.
 
 ## Getting Started
 
