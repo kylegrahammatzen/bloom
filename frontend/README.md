@@ -23,7 +23,7 @@ React TypeScript frontend for Bloom, an open-source project to show how authenti
    npm start
    ```
 
-3. Open http://localhost:3000 to view the application.
+3. Open http://localhost:3000 to view the application
 
 ## Available Scripts
 

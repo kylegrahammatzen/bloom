@@ -1,55 +1,7 @@
-# Dependencies
-node_modules/
-
-# Production build
-build/
-dist/
-
-# Environment variables
 .env
-.env.local
-.env.production
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-
-# Temporary directories
-.tmp/
-.temp/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
+!.env.example
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# React specific
-.eslintcache
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
+.react-router
+build
+node_modules
+*.tsbuildinfo
