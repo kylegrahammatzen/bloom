@@ -9,6 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { BloomProvider } from "./lib/auth-context";
 
 export const links: Route.LinksFunction = () => [];
 
@@ -31,7 +32,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />;
+	return (
+		<BloomProvider>
+			<Outlet />
+		</BloomProvider>
+	);
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

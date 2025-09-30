@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { healthCheck } from "../lib/api";
+import { useAuth } from "../lib/auth-context";
 
 export function Welcome() {
 	const [status, setStatus] = useState<string>("Checking...");
 	const [data, setData] = useState<any>(null);
+	const { isSignedIn, isLoading } = useAuth();
 
 	useEffect(() => {
 		const checkBackend = async () => {
@@ -25,6 +27,7 @@ export function Welcome() {
 			<p>An open-source project to show how authentication really works</p>
 			<span>API Status: {status}</span>
 			{data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+			<span>Auth Status: {isLoading ? "Checking..." : isSignedIn ? "Signed In" : "Signed Out"}</span>
 		</div>
 	);
 }
