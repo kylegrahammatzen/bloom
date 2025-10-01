@@ -108,6 +108,12 @@ export const authApi = {
       body: JSON.stringify({ token, password }),
     });
   },
+
+  deleteAccount: async () => {
+    return apiFetch('/api/auth/account', {
+      method: 'DELETE',
+    });
+  },
 };
 
 // Lab endpoints
