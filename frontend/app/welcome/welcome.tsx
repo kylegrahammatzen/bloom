@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { healthCheck, authApi } from "~/lib/api";
-import { useAuth } from "~/lib/auth-context";
+import { healthCheck } from "~/lib/api";
+import { bloomClient } from "~/lib/bloom-client";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import { toastManager } from "~/hooks/use-toast";
@@ -11,7 +11,7 @@ import { DeleteAccountDialog } from "~/components/auth/delete-account-dialog";
 export function Welcome() {
 	const [status, setStatus] = useState<string>("Checking...");
 	const [data, setData] = useState<any>(null);
-	const { isSignedIn, isLoading, user, refetch } = useAuth();
+	const { data: session, isLoading, refetch } = bloomClient.useSession();
 
 	useEffect(() => {
 		const checkBackend = async () => {
@@ -27,36 +27,26 @@ export function Welcome() {
 		checkBackend();
 	}, []);
 
-	const handleSignUp = async (data: { email: string; password: string }) => {
-		const response = await authApi.register(data.email, data.password);
-		if (response.data) {
-			// Automatically log in after successful registration
-			const loginResponse = await authApi.login(data.email, data.password);
-			if (loginResponse.data) {
-				await refetch();
-				toastManager.add({
-					title: "Account created successfully",
-					type: "success",
-				});
-			} else {
-				toastManager.add({
-					title: "Account created, but login failed",
-					description: "Please try logging in manually",
-					type: "warning",
-				});
-			}
+	const handleSignUp = async (body: { email: string; password: string }) => {
+		const { data, error } = await bloomClient.signUp.email(body);
+		if (data) {
+			await refetch();
+			toastManager.add({
+				title: "Account created successfully",
+				type: "success",
+			});
 		} else {
 			toastManager.add({
 				title: "Sign up failed",
-				description: response.error?.message || "Please try again",
+				description: error?.message || "Please try again",
 				type: "error",
 			});
 		}
 	};
 
-	const handleLogin = async (data: { email: string; password: string }) => {
-		const response = await authApi.login(data.email, data.password);
-		if (response.data) {
+	const handleLogin = async (body: { email: string; password: string }) => {
+		const { data, error } = await bloomClient.signIn.email(body);
+		if (data) {
 			await refetch();
 			toastManager.add({
 				title: "Logged in successfully",
@@ -65,14 +55,14 @@ export function Welcome() {
 		} else {
 			toastManager.add({
 				title: "Login failed",
-				description: response.error?.message || "Please try again",
+				description: error?.message || "Please try again",
 				type: "error",
 			});
 		}
 	};
 
 	const handleLogout = async () => {
-		await authApi.logout();
+		await bloomClient.signOut();
 		await refetch();
 		toastManager.add({
 			title: "Logged out successfully",
@@ -81,8 +71,8 @@ export function Welcome() {
 	};
 
 	const handleDeleteAccount = async () => {
-		const response = await authApi.deleteAccount();
-		if (response.data) {
+		const { data, error } = await bloomClient.deleteAccount();
+		if (data) {
 			await refetch();
 			toastManager.add({
 				title: "Account deleted successfully",
@@ -91,7 +81,7 @@ export function Welcome() {
 		} else {
 			toastManager.add({
 				title: "Failed to delete account",
-				description: response.error?.message || "Please try again",
+				description: error?.message || "Please try again",
 				type: "error",
 			});
 		}
@@ -108,18 +98,18 @@ export function Welcome() {
 			</div>
 
 			<div>
-				<span>Auth Status: {isLoading ? "Checking..." : isSignedIn ? "Signed In" : "Signed Out"}</span>
-				{user && <pre>{JSON.stringify(user, null, 2)}</pre>}
+				<span>Auth Status: {isLoading ? "Checking..." : session ? "Signed In" : "Signed Out"}</span>
+				{session?.user && <pre>{JSON.stringify(session.user, null, 2)}</pre>}
 			</div>
 
 			<div>
-				{isSignedIn ? (
+				{session ? (
 					<Card>
 						<CardHeader>
 							<CardTitle>Logged In</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<p>Logged in as: {user?.email}</p>
+							<p>Logged in as: {session.user.email}</p>
 							<div className="flex gap-2">
 								<Button onClick={handleLogout}>Logout</Button>
 								<DeleteAccountDialog onConfirm={handleDeleteAccount} />
