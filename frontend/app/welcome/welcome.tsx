@@ -118,6 +118,7 @@ export function Welcome() {
 
 			<div>
 				<span>Auth Status: {isLoading ? "Checking..." : isSignedIn ? "Signed In" : "Signed Out"}</span>
+				{user && <pre>{JSON.stringify(user, null, 2)}</pre>}
 			</div>
 
 			<div>
