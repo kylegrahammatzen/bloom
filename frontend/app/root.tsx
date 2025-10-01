@@ -24,9 +24,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body>
-				<ToastProvider>
-					<div className="root">{children}</div>
-				</ToastProvider>
+				<BloomProvider>
+					<ToastProvider>
+						<div className="root">{children}</div>
+					</ToastProvider>
+				</BloomProvider>
 				<ScrollRestoration />
 				<Scripts />
 			</body>
@@ -35,11 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return (
-		<BloomProvider>
-			<Outlet />
-		</BloomProvider>
-	);
+	return <Outlet />;
 }
 
 export function ErrorBoundary({ error }: { error: unknown }) {
