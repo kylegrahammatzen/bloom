@@ -448,4 +448,40 @@ router.get('/me', async (req, res, next) => {
   }
 });
 
+// Delete account endpoint
+router.delete('/account', async (req, res, next) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({
+        error: {
+          message: 'Not authenticated',
+        },
+      });
+    }
+
+    const userId = req.session.userId;
+
+    // Delete all user sessions
+    await Session.deleteMany({ user_id: userId });
+
+    // Delete all user tokens
+    await Token.deleteMany({ user_id: userId });
+
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+
+    // Destroy session
+    req.session.destroy((err) => {
+      if (err) {
+        return next(err);
+      }
+
+      res.clearCookie('bloom.sid');
+      res.json({ message: 'Account deleted successfully' });
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 export default router;
