@@ -6,12 +6,13 @@ import {
 	ScrollRestoration,
 	isRouteErrorResponse,
 } from "react-router";
+import type { LinksFunction } from "react-router";
 
-import type { Route } from "./+types/root";
 import "./app.css";
-import { BloomProvider } from "./lib/auth-context";
+import { BloomProvider } from "~/lib/auth-context";
+import { ToastProvider } from "~/components/ui/toast";
 
-export const links: Route.LinksFunction = () => [];
+export const links: LinksFunction = () => [];
 
 export function Layout({ children }: { children: React.ReactNode }) {
 	return (
@@ -23,7 +24,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body>
-				{children}
+				<ToastProvider>
+					<div className="root">{children}</div>
+				</ToastProvider>
 				<ScrollRestoration />
 				<Scripts />
 			</body>
@@ -39,7 +42,7 @@ export default function App() {
 	);
 }
 
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+export function ErrorBoundary({ error }: { error: unknown }) {
 	let message = "Oops!";
 	let details = "An unexpected error occurred.";
 	let stack: string | undefined;
