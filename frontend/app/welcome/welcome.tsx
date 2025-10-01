@@ -29,11 +29,21 @@ export function Welcome() {
 	const handleSignUp = async (data: { email: string; password: string }) => {
 		const response = await authApi.register(data.email, data.password);
 		if (response.data) {
-			await refetch();
-			toastManager.add({
-				title: "Account created successfully",
-				type: "success",
-			});
+			// Automatically log in after successful registration
+			const loginResponse = await authApi.login(data.email, data.password);
+			if (loginResponse.data) {
+				await refetch();
+				toastManager.add({
+					title: "Account created successfully",
+					type: "success",
+				});
+			} else {
+				toastManager.add({
+					title: "Account created, but login failed",
+					description: "Please try logging in manually",
+					type: "warning",
+				});
+			}
 		} else {
 			toastManager.add({
 				title: "Sign up failed",
