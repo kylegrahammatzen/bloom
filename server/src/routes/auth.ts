@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
-import { User, Session, Token } from '../models';
+import { User, UserCredentials, Session, Token } from '../models';
 import {
   hashPassword,
   verifyPassword,
@@ -69,17 +69,22 @@ router.post(
         });
       }
 
-      // Hash password
-      const { hash, salt } = await hashPassword(password);
-
       // Create user
       const user = new User({
         email: normalizedEmail,
+      });
+
+      await user.save();
+
+      // Hash password and create credentials
+      const { hash, salt } = await hashPassword(password);
+      const credentials = new UserCredentials({
+        user_id: user._id,
         password_hash: hash,
         salt,
       });
 
-      await user.save();
+      await credentials.save();
 
       // Generate email verification token
       const token = generateSecureToken();
@@ -94,16 +99,42 @@ router.post(
 
       await verificationToken.save();
 
+      // Create session
+      const sessionId = generateSessionId();
+      const session = new Session({
+        session_id: sessionId,
+        user_id: user._id,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        user_agent: req.get('User-Agent'),
+        ip_address: req.ip,
+      });
+
+      await session.save();
+
+      // Set session cookie
+      req.session.userId = user._id.toString();
+      req.session.sessionId = sessionId;
+
       res.status(201).json({
         message: 'Registration successful. Please check your email for verification.',
         user: {
           id: user._id,
           email: user.email,
-          created_at: user.created_at,
           email_verified: user.email_verified,
+          name: user.name,
+          image: user.image,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
         },
-        // In production, you would send this token via email
-        // For development, we return it in the response
+        session: {
+          id: session.session_id,
+          userId: session.user_id.toString(),
+          expiresAt: session.expires_at,
+          createdAt: session.created_at,
+          lastAccessedAt: session.last_accessed,
+          ipAddress: session.ip_address,
+          userAgent: session.user_agent,
+        },
         ...(process.env.NODE_ENV !== 'production' && { verification_token: token }),
       });
     } catch (error) {
@@ -144,8 +175,18 @@ router.post(
         });
       }
 
+      // Get credentials
+      const credentials = await UserCredentials.findOne({ user_id: user._id });
+      if (!credentials) {
+        return res.status(401).json({
+          error: {
+            message: 'Invalid credentials',
+          },
+        });
+      }
+
       // Check if account is locked
-      if (user.isAccountLocked()) {
+      if (credentials.isAccountLocked()) {
         return res.status(423).json({
           error: {
             message: 'Account is temporarily locked due to too many failed login attempts',
@@ -154,9 +195,9 @@ router.post(
       }
 
       // Verify password
-      const isValidPassword = await verifyPassword(password, user.password_hash, user.salt);
+      const isValidPassword = await verifyPassword(password, credentials.password_hash, credentials.salt);
       if (!isValidPassword) {
-        await user.incrementLoginAttempts();
+        await credentials.incrementLoginAttempts();
         return res.status(401).json({
           error: {
             message: 'Invalid credentials',
@@ -165,7 +206,7 @@ router.post(
       }
 
       // Reset login attempts on successful login
-      await user.resetLoginAttempts();
+      await credentials.resetLoginAttempts();
 
       // Update last login
       user.last_login = new Date();
@@ -193,7 +234,20 @@ router.post(
           id: user._id,
           email: user.email,
           email_verified: user.email_verified,
+          name: user.name,
+          image: user.image,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
           last_login: user.last_login,
+        },
+        session: {
+          id: session.session_id,
+          userId: session.user_id.toString(),
+          expiresAt: session.expires_at,
+          createdAt: session.created_at,
+          lastAccessedAt: session.last_accessed,
+          ipAddress: session.ip_address,
+          userAgent: session.user_agent,
         },
       });
     } catch (error) {
@@ -383,7 +437,7 @@ router.post(
         });
       }
 
-      // Find user and update password
+      // Find user
       const user = await User.findById(resetToken.user_id);
       if (!user) {
         return res.status(404).json({
@@ -393,11 +447,17 @@ router.post(
         });
       }
 
-      // Hash new password
+      // Update credentials with new password
       const { hash, salt } = await hashPassword(password);
-      user.password_hash = hash;
-      user.salt = salt;
-      await user.save();
+      await UserCredentials.updateOne(
+        { user_id: user._id },
+        {
+          $set: {
+            password_hash: hash,
+            salt: salt,
+          },
+        }
+      );
 
       // Mark token as used
       await resetToken.markAsUsed();
@@ -434,13 +494,34 @@ router.get('/me', async (req, res, next) => {
       });
     }
 
+    const session = await Session.findOne({ session_id: req.session.sessionId });
+    if (!session) {
+      return res.status(404).json({
+        error: {
+          message: 'Session not found',
+        },
+      });
+    }
+
     res.json({
       user: {
         id: user._id,
         email: user.email,
         email_verified: user.email_verified,
+        name: user.name,
+        image: user.image,
         created_at: user.created_at,
+        updated_at: user.updated_at,
         last_login: user.last_login,
+      },
+      session: {
+        id: session.session_id,
+        userId: session.user_id.toString(),
+        expiresAt: session.expires_at,
+        createdAt: session.created_at,
+        lastAccessedAt: session.last_accessed,
+        ipAddress: session.ip_address,
+        userAgent: session.user_agent,
       },
     });
   } catch (error) {
@@ -466,6 +547,9 @@ router.delete('/account', async (req, res, next) => {
 
     // Delete all user tokens
     await Token.deleteMany({ user_id: userId });
+
+    // Delete user credentials
+    await UserCredentials.deleteOne({ user_id: userId });
 
     // Delete the user
     await User.findByIdAndDelete(userId);

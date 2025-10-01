@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { authApi } from "./api";
-import type { User } from "./bloom-client";
+import { authClient, type User, type Session } from "./bloom";
 
 type AuthContextType = {
   user: User | null;
+  session: Session | null;
   isLoading: boolean;
   isSignedIn: boolean;
   refetch: () => Promise<void>;
@@ -12,16 +12,16 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function BloomProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchUser = async () => {
-    const response = await authApi.me();
-    if (response.data?.user) {
-      setUser(response.data.user);
-      console.log("User signed in:", response.data.user);
+    const response = await authClient.getSession();
+    if (response.data) {
+      setSession(response.data);
+      console.log("User signed in:", response.data);
     } else {
-      setUser(null);
+      setSession(null);
       console.log("User not signed in");
     }
     setIsLoading(false);
@@ -32,9 +32,10 @@ export function BloomProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value: AuthContextType = {
-    user,
+    user: session?.user ?? null,
+    session,
     isLoading,
-    isSignedIn: user !== null,
+    isSignedIn: session !== null,
     refetch: fetchUser,
   };
 

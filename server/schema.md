@@ -8,12 +8,23 @@ MongoDB collections for the Bloom authentication server.
 {
   _id: ObjectId,
   email: String (unique),
-  password_hash: String,
-  salt: String,
+  name: String (optional),
+  image: String (optional),
   created_at: Date,
   updated_at: Date,
   email_verified: Boolean,
-  last_login: Date,
+  last_login: Date
+}
+```
+
+## User Credentials
+
+```javascript
+{
+  _id: ObjectId,
+  user_id: ObjectId (unique, ref: User),
+  password_hash: String,
+  salt: String,
   failed_login_attempts: Number,
   locked_until: Date
 }
@@ -50,6 +61,7 @@ MongoDB collections for the Bloom authentication server.
 
 ## Indexes
 
-- Users: `email` (unique), `created_at`, `locked_until`
+- Users: `email` (unique), `created_at`
+- User Credentials: `user_id` (unique), `locked_until`
 - Sessions: `session_id` (unique), `user_id`, `expires_at` (TTL)
 - Tokens: `token_hash` (unique), `user_id`, `expires_at` (TTL)

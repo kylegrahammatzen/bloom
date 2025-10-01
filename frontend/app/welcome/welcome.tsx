@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { healthCheck } from "~/lib/api";
-import { bloomClient } from "~/lib/bloom-client";
+import { authClient } from "~/lib/bloom";
+import { useAuth } from "~/lib/auth-context";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import { toastManager } from "~/hooks/use-toast";
@@ -11,7 +12,7 @@ import { DeleteAccountDialog } from "~/components/auth/delete-account-dialog";
 export function Welcome() {
 	const [status, setStatus] = useState<string>("Checking...");
 	const [data, setData] = useState<any>(null);
-	const { data: session, isLoading, refetch } = bloomClient.useSession();
+	const { session, isLoading: isPending, refetch } = useAuth();
 
 	useEffect(() => {
 		const checkBackend = async () => {
@@ -28,7 +29,7 @@ export function Welcome() {
 	}, []);
 
 	const handleSignUp = async (body: { email: string; password: string }) => {
-		const { data, error } = await bloomClient.signUp.email(body);
+		const { data, error } = await authClient.signUp.email(body);
 		if (data) {
 			await refetch();
 			toastManager.add({
@@ -45,7 +46,7 @@ export function Welcome() {
 	};
 
 	const handleLogin = async (body: { email: string; password: string }) => {
-		const { data, error } = await bloomClient.signIn.email(body);
+		const { data, error } = await authClient.signIn.email(body);
 		if (data) {
 			await refetch();
 			toastManager.add({
@@ -62,7 +63,7 @@ export function Welcome() {
 	};
 
 	const handleLogout = async () => {
-		await bloomClient.signOut();
+		await authClient.signOut();
 		await refetch();
 		toastManager.add({
 			title: "Logged out successfully",
@@ -71,7 +72,7 @@ export function Welcome() {
 	};
 
 	const handleDeleteAccount = async () => {
-		const { data, error } = await bloomClient.deleteAccount();
+		const { data, error } = await authClient.deleteAccount();
 		if (data) {
 			await refetch();
 			toastManager.add({
@@ -98,7 +99,7 @@ export function Welcome() {
 			</div>
 
 			<div>
-				<span>Auth Status: {isLoading ? "Checking..." : session ? "Signed In" : "Signed Out"}</span>
+				<span>Auth Status: {isPending ? "Checking..." : session ? "Signed In" : "Signed Out"}</span>
 				{session?.user && <pre>{JSON.stringify(session.user, null, 2)}</pre>}
 			</div>
 

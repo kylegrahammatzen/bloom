@@ -1,38 +1,15 @@
+import type { BloomResponse } from './bloom';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-type ApiResponse<T = any> = {
-  data?: T;
-  error?: {
-    message: string;
-    details?: any;
-  };
-};
-
-export type User = {
-  id: string;
-  email: string;
-  email_verified: boolean;
-  created_at: string;
-  last_login?: string;
-};
-
-type AuthResponse = {
-  user: User;
-};
-
-type MeResponse = {
-  user: User;
-};
-
-// Base fetch with cookie credentials
 async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
-): Promise<ApiResponse<T>> {
+): Promise<BloomResponse<T>> {
   const url = `${API_URL}${endpoint}`;
 
   const defaultOptions: RequestInit = {
-    credentials: 'include', // Send cookies for sessions
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -46,8 +23,11 @@ async function apiFetch<T>(
 
     if (!response.ok) {
       return {
-        error: data.error || {
-          message: `Request failed with status ${response.status}`,
+        error: {
+          message: data.error?.message || `Request failed with status ${response.status}`,
+          status: response.status,
+          statusText: response.statusText,
+          details: data.error?.details,
         },
       };
     }
@@ -57,64 +37,12 @@ async function apiFetch<T>(
     return {
       error: {
         message: error instanceof Error ? error.message : 'Network error',
+        status: 0,
+        statusText: 'Network Error',
       },
     };
   }
 }
-
-// Auth endpoints
-export const authApi = {
-  register: async (email: string, password: string) => {
-    return apiFetch<AuthResponse>('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-  },
-
-  login: async (email: string, password: string) => {
-    return apiFetch<AuthResponse>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-  },
-
-  logout: async () => {
-    return apiFetch('/api/auth/logout', {
-      method: 'POST',
-    });
-  },
-
-  me: async () => {
-    return apiFetch<MeResponse>('/api/auth/me');
-  },
-
-  verifyEmail: async (token: string) => {
-    return apiFetch('/api/auth/verify-email', {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    });
-  },
-
-  requestPasswordReset: async (email: string) => {
-    return apiFetch('/api/auth/request-password-reset', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-  },
-
-  resetPassword: async (token: string, password: string) => {
-    return apiFetch('/api/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ token, password }),
-    });
-  },
-
-  deleteAccount: async () => {
-    return apiFetch('/api/auth/account', {
-      method: 'DELETE',
-    });
-  },
-};
 
 // Lab endpoints
 export const labApi = {
