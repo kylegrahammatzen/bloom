@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { authApi, User } from "./api";
+import { authApi } from "./api";
+import type { User } from "./bloom-client";
 
 type AuthContextType = {
   user: User | null;
