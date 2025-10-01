@@ -8,6 +8,22 @@ type ApiResponse<T = any> = {
   };
 };
 
+export type User = {
+  id: string;
+  email: string;
+  email_verified: boolean;
+  created_at: string;
+  last_login?: string;
+};
+
+type AuthResponse = {
+  user: User;
+};
+
+type MeResponse = {
+  user: User;
+};
+
 // Base fetch with cookie credentials
 async function apiFetch<T>(
   endpoint: string,
@@ -49,14 +65,14 @@ async function apiFetch<T>(
 // Auth endpoints
 export const authApi = {
   register: async (email: string, password: string) => {
-    return apiFetch('/api/auth/register', {
+    return apiFetch<AuthResponse>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   },
 
   login: async (email: string, password: string) => {
-    return apiFetch('/api/auth/login', {
+    return apiFetch<AuthResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -69,7 +85,7 @@ export const authApi = {
   },
 
   me: async () => {
-    return apiFetch('/api/auth/me');
+    return apiFetch<MeResponse>('/api/auth/me');
   },
 
   verifyEmail: async (token: string) => {

@@ -1,18 +1,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { authApi } from "./api";
-
-type User = {
-  id: string;
-  email: string;
-  email_verified: boolean;
-  created_at: string;
-  last_login?: string;
-};
+import { authApi, User } from "./api";
 
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isSignedIn: boolean;
+  refetch: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,19 +14,19 @@ export function BloomProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const response = await authApi.me();
-      if (response.data?.user) {
-        setUser(response.data.user);
-        console.log("User signed in:", response.data.user);
-      } else {
-        setUser(null);
-        console.log("User not signed in");
-      }
-      setIsLoading(false);
-    };
+  const fetchUser = async () => {
+    const response = await authApi.me();
+    if (response.data?.user) {
+      setUser(response.data.user);
+      console.log("User signed in:", response.data.user);
+    } else {
+      setUser(null);
+      console.log("User not signed in");
+    }
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     fetchUser();
   }, []);
 
@@ -41,6 +34,7 @@ export function BloomProvider({ children }: { children: ReactNode }) {
     user,
     isLoading,
     isSignedIn: user !== null,
+    refetch: fetchUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
