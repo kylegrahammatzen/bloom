@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@bloom/react'
 
-export default function DashboardPage() {
+export default function Dashboard() {
   const { user, signOut, refetch, deleteAccount } = useAuth()
   const navigate = useNavigate()
 
@@ -20,7 +20,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <nav className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -83,6 +83,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
-    </div>
+    </>
   )
 }
