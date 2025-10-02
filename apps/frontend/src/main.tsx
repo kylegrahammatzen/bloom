@@ -4,10 +4,11 @@ import { BrowserRouter } from 'react-router-dom'
 import { BloomProvider } from '@bloom/react'
 import App from './App'
 import './index.css'
+import { config } from './config'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BloomProvider baseURL={import.meta.env.VITE_API_URL || 'http://localhost:5000'}>
+    <BloomProvider baseURL={config.apiUrl}>
       <BrowserRouter>
         <App />
       </BrowserRouter>
