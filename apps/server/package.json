@@ -13,9 +13,8 @@
     "lint": "eslint src/**/*.ts"
   },
   "dependencies": {
-    "@bloom/core": "1.0.0",
-    "@bloom/node": "1.0.0",
-    "@bloom/server": "1.0.0",
+    "@bloom/core": "workspace:*",
+    "@bloom/server": "workspace:*",
     "connect-mongo": "^5.1.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -30,7 +29,6 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/express-session": "^1.17.10",
-    "@types/node": "^20.8.9",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
@@ -40,7 +38,6 @@
     "nodemon": "^3.0.1",
     "supertest": "^6.3.3",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2",
     "vitest": "^2.1.4"
   }
 }
