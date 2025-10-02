@@ -5,22 +5,26 @@
   "author": "Kyle Graham Matzen <kgrahammatzen@gmail.com>",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "dev": "turbo dev",
     "dev:server": "pnpm --filter bloom-server dev",
     "dev:frontend": "pnpm --filter bloom-frontend dev",
-    "build": "pnpm --filter './packages/*' -r build",
-    "build:all": "pnpm -r build",
+    "build": "turbo build --filter='!./apps/*'",
+    "build:prod": "turbo build",
     "start": "pnpm --filter bloom-server build && pnpm --filter bloom-server start",
+    "test": "turbo test",
+    "lint": "turbo lint",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
   },
   "devDependencies": {
-    "@types/node": "^20.8.9",
+    "@types/node": "^22.10.5",
+    "turbo": "^2.3.5",
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=8.0.0"
-  }
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.18.0+sha512.e804f889f1cecc40d572db084eec3e4881739f8dec69c0ff10d2d1beff9a4e309383ba27b5b750059d7f4c149535b6cd0d2cb1ed3aeb739239a4284a68f40cfa"
 }
