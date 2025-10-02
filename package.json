@@ -10,7 +10,10 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev -w apps/server\" \"npm run dev -w apps/frontend\"",
-    "build": "npm run build -ws --if-present",
+    "build": "npm run build:packages && npm run build:apps",
+    "build:packages": "npm run build -w packages/core -w packages/client -w packages/node -w packages/react -w packages/server",
+    "build:apps": "npm run build -w apps/server -w apps/frontend",
+    "start": "npm run start -w apps/server",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
