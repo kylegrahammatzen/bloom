@@ -4,23 +4,23 @@
   "description": "Bloom is an open-source project to show how authentication really works",
   "author": "Kyle Graham Matzen <kgrahammatzen@gmail.com>",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
-    "dev": "concurrently \"npm run dev -w apps/server\" \"npm run dev -w apps/frontend\"",
-    "build": "npm run build -w packages/core -w packages/client -w packages/node -w packages/react -w packages/server",
-    "start": "npm run build -w apps/server && npm run start -w apps/server",
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "dev:server": "pnpm --filter bloom-server dev",
+    "dev:frontend": "pnpm --filter bloom-frontend dev",
+    "build": "pnpm --filter './packages/*' -r build",
+    "build:all": "pnpm -r build",
+    "start": "pnpm --filter bloom-server build && pnpm --filter bloom-server start",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/node": "^20.8.9",
+    "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
   }
 }
