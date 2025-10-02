@@ -1,12 +1,5 @@
 # Contributing to Bloom
 
-## Development Setup
-
-1. Fork and clone the repository
-2. Install dependencies: `npm run install:all`
-3. Copy `server/.env.example` to `server/.env` and configure
-4. Start development: `npm run dev`
-
 ## Code Style
 
 - Use TypeScript with strict typing
