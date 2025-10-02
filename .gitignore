@@ -25,9 +25,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Exclude specific files
-project.md
-copenhagenbook.md
-plan.md
 .claude/
 *.pdf
 
