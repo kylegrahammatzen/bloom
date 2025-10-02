@@ -1,7 +1,6 @@
 {
   "name": "bloom-server",
   "version": "1.0.0",
-  "type": "module",
   "description": "Express.js backend for Bloom authentication learning tool",
   "main": "dist/index.js",
   "scripts": {

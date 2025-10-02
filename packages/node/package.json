@@ -19,15 +19,5 @@
   },
   "peerDependencies": {
     "express": "^4.0.0"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./express": {
-      "types": "./dist/express/index.d.ts",
-      "default": "./dist/express/index.js"
-    }
   }
 }

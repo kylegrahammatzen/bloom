@@ -10,8 +10,7 @@
   },
   "dependencies": {
     "argon2": "^0.31.2",
-    "mongoose": "^7.6.3",
-    "rou3": "^0.7.3"
+    "mongoose": "^7.6.3"
   },
   "devDependencies": {
     "@types/node": "^20.8.9",

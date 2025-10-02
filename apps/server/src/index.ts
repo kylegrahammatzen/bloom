@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { bloomServer } from '@bloom/server/express';
+import { bloomServer } from '@bloom/server/dist/express';
 import { bloomAuth } from '@bloom/core';
 
 const auth = bloomAuth({
@@ -9,7 +9,7 @@ const auth = bloomAuth({
     provider: "mongodb",
     uri:
       process.env.MONGODB_URI ||
-      "mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth",
+      "mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin",
   },
   session: {
     expiresIn: 7 * 24 * 60 * 60 * 1000,

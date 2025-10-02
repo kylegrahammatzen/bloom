@@ -45,7 +45,7 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
   const sessionSecret = auth.config.session?.secret || process.env.SESSION_SECRET || 'bloom-dev-secret-change-in-production';
   const sessionCookieName = auth.config.session?.cookieName || 'bloom.sid';
   const sessionMaxAge = auth.config.session?.expiresIn || 7 * 24 * 60 * 60 * 1000;
-  const mongoUri = auth.config.database?.uri || process.env.MONGODB_URI || 'mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth';
+  const mongoUri = auth.config.database?.uri || process.env.MONGODB_URI || 'mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin';
 
   app.use(session({
     secret: sessionSecret,
@@ -116,11 +116,11 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
           serverSelectionTimeoutMS: 5000,
           socketTimeoutMS: 45000,
         });
-        console.log('✅ Connected to MongoDB successfully');
+        console.log('Connected to MongoDB successfully');
       }
 
       app.listen(serverPort, () => {
-        console.log(`🚀 Bloom authentication server running on port ${serverPort}`);
+        console.log(`Bloom authentication server running on port ${serverPort}`);
         console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
         console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 

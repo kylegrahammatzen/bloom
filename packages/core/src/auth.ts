@@ -11,7 +11,7 @@ import {
   isValidEmail
 } from './utils/crypto';
 import { checkRateLimit, trackAttempt } from './utils/rateLimit';
-import { createRouter, addRoute, findRoute } from 'rou3';
+import { createRouter, addRoute, findRoute } from './utils/router';
 
 export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
   const defaultConfig: BloomAuthConfig = {
