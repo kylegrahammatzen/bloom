@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import mongoose from 'mongoose';
-import { toExpressHandler, requireAuth } from '@bloom/node/express';
+import { toExpressHandler, requireAuth } from '@bloom/node/dist/express';
 import type { BloomServerConfig, BloomServerInstance } from '../types';
 
 /**
