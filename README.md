@@ -129,12 +129,6 @@ function Dashboard() {
 }
 ```
 
-## Documentation
-
-- Architecture: See plan-v2.md
-- Implementation: See SDK-IMPLEMENTATION.md
-- Contributing: See CONTRIBUTING.md
-
 ## Development
 
 ```bash
