@@ -28,7 +28,9 @@ bloom/
 │   ├── core/       # @bloom/core - Server authentication
 │   ├── client/     # @bloom/client - Browser client
 │   ├── react/      # @bloom/react - React bindings
-│   └── node/       # @bloom/node - Node.js adapters
+│   ├── adapters/   # @bloom/adapters - Framework adapters
+│   │   └── express/
+│   └── server/     # @bloom/server - Zero-config server
 ├── apps/
 │   ├── frontend/   # Demo React application
 │   └── server/     # Demo Express server
@@ -61,14 +63,14 @@ npm run test
 
 ```typescript
 import { bloomAuth } from "@bloom/core";
-import { toExpressHandler } from "@bloom/node/express";
+import { toExpressHandler } from "@bloom/adapters/express";
 
 const auth = bloomAuth({
   database: { provider: "mongodb", uri: process.env.MONGODB_URI },
   emailAndPassword: { enabled: true },
 });
 
-app.all("/api/auth/*", toExpressHandler(auth.handler));
+app.all("/api/auth/*", toExpressHandler(auth));
 ```
 
 **Client:**
