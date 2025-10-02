@@ -9,20 +9,11 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:frontend\"",
-    "dev:frontend": "cd apps/frontend && npm run dev",
-    "dev:server": "cd apps/server && npm run dev",
-    "build": "npm run build:packages && npm run build:server && npm run build:frontend",
-    "build:packages": "cd packages/core && npm run build && cd ../client && npm run build && cd ../react && npm run build && cd ../node && npm run build && cd ../server && npm run build",
-    "build:frontend": "cd apps/frontend && npm run build",
-    "build:server": "cd apps/server && npm run build",
+    "dev": "concurrently \"npm run dev -w apps/server\" \"npm run dev -w apps/frontend\"",
+    "build": "npm run build -ws --if-present",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "test": "npm run test:server",
-    "test:server": "cd apps/server && npm test",
-    "lint": "npm run lint:server",
-    "lint:server": "cd apps/server && npm run lint"
+    "docker:logs": "docker-compose logs -f"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
