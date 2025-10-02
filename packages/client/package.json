@@ -1,6 +1,7 @@
 {
   "name": "@bloom/client",
   "version": "1.0.0",
+  "type": "module",
   "description": "Client-side authentication library for Bloom - framework-agnostic",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

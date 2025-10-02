@@ -1,6 +1,7 @@
 {
   "name": "@bloom/react",
   "version": "1.0.0",
+  "type": "module",
   "description": "React bindings for Bloom authentication",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
