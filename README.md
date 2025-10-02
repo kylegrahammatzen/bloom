@@ -11,7 +11,7 @@
 
 </div>
 
-Bloom is an open-source framework-agnostic authentication SDK for TypeScript. It provides a unified authentication system following the better-auth pattern, with framework adapters for Express, React, Next.js, and more.
+Bloom is an open-source framework-agnostic authentication SDK for TypeScript, with framework adapters for Express, React, Next.js, and more.
 
 ## Features
 
@@ -70,40 +70,40 @@ bloom/
 Create an auth.ts file in your server:
 
 ```typescript
-import { bloomAuth } from '@bloom/core'
+import { bloomAuth } from "@bloom/core";
 
 export const auth = bloomAuth({
   database: {
-    provider: 'mongodb',
-    uri: process.env.MONGODB_URI
+    provider: "mongodb",
+    uri: process.env.MONGODB_URI,
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7,
-    cookieName: 'bloom.sid'
+    cookieName: "bloom.sid",
   },
   emailAndPassword: {
-    enabled: true
-  }
-})
+    enabled: true,
+  },
+});
 ```
 
 Mount the auth handler in Express:
 
 ```typescript
-import { toExpressHandler } from '@bloom/node/express'
-import { auth } from './lib/auth'
+import { toExpressHandler } from "@bloom/node/express";
+import { auth } from "./lib/auth";
 
-app.all('/api/auth/*', toExpressHandler(auth.handler))
+app.all("/api/auth/*", toExpressHandler(auth.handler));
 ```
 
 Protect routes with middleware:
 
 ```typescript
-import { requireAuth } from '@bloom/node/express'
+import { requireAuth } from "@bloom/node/express";
 
-app.get('/api/protected', requireAuth(), (req, res) => {
-  res.json({ user: req.user })
-})
+app.get("/api/protected", requireAuth(), (req, res) => {
+  res.json({ user: req.user });
+});
 ```
 
 ### Client-Side Usage
