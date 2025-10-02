@@ -10,13 +10,11 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@bloom/client": "1.0.0"
+    "@bloom/client": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20.8.9",
     "@types/react": "^18.3.25",
-    "react": "^18.3.1",
-    "typescript": "^5.2.2"
+    "react": "^18.3.1"
   },
   "peerDependencies": {
     "react": "^18.0.0"
