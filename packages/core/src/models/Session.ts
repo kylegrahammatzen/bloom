@@ -48,12 +48,10 @@ const SessionSchema = new Schema<ISession>({
   },
 });
 
-// Indexes
 SessionSchema.index({ session_id: 1 }, { unique: true });
 SessionSchema.index({ user_id: 1 });
 SessionSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
 
-// Update last_accessed before saving
 SessionSchema.pre('save', function (next) {
   if (!this.isNew) {
     this.last_accessed = new Date();
@@ -61,7 +59,6 @@ SessionSchema.pre('save', function (next) {
   next();
 });
 
-// Instance methods
 SessionSchema.methods.isExpired = function (): boolean {
   return this.expires_at < new Date();
 };

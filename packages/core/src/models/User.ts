@@ -45,11 +45,9 @@ const UserSchema = new Schema<IUser>({
   },
 });
 
-// Indexes
 UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ created_at: 1 });
 
-// Update the updated_at field before saving
 UserSchema.pre('save', function (next) {
   this.updated_at = new Date();
   next();

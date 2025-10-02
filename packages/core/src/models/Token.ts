@@ -8,7 +8,6 @@ export interface IToken extends Document {
   used_at?: Date;
   created_at: Date;
 
-  // Instance methods
   isExpired(): boolean;
   isUsed(): boolean;
   markAsUsed(): Promise<IToken>;
@@ -45,13 +44,11 @@ const TokenSchema = new Schema<IToken>({
   },
 });
 
-// Indexes
 TokenSchema.index({ token_hash: 1 }, { unique: true });
 TokenSchema.index({ user_id: 1 });
 TokenSchema.index({ expires_at: 1 }, { expireAfterSeconds: 0 });
 TokenSchema.index({ type: 1 });
 
-// Instance methods
 TokenSchema.methods.isExpired = function (): boolean {
   return this.expires_at < new Date();
 };

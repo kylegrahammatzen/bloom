@@ -9,7 +9,6 @@ type RateLimitConfig = {
   window: number;
 }
 
-// In-memory storage for rate limiting attempts
 const attempts = new Map<string, RateLimitAttempt>();
 
 /**
@@ -25,18 +24,15 @@ export function checkRateLimit(
   const now = Date.now();
   const attempt = attempts.get(key);
 
-  // Clean up expired attempt data
   if (attempt && now - attempt.firstAttemptAt > config.window) {
     attempts.delete(key);
     return { isLimited: false, remaining: config.max };
   }
 
-  // No previous attempts
   if (!attempt) {
     return { isLimited: false, remaining: config.max };
   }
 
-  // Check if limit exceeded
   if (attempt.count >= config.max) {
     const resetAt = new Date(attempt.firstAttemptAt + config.window);
     return { isLimited: true, remaining: 0, resetAt };
@@ -88,5 +84,4 @@ export function cleanupOldAttempts(maxAge: number = 60 * 60 * 1000): void {
   }
 }
 
-// Clean up old attempts every 10 minutes
 setInterval(() => cleanupOldAttempts(), 10 * 60 * 1000);
