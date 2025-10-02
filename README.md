@@ -5,22 +5,50 @@
 [![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](LICENSE)
 [![MongoDB](https://img.shields.io/badge/MongoDB-8.7-green.svg)](https://www.mongodb.com/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.21-green.svg)](https://expressjs.com/)
-[![React](https://img.shields.io/badge/React-17-blue.svg)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
 </div>
 
-Bloom is an open-source project to show how authentication really works.
+Bloom is an open-source framework-agnostic authentication SDK for TypeScript. It provides a unified authentication system following the better-auth pattern, with framework adapters for Express, React, Next.js, and more.
+
+## Features
+
+- Framework-agnostic core SDK
+- React hooks and components
+- Express middleware and handlers
+- Type-safe throughout
+- Argon2id password hashing
+- Session management
+- Rate limiting
+- Email verification
+- Password reset
+- Account deletion
+- Plugin system (future)
+
+## Package Structure
+
+```
+bloom/
+├── packages/
+│   ├── core/       # @bloom/core - Server authentication
+│   ├── client/     # @bloom/client - Browser client
+│   ├── react/      # @bloom/react - React bindings
+│   └── node/       # @bloom/node - Node.js adapters
+├── apps/
+│   ├── frontend/   # Demo React application
+│   └── server/     # Demo Express server
+```
 
 ## Getting Started
 
-1. Clone and configure:
+1. Clone and install dependencies:
 
    ```bash
    git clone https://github.com/kylegrahammatzen/bloom.git
    cd bloom
-   cp server/.env.example server/.env
+   npm install
    ```
 
 2. Start MongoDB with Docker:
@@ -29,23 +57,99 @@ Bloom is an open-source project to show how authentication really works.
    npm run docker:up
    ```
 
-3. Install dependencies and start development servers:
+3. Start development servers:
 
    ```bash
-   # Install all dependencies
-   npm run install:all
-
-   # Start both frontend and backend
    npm run dev
    ```
 
-## Features
+## Usage
 
-- Icebox laboratory for experimenting with different authentication methods
-- Real-time visualization of authentication processes
-- Three security scenarios (banking, social media, payment processing)
-- Safe environment for testing attacks and inspecting tokens/cookies
-- Step-by-step demonstration of password hashing, session management, and CSRF protection
+### Server-Side Configuration
+
+Create an auth.ts file in your server:
+
+```typescript
+import { bloomAuth } from '@bloom/core'
+
+export const auth = bloomAuth({
+  database: {
+    provider: 'mongodb',
+    uri: process.env.MONGODB_URI
+  },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7,
+    cookieName: 'bloom.sid'
+  },
+  emailAndPassword: {
+    enabled: true
+  }
+})
+```
+
+Mount the auth handler in Express:
+
+```typescript
+import { toExpressHandler } from '@bloom/node/express'
+import { auth } from './lib/auth'
+
+app.all('/api/auth/*', toExpressHandler(auth.handler))
+```
+
+Protect routes with middleware:
+
+```typescript
+import { requireAuth } from '@bloom/node/express'
+
+app.get('/api/protected', requireAuth(), (req, res) => {
+  res.json({ user: req.user })
+})
+```
+
+### Client-Side Usage
+
+Wrap your app with BloomProvider:
+
+```typescript
+import { BloomProvider } from '@bloom/react'
+
+<BloomProvider baseURL="http://localhost:5000">
+  <App />
+</BloomProvider>
+```
+
+Use the useAuth hook in components:
+
+```typescript
+import { useAuth } from '@bloom/react'
+
+function Dashboard() {
+  const { user, signOut } = useAuth()
+  return <div>Welcome {user?.email}</div>
+}
+```
+
+## Documentation
+
+- Architecture: See plan-v2.md
+- Implementation: See SDK-IMPLEMENTATION.md
+- Contributing: See CONTRIBUTING.md
+
+## Development
+
+```bash
+# Start development servers
+npm run dev
+
+# Build all packages
+npm run build
+
+# Run tests
+npm run test
+
+# Run linting
+npm run lint
+```
 
 ## Tech Stack
 
@@ -53,34 +157,8 @@ Bloom is an open-source project to show how authentication really works.
 - Express.js with TypeScript backend
 - MongoDB with Mongoose ODM
 - Argon2id for password hashing
-- Express session management with rate limiting
-- Docker for MongoDB development environment
-
-## Project Structure
-
-```
-bloom/
-├── frontend/          # React TypeScript application
-├── server/           # Express.js TypeScript backend
-├── docker-compose.yml # MongoDB and services
-└── package.json      # Root workspace configuration
-```
-
-## Development
-
-```bash
-# Start frontend only
-npm run dev:frontend
-
-# Start backend only
-npm run dev:server
-
-# Build for production
-npm run build
-
-# Run linting
-npm run lint
-```
+- Session management with rate limiting
+- Docker for MongoDB development
 
 ## License
 
