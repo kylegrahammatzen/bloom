@@ -1,0 +1,27 @@
+{
+  "name": "@bloom/core",
+  "version": "1.0.0",
+  "description": "Core authentication library for Bloom - framework-agnostic",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "argon2": "^0.31.2",
+    "mongoose": "^7.6.3",
+    "rou3": "^0.7.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.9",
+    "typescript": "^5.2.2"
+  },
+  "peerDependencies": {},
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}
