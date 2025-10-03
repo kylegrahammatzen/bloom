@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction, Router } from 'express';
 import type { BloomAuth, BloomHandlerContext } from '@bloom/core';
+import { logger } from '@bloom/core';
 import express from 'express';
 
 export function toExpressHandler(auth: BloomAuth): Router {
@@ -31,10 +32,10 @@ export function toExpressHandler(auth: BloomAuth): Router {
           ip,
           userAgent,
         },
-        session: req.session && {
+        session: req.session?.userId && req.session?.sessionId ? {
           userId: req.session.userId,
           sessionId: req.session.sessionId,
-        },
+        } : undefined,
       };
 
       // Call core auth handler
@@ -49,7 +50,7 @@ export function toExpressHandler(auth: BloomAuth): Router {
       // Clear session if requested
       if (result.clearSession && req.session) {
         req.session.destroy((err) => {
-          if (err) console.error('Session destruction error:', err);
+          if (err) logger.error({ error: err }, 'Session destruction error');
         });
         res.clearCookie(auth.config.session?.cookieName || 'bloom.sid');
       }
@@ -81,10 +82,10 @@ export function createExpressHandler(auth: BloomAuth) {
           ip,
           userAgent: req.headers['user-agent'],
         },
-        session: req.session && {
+        session: req.session?.userId && req.session?.sessionId ? {
           userId: req.session.userId,
           sessionId: req.session.sessionId,
-        },
+        } : undefined,
       };
 
       const result = await auth.handler(context);
@@ -97,7 +98,7 @@ export function createExpressHandler(auth: BloomAuth) {
 
         if (result.clearSession && req.session) {
           req.session.destroy((err) => {
-            if (err) console.error('Session destruction error:', err);
+            if (err) logger.error({ error: err }, 'Session destruction error');
           });
           res.clearCookie(auth.config.session?.cookieName || 'bloom.sid');
         }
