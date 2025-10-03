@@ -1,171 +1,143 @@
-# Bloom Server
+# Bloom Express Server Example
 
-<div align="center">
+Express server example with Bloom authentication, featuring session-based authentication with Redis storage.
 
-[![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](../LICENSE)
-[![Express.js](https://img.shields.io/badge/Express.js-4.21-green.svg)](https://expressjs.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-8.7-green.svg)](https://www.mongodb.com/)
-[![Argon2](https://img.shields.io/badge/Argon2-0.40-red.svg)](https://www.npmjs.com/package/argon2)
+## Features
 
-</div>
+- Express server with Bloom authentication
+- Session-based authentication with Redis storage
+- Argon2id password hashing
+- Email verification and password reset flows
+- Type-safe authentication with TypeScript
+- CORS and security middleware
 
-Express.js TypeScript backend for Bloom, an open-source project to show how authentication really works.
+## Package Structure
 
-## Getting Started
+```
+apps/express-server/
+├── src/
+│   └── index.ts              # Server entry point
+```
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+## Setup
 
-2. Copy environment file:
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Start MongoDB (from project root):
-   ```bash
-   npm run docker:up
-   ```
-
-4. Start development server:
-   ```bash
-   npm run dev
-   ```
-
-## Available Scripts
+Install dependencies:
 
 ```bash
-# Start development server with hot reload
-npm run dev
+pnpm install
+```
 
-# Build TypeScript to JavaScript
-npm run build
+Configure environment variables:
 
-# Start production server
-npm start
+```bash
+cp .env.example .env
+```
 
-# Run tests with Vitest
-npm test
+Update `.env` with your values:
 
-# Run tests in watch mode
-npm run test:watch
+```env
+DATABASE_URL=mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin
+REDIS_URL=redis://localhost:6379
+SESSION_SECRET=your-super-secret-session-key
+PORT=5000
+FRONTEND_URL=http://localhost:3000
+```
 
-# Run tests with UI
-npm run test:ui
+Start MongoDB and Redis:
 
-# Run linting
-npm run lint
+```bash
+pnpm docker:up
+```
+
+Run development server:
+
+```bash
+pnpm dev
+```
+
+Server runs on http://localhost:5000
+
+## Usage
+
+Basic Server Setup:
+
+```typescript
+import 'dotenv/config';
+import { bloomServer } from '@bloom/core/server/express';
+import type { AuthEventContext } from '@bloom/core';
+
+bloomServer({
+  database: {
+    uri: process.env.DATABASE_URL,
+  },
+  session: {
+    secret: process.env.SESSION_SECRET,
+    expiresIn: 7 * 24 * 60 * 60 * 1000,
+  },
+  sessionStore: {
+    type: 'redis',
+    uri: process.env.REDIS_URL,
+  },
+  emailAndPassword: {
+    requireEmailVerification: false,
+  },
+  callbacks: {
+    onAuthEvent: (ctx: AuthEventContext) => {
+      console.log(`[${ctx.action}] ${ctx.email || ctx.userId}`);
+    },
+  },
+}).start();
+```
+
+Adding Custom Routes:
+
+```typescript
+const server = bloomServer(config);
+
+server.addRoute('/api/users', async (req, res) => {
+  res.json({ message: 'Custom route' });
+});
+
+server.addRoute('/api/protected', async (req, res) => {
+  res.json({ user: req.user });
+}, { protected: true });
+
+server.start();
+```
+
+Using Middleware Adapters:
+
+```typescript
+import express from 'express';
+import { bloomAuth } from '@bloom/core';
+import { toExpressHandler, requireAuth } from '@bloom/adapters/express';
+
+const app = express();
+const auth = bloomAuth(config);
+
+app.all('/api/auth/*', toExpressHandler(auth));
+
+app.get('/api/protected', requireAuth(), (req, res) => {
+  res.json({ user: req.user });
+});
+
+app.listen(5000);
 ```
 
 ## API Endpoints
 
-### Authentication Routes (/api/auth)
-- POST /register - User registration with password strength validation
-- POST /login - User authentication with rate limiting
-- POST /logout - Session termination
-- GET /me - Get current user information
-- POST /verify-email - Email verification with tokens
-- POST /request-password-reset - Password reset request
-- POST /reset-password - Password reset with new password
+All endpoints are available under `/api/auth`:
 
-### Laboratory Routes (/api/lab)
-- POST /password-comparison - Compare different password storage methods
-- POST /token-analysis - Analyze token generation and entropy
-- POST /session-demo - Demonstrate session lifecycle
-- POST /attack-simulation - Safe security attack demonstrations
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/logout` - Logout user
+- `GET /api/auth/me` - Get current session
+- `POST /api/auth/email/verify` - Verify email
+- `POST /api/auth/email/resend` - Resend verification email
+- `POST /api/auth/password/reset` - Request password reset
+- `POST /api/auth/password/update` - Update password
+- `DELETE /api/auth/account` - Delete account
 
-### Health Check
-- GET /api/health - Service health status
+## License
 
-## Security Features
-
-- Argon2id password hashing with proper salt generation
-- Cryptographically secure token generation (120-bit entropy)
-- Session management with HttpOnly, SameSite, and Secure cookies
-- Rate limiting on authentication endpoints
-- CSRF protection through SameSite cookies
-- Account lockout after failed login attempts
-- Input validation and sanitization
-
-## Tech Stack
-
-- Express.js with TypeScript
-- MongoDB with Mongoose ODM
-- Argon2 for password hashing
-- Express Session for session management
-- Express Rate Limit for protection
-- Express Validator for input validation
-- Helmet for security headers
-- CORS for cross-origin requests
-
-## Project Structure
-
-```
-server/
-├── src/
-│   ├── config/          # Database configuration
-│   ├── middleware/      # Express middleware (auth, rate limiting, errors)
-│   ├── models/         # Mongoose schemas (User, Session, Token)
-│   ├── routes/         # API route handlers
-│   ├── types/          # TypeScript type definitions
-│   ├── utils/          # Utility functions (auth helpers)
-│   └── index.ts        # Application entry point
-├── scripts/            # Database initialization scripts
-├── .env.example        # Environment variables template
-├── package.json        # Dependencies and scripts
-├── tsconfig.json       # TypeScript configuration
-└── nodemon.json        # Development server configuration
-```
-
-## Environment Variables
-
-```bash
-NODE_ENV=development
-PORT=5000
-MONGODB_URI=mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth
-SESSION_SECRET=your-super-secret-session-key-change-in-production
-FRONTEND_URL=http://localhost:3000
-```
-
-## Database Setup
-
-The server automatically connects to MongoDB on startup. No manual schema creation is required - Mongoose will automatically create collections when documents are first inserted.
-
-### Database Connection
-- Connects to MongoDB using Mongoose ODM
-- Automatic connection pooling and error handling
-- Collections are created dynamically when first used
-- Indexes are automatically created based on schema definitions
-
-For detailed database schema information, see [schema.md](schema.md).
-
-## Testing
-
-The server includes comprehensive tests using Vitest:
-
-- Unit Tests: Authentication utilities, middleware functions, database models
-- Integration Tests: Complete API endpoint testing with MongoDB Memory Server
-- Security Tests: Password hashing, rate limiting, session management
-- Coverage: All core authentication flows and edge cases
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode for development
-npm run test:watch
-
-# Run tests with interactive UI
-npm run test:ui
-```
-
-## Development Notes
-
-- Database Schema: MongoDB collections are created automatically on startup
-- Type Safety: All routes include proper TypeScript typing
-- Security: Rate limiting prevents brute force attacks
-- Education: Laboratory endpoints demonstrate security concepts safely
-- Standards: Follows Copenhagen Book security recommendations
-- Testing: Comprehensive test suite with Vitest and MongoDB Memory Server
+This project is licensed under the GNU Affero General Public License v3.0.
