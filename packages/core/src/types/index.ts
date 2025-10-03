@@ -40,6 +40,14 @@ export type GenericResponse = {
   clearSession?: boolean;
 }
 
+export type AuthEventContext = {
+  action: string;
+  userId?: string;
+  email?: string;
+  endpoint: string;
+  ip?: string;
+};
+
 export type BloomAuthConfig = {
   database?: {
     provider?: 'mongodb';
@@ -78,7 +86,7 @@ export type BloomAuthConfig = {
     onPasswordReset?: (ctx: { userId: string; email: string; ip?: string }) => Promise<void> | void;
     onError?: (ctx: { error: Error; endpoint: string; method: string; path: string; userId?: string; ip?: string }) => Promise<void> | void;
     onRateLimit?: (ctx: { ip: string; endpoint: string; limit: { max: number; window: number }; userId?: string }) => Promise<void> | void;
-    onAuthEvent?: (ctx: { action: string; userId?: string; email?: string; endpoint: string; ip?: string }) => Promise<void> | void;
+    onAuthEvent?: (ctx: AuthEventContext) => Promise<void> | void;
   };
   plugins?: BloomPlugin[];
 }

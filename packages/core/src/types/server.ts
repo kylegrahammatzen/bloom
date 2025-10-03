@@ -1,9 +1,15 @@
 import type { BloomAuth, BloomAuthConfig } from './index';
 
+export type SessionStoreConfig = {
+  type?: 'memory' | 'mongo' | 'redis';
+  uri?: string;
+};
+
 export type BloomServerConfig = BloomAuthConfig & {
   port?: number;
   cors?: any;
   helmet?: any;
+  sessionStore?: SessionStoreConfig;
   onReady?: (port: number) => void;
 }
 
