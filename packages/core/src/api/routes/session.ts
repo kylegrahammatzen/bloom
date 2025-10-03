@@ -1,8 +1,8 @@
-import type { BloomHandlerContext, GenericResponse } from '../../types';
-import { User as UserModel, Session as SessionModel } from '../../models';
-import { APIError, APIErrorCode } from '../../types/errors';
-import { APIResponse } from '../../utils/response';
-import { mapUser, mapSession } from '../../utils/mappers';
+import type { BloomHandlerContext, GenericResponse } from '@/types';
+import { User as UserModel, Session as SessionModel } from '@/models';
+import { APIError, APIErrorCode } from '@/types/errors';
+import { APIResponse } from '@/utils/response';
+import { mapUser, mapSession } from '@/utils/mappers';
 
 export async function handleGetSession(ctx: BloomHandlerContext): Promise<GenericResponse> {
   if (!ctx.session?.userId) {

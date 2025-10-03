@@ -1,4 +1,4 @@
-import type { BloomAuthConfig, User, Session } from '../types';
+import type { BloomAuthConfig, User, Session } from '@/types';
 
 type CallbackContext = {
   action: string;

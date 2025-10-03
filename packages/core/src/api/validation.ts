@@ -1,6 +1,6 @@
-import { isValidEmail, normalizeEmail, checkPasswordStrength } from '../utils/crypto';
-import { APIError, APIErrorCode } from '../types/errors';
-import type { GenericResponse } from '../types';
+import { isValidEmail, normalizeEmail, checkPasswordStrength } from '@/utils/crypto';
+import { APIError, APIErrorCode } from '@/types/errors';
+import type { GenericResponse } from '@/types';
 
 export function validateEmail(email: string): GenericResponse | null {
   if (!email || !isValidEmail(email)) {

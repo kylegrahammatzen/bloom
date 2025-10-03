@@ -1,11 +1,11 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '../../types';
-import { User as UserModel, UserCredentials, Session as SessionModel } from '../../models';
-import { verifyPassword, generateSessionId, normalizeEmail } from '../../utils/crypto';
-import { APIError, APIErrorCode } from '../../types/errors';
-import { APIResponse } from '../../utils/response';
-import { checkRateLimit } from '../ratelimit';
-import { emitCallback } from '../callbacks';
-import { mapUser, mapSession } from '../../utils/mappers';
+import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import { User as UserModel, UserCredentials, Session as SessionModel } from '@/models';
+import { verifyPassword, generateSessionId, normalizeEmail } from '@/utils/crypto';
+import { APIError, APIErrorCode } from '@/types/errors';
+import { APIResponse } from '@/utils/response';
+import { checkRateLimit } from '@/api/ratelimit';
+import { emitCallback } from '@/api/callbacks';
+import { mapUser, mapSession } from '@/utils/mappers';
 
 export async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { email, password } = ctx.request.body;

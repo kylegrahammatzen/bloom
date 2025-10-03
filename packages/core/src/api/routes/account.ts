@@ -1,8 +1,8 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '../../types';
-import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '../../models';
-import { APIError, APIErrorCode } from '../../types/errors';
-import { APIResponse } from '../../utils/response';
-import { emitCallback } from '../callbacks';
+import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '@/models';
+import { APIError, APIErrorCode } from '@/types/errors';
+import { APIResponse } from '@/utils/response';
+import { emitCallback } from '@/api/callbacks';
 
 export async function handleDeleteAccount(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   if (!ctx.session?.userId) {

@@ -1,12 +1,12 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '../../types';
-import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '../../models';
-import { hashPassword, generateSecureToken, hashToken, generateSessionId } from '../../utils/crypto';
-import { APIError, APIErrorCode } from '../../types/errors';
-import { APIResponse } from '../../utils/response';
-import { checkRateLimit } from '../ratelimit';
-import { validateEmailAndPassword, normalizeEmail } from '../validation';
-import { emitCallback } from '../callbacks';
-import { mapUser, mapSession } from '../../utils/mappers';
+import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '@/models';
+import { hashPassword, generateSecureToken, hashToken, generateSessionId } from '@/utils/crypto';
+import { APIError, APIErrorCode } from '@/types/errors';
+import { APIResponse } from '@/utils/response';
+import { checkRateLimit } from '@/api/ratelimit';
+import { validateEmailAndPassword, normalizeEmail } from '@/api/validation';
+import { emitCallback } from '@/api/callbacks';
+import { mapUser, mapSession } from '@/utils/mappers';
 
 export async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { email, password } = ctx.request.body;

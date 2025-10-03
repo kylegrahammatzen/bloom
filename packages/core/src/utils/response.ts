@@ -1,4 +1,4 @@
-import type { GenericResponse } from '../types';
+import type { GenericResponse } from '@/types';
 
 export class APIResponse {
   static success(body: any, sessionData?: { userId: string; sessionId: string }): GenericResponse {

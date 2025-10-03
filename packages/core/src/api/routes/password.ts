@@ -1,11 +1,11 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '../../types';
-import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '../../models';
-import { hashPassword, generateSecureToken, hashToken } from '../../utils/crypto';
-import { APIError, APIErrorCode } from '../../types/errors';
-import { APIResponse } from '../../utils/response';
-import { checkRateLimit } from '../ratelimit';
-import { validateEmail, validatePassword, normalizeEmail } from '../validation';
-import { emitCallback } from '../callbacks';
+import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '@/models';
+import { hashPassword, generateSecureToken, hashToken } from '@/utils/crypto';
+import { APIError, APIErrorCode } from '@/types/errors';
+import { APIResponse } from '@/utils/response';
+import { checkRateLimit } from '@/api/ratelimit';
+import { validateEmail, validatePassword, normalizeEmail } from '@/api/validation';
+import { emitCallback } from '@/api/callbacks';
 
 export async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { email } = ctx.request.body;
