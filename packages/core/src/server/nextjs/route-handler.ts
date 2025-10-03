@@ -6,6 +6,17 @@ export type NextAuthHandlerConfig = {
   connectDB?: () => Promise<void>;
 };
 
+const API_AUTH_PREFIX = '/api/auth';
+
+function parseSessionCookie(cookieValue: string) {
+  try {
+    const data = JSON.parse(cookieValue);
+    return { userId: data.userId, sessionId: data.sessionId };
+  } catch {
+    return undefined;
+  }
+}
+
 export function createAuthHandler(config: NextAuthHandlerConfig) {
   const { auth, connectDB } = config;
   const cookieName = auth.config.session?.cookieName || 'bloom.sid';
@@ -15,19 +26,12 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       await connectDB?.();
 
       const pathname = request.nextUrl.pathname;
-      const path = pathname.replace('/api/auth', '');
+      const path = pathname.replace(API_AUTH_PREFIX, '');
 
       const body = method !== 'GET' ? await request.json().catch(() => undefined) : undefined;
 
       const sessionCookie = request.cookies.get(cookieName);
-      const session = sessionCookie ? (() => {
-        try {
-          const data = JSON.parse(sessionCookie.value);
-          return { userId: data.userId, sessionId: data.sessionId };
-        } catch {
-          return undefined;
-        }
-      })() : undefined;
+      const session = sessionCookie ? parseSessionCookie(sessionCookie.value) : undefined;
 
       const context: BloomHandlerContext = {
         request: {
