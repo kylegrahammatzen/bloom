@@ -18,7 +18,86 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  apps/frontend:
+  apps/express-server:
+    dependencies:
+      '@bloom/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      connect-mongo:
+        specifier: ^5.1.0
+        version: 5.1.0(express-session@1.18.2)(mongodb@5.9.2)
+      connect-redis:
+        specifier: ^7.1.1
+        version: 7.1.1(express-session@1.18.2)
+      cookie-parser:
+        specifier: ^1.4.6
+        version: 1.4.7
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      dotenv:
+        specifier: ^16.3.1
+        version: 16.6.1
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+      express-session:
+        specifier: ^1.17.3
+        version: 1.18.2
+      helmet:
+        specifier: ^7.1.0
+        version: 7.2.0
+      mongoose:
+        specifier: ^7.6.3
+        version: 7.8.7
+      redis:
+        specifier: ^4.7.0
+        version: 4.7.1
+    devDependencies:
+      '@types/cookie-parser':
+        specifier: ^1.4.6
+        version: 1.4.9(@types/express@4.17.23)
+      '@types/cors':
+        specifier: ^2.8.17
+        version: 2.8.19
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.23
+      '@types/express-session':
+        specifier: ^1.17.10
+        version: 1.18.2
+      '@types/supertest':
+        specifier: ^2.0.12
+        version: 2.0.16
+      '@typescript-eslint/eslint-plugin':
+        specifier: ^6.9.1
+        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
+      '@typescript-eslint/parser':
+        specifier: ^6.9.1
+        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
+      '@vitest/ui':
+        specifier: ^2.1.4
+        version: 2.1.9(vitest@2.1.9)
+      eslint:
+        specifier: ^8.53.0
+        version: 8.57.1
+      mongodb-memory-server:
+        specifier: ^9.0.1
+        version: 9.5.0
+      nodemon:
+        specifier: ^3.0.1
+        version: 3.1.10
+      supertest:
+        specifier: ^6.3.3
+        version: 6.3.4
+      ts-node:
+        specifier: ^10.9.1
+        version: 10.9.2(@types/node@22.18.8)(typescript@5.9.3)
+      vitest:
+        specifier: ^2.1.4
+        version: 2.1.9(@types/node@22.18.8)(@vitest/ui@2.1.9)(lightningcss@1.30.1)
+
+  apps/react-router-v7:
     dependencies:
       '@base-ui-components/react':
         specifier: 1.0.0-beta.4
@@ -91,79 +170,6 @@ importers:
         specifier: ^6.3.6
         version: 6.3.6(@types/node@22.18.8)(jiti@2.6.1)(lightningcss@1.30.1)
 
-  apps/server:
-    dependencies:
-      '@bloom/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      connect-mongo:
-        specifier: ^5.1.0
-        version: 5.1.0(express-session@1.18.2)(mongodb@5.9.2)
-      cookie-parser:
-        specifier: ^1.4.6
-        version: 1.4.7
-      cors:
-        specifier: ^2.8.5
-        version: 2.8.5
-      dotenv:
-        specifier: ^16.3.1
-        version: 16.6.1
-      express:
-        specifier: ^4.18.2
-        version: 4.21.2
-      express-session:
-        specifier: ^1.17.3
-        version: 1.18.2
-      helmet:
-        specifier: ^7.1.0
-        version: 7.2.0
-      mongoose:
-        specifier: ^7.6.3
-        version: 7.8.7
-    devDependencies:
-      '@types/cookie-parser':
-        specifier: ^1.4.6
-        version: 1.4.9(@types/express@4.17.23)
-      '@types/cors':
-        specifier: ^2.8.17
-        version: 2.8.19
-      '@types/express':
-        specifier: ^4.17.21
-        version: 4.17.23
-      '@types/express-session':
-        specifier: ^1.17.10
-        version: 1.18.2
-      '@types/supertest':
-        specifier: ^2.0.12
-        version: 2.0.16
-      '@typescript-eslint/eslint-plugin':
-        specifier: ^6.9.1
-        version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
-      '@typescript-eslint/parser':
-        specifier: ^6.9.1
-        version: 6.21.0(eslint@8.57.1)(typescript@5.9.3)
-      '@vitest/ui':
-        specifier: ^2.1.4
-        version: 2.1.9(vitest@2.1.9)
-      eslint:
-        specifier: ^8.53.0
-        version: 8.57.1
-      mongodb-memory-server:
-        specifier: ^9.0.1
-        version: 9.5.0
-      nodemon:
-        specifier: ^3.0.1
-        version: 3.1.10
-      supertest:
-        specifier: ^6.3.3
-        version: 6.3.4
-      ts-node:
-        specifier: ^10.9.1
-        version: 10.9.2(@types/node@22.18.8)(typescript@5.9.3)
-      vitest:
-        specifier: ^2.1.4
-        version: 2.1.9(@types/node@22.18.8)(@vitest/ui@2.1.9)(lightningcss@1.30.1)
-
   packages/adapters:
     dependencies:
       '@bloom/core':
@@ -184,15 +190,15 @@ importers:
 
   packages/core:
     dependencies:
-      '@bloom/adapters':
-        specifier: workspace:*
-        version: link:../adapters
       argon2:
         specifier: ^0.31.2
         version: 0.31.2
       connect-mongo:
         specifier: ^5.1.0
         version: 5.1.0(express-session@1.18.2)(mongodb@5.9.2)
+      connect-redis:
+        specifier: ^7.1.0
+        version: 7.1.1(express-session@1.18.2)
       cookie-parser:
         specifier: ^1.4.6
         version: 1.4.7
@@ -211,6 +217,9 @@ importers:
       mongoose:
         specifier: ^7.6.3
         version: 7.8.7
+      redis:
+        specifier: ^4.6.0
+        version: 4.7.1
     devDependencies:
       '@types/cookie-parser':
         specifier: ^1.4.6
@@ -232,11 +241,11 @@ importers:
         version: link:../client
     devDependencies:
       '@types/react':
-        specifier: ^18.3.25
-        version: 18.3.25
+        specifier: ^19.0.2
+        version: 19.2.0
       react:
-        specifier: ^18.3.1
-        version: 18.3.1
+        specifier: ^19.0.0
+        version: 19.2.0
 
 packages:
 
@@ -853,6 +862,35 @@ packages:
       typescript:
         optional: true
 
+  '@redis/bloom@1.2.0':
+    resolution: {integrity: sha512-HG2DFjYKbpNmVXsa0keLHp/3leGJz1mjh09f2RLGGLQZzSHpkmZWuwJbAvo3QcRY8p80m5+ZdXZdYOSBLlp7Cg==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
+
+  '@redis/client@1.6.1':
+    resolution: {integrity: sha512-/KCsg3xSlR+nCK8/8ZYSknYxvXHwubJrU82F3Lm1Fp6789VQ0/3RJKfsmRXjqfaTA++23CvC3hqmqe/2GEt6Kw==}
+    engines: {node: '>=14'}
+
+  '@redis/graph@1.1.1':
+    resolution: {integrity: sha512-FEMTcTHZozZciLRl6GiiIB4zGm5z5F3F6a6FZCyrfxdKOhFlGkiAqlexWMBzCi4DcRoyiOsuLfW+cjlGWyExOw==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
+
+  '@redis/json@1.0.7':
+    resolution: {integrity: sha512-6UyXfjVaTBTJtKNG4/9Z8PSpKE6XgSyEb8iwaqDcy+uKrd/DGYHTWkUdnQDyzm727V7p21WUMhsqz5oy65kPcQ==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
+
+  '@redis/search@1.2.0':
+    resolution: {integrity: sha512-tYoDBbtqOVigEDMAcTGsRlMycIIjwMCgD8eR2t0NANeQmgK/lvxNAvYyb6bZDD4frHRhIHkJu2TBRvB0ERkOmw==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
+
+  '@redis/time-series@1.1.0':
+    resolution: {integrity: sha512-c1Q99M5ljsIuc4YdaCwfUEXsofakb9c8+Zse2qxTadu8TalLXuAESzLvFAvNVbkmSlvlzIQOLpBCmWI9wTOt+g==}
+    peerDependencies:
+      '@redis/client': ^1.0.0
+
   '@remix-run/node-fetch-server@0.9.0':
     resolution: {integrity: sha512-SoLMv7dbH+njWzXnOY6fI08dFMI5+/dQ+vY3n8RnnbdG7MdJEgiP28Xj/xWlnRnED/aB6SFw56Zop+LbmaaKqA==}
 
@@ -1131,6 +1169,9 @@ packages:
 
   '@types/react@18.3.25':
     resolution: {integrity: sha512-oSVZmGtDPmRZtVDqvdKUi/qgCsWp5IDY29wp8na8Bj4B3cc99hfNzvNhlMkVVxctkAOGUA3Km7MMpBHAnWfcIA==}
+
+  '@types/react@19.2.0':
+    resolution: {integrity: sha512-1LOH8xovvsKsCBq1wnT4ntDUdCJKmnEakhsuoUSy6ExlHCkGP2hqnatagYTgFk6oeL0VU31u7SNjunPN+GchtA==}
 
   '@types/semver@7.7.1':
     resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
@@ -1467,6 +1508,10 @@ packages:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
 
+  cluster-key-slot@1.1.2:
+    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
+    engines: {node: '>=0.10.0'}
+
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
     engines: {node: '>=7.0.0'}
@@ -1497,6 +1542,12 @@ packages:
     peerDependencies:
       express-session: ^1.17.1
       mongodb: '>= 5.1.0 < 7'
+
+  connect-redis@7.1.1:
+    resolution: {integrity: sha512-M+z7alnCJiuzKa8/1qAYdGUXHYfDnLolOGAUjOioB07pP39qxjG+X9ibsud7qUBc4jMV5Mcy3ugGv8eFcgamJQ==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      express-session: '>=1'
 
   console-control-strings@1.1.0:
     resolution: {integrity: sha512-ty/fTekppD2fIwRvnZAVdeOiGd1c7YXEixbgJTNzqcxJWKQnjJ/V1bNEEE6hygpM3WjwHFUVK6HTjWSzV4a8sQ==}
@@ -1870,6 +1921,10 @@ packages:
     resolution: {integrity: sha512-+5J6MS/5XksCuXq++uFRsnUd7Ovu1XenbeuIuNRJxYWjgQbPuFhT14lAvsWfqfAmnwluf1OwMjz39HjfLPci0Q==}
     engines: {node: '>=10'}
     deprecated: This package is no longer supported.
+
+  generic-pool@3.9.0:
+    resolution: {integrity: sha512-hymDOu5B53XvN4QT9dBmZxPX4CWhBPPLguTZ9MMFeFa/Kg0xWVfylOVNlJji/E7yTZWFd/q9GO5TxDLq156D7g==}
+    engines: {node: '>= 4'}
 
   gensync@1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
@@ -2606,6 +2661,10 @@ packages:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
     engines: {node: '>=0.10.0'}
 
+  react@19.2.0:
+    resolution: {integrity: sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==}
+    engines: {node: '>=0.10.0'}
+
   readable-stream@3.6.2:
     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
     engines: {node: '>= 6'}
@@ -2617,6 +2676,9 @@ packages:
   readdirp@4.1.2:
     resolution: {integrity: sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==}
     engines: {node: '>= 14.18.0'}
+
+  redis@4.7.1:
+    resolution: {integrity: sha512-S1bJDnqLftzHXHP8JsT5II/CtHWQrASX5K96REjWjlmWKrviSOLWmM7QnRLstAWsu1VBBV1ffV6DzCvxNP0UJQ==}
 
   reselect@5.1.1:
     resolution: {integrity: sha512-K/BG6eIky/SBpzfHZv/dd+9JBFiS4SWV7FIujVyJRux6e45+73RaUHXLmIR1f7WOMaQ0U1km6qwklRQxpJJY0w==}
@@ -3790,6 +3852,32 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
+  '@redis/bloom@1.2.0(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
+  '@redis/client@1.6.1':
+    dependencies:
+      cluster-key-slot: 1.1.2
+      generic-pool: 3.9.0
+      yallist: 4.0.0
+
+  '@redis/graph@1.1.1(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
+  '@redis/json@1.0.7(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
+  '@redis/search@1.2.0(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
+  '@redis/time-series@1.1.0(@redis/client@1.6.1)':
+    dependencies:
+      '@redis/client': 1.6.1
+
   '@remix-run/node-fetch-server@0.9.0': {}
 
   '@rollup/rollup-android-arm-eabi@4.52.3':
@@ -4003,6 +4091,10 @@ snapshots:
   '@types/react@18.3.25':
     dependencies:
       '@types/prop-types': 15.7.15
+      csstype: 3.1.3
+
+  '@types/react@19.2.0':
+    dependencies:
       csstype: 3.1.3
 
   '@types/semver@7.7.1': {}
@@ -4399,6 +4491,8 @@ snapshots:
 
   clsx@2.1.1: {}
 
+  cluster-key-slot@1.1.2: {}
+
   color-convert@2.0.1:
     dependencies:
       color-name: 1.1.4
@@ -4425,6 +4519,10 @@ snapshots:
       mongodb: 5.9.2
     transitivePeerDependencies:
       - supports-color
+
+  connect-redis@7.1.1(express-session@1.18.2):
+    dependencies:
+      express-session: 1.18.2
 
   console-control-strings@1.1.0: {}
 
@@ -4871,6 +4969,8 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wide-align: 1.1.5
+
+  generic-pool@3.9.0: {}
 
   gensync@1.0.0-beta.2: {}
 
@@ -5532,6 +5632,8 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
 
+  react@19.2.0: {}
+
   readable-stream@3.6.2:
     dependencies:
       inherits: 2.0.4
@@ -5543,6 +5645,15 @@ snapshots:
       picomatch: 2.3.1
 
   readdirp@4.1.2: {}
+
+  redis@4.7.1:
+    dependencies:
+      '@redis/bloom': 1.2.0(@redis/client@1.6.1)
+      '@redis/client': 1.6.1
+      '@redis/graph': 1.1.1(@redis/client@1.6.1)
+      '@redis/json': 1.0.7(@redis/client@1.6.1)
+      '@redis/search': 1.2.0(@redis/client@1.6.1)
+      '@redis/time-series': 1.1.0(@redis/client@1.6.1)
 
   reselect@5.1.1: {}
 
