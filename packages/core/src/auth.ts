@@ -12,6 +12,8 @@ import {
 } from './utils/crypto';
 import { checkRateLimit, trackAttempt } from './utils/rateLimit';
 import { createRouter, addRoute, findRoute } from './utils/router';
+import { APIError, APIErrorCode } from './types/errors';
+import { createSuccess } from './utils/response';
 
 export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
   const defaultConfig: BloomAuthConfig = {
@@ -109,10 +111,7 @@ function createHandler(config: BloomAuthConfig) {
       const match = findRoute(router, method, normalizedPath);
 
       if (!match) {
-        return {
-          status: 404,
-          body: { error: { message: 'Endpoint not found' } },
-        };
+        return new APIError(APIErrorCode.ENDPOINT_NOT_FOUND).toResponse();
       }
 
       const handler = match.data as (ctx: BloomHandlerContext) => Promise<GenericResponse>;
@@ -131,10 +130,7 @@ function createHandler(config: BloomAuthConfig) {
         });
       }
 
-      return {
-        status: 500,
-        body: { error: { message: err.message } },
-      };
+      return new APIError(APIErrorCode.INTERNAL_ERROR).toResponse();
     }
   };
 }
@@ -162,15 +158,7 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
           });
         }
 
-        return {
-          status: 429,
-          body: {
-            error: {
-              message: 'Too many registration attempts. Please try again later.',
-              resetAt: rateLimit.resetAt
-            }
-          },
-        };
+        return new APIError(APIErrorCode.RATE_LIMITED, { resetAt: rateLimit.resetAt }).toResponse();
       }
 
       trackAttempt(rateLimitKey);
@@ -178,40 +166,23 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
   }
 
   if (!email || !isValidEmail(email)) {
-    return {
-      status: 400,
-      body: { error: { message: 'Invalid email format' } },
-    };
+    return new APIError(APIErrorCode.INVALID_EMAIL).toResponse();
   }
 
   if (!password || password.length < 8 || password.length > 256) {
-    return {
-      status: 400,
-      body: { error: { message: 'Password must be between 8 and 256 characters' } },
-    };
+    return new APIError(APIErrorCode.PASSWORD_REQUIRED).toResponse();
   }
 
   const normalizedEmail = normalizeEmail(email);
   const passwordCheck = checkPasswordStrength(password);
 
   if (!passwordCheck.isStrong) {
-    return {
-      status: 400,
-      body: {
-        error: {
-          message: 'Password does not meet security requirements',
-          details: passwordCheck.issues,
-        },
-      },
-    };
+    return new APIError(APIErrorCode.WEAK_PASSWORD, passwordCheck.issues).toResponse();
   }
 
   const existingUser = await UserModel.findOne({ email: normalizedEmail });
   if (existingUser) {
-    return {
-      status: 409,
-      body: { error: { message: 'An account with this email already exists' } },
-    };
+    return new APIError(APIErrorCode.EMAIL_ALREADY_EXISTS).toResponse();
   }
 
   const user = new UserModel({ email: normalizedEmail });
@@ -308,15 +279,7 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
           });
         }
 
-        return {
-          status: 429,
-          body: {
-            error: {
-              message: 'Too many login attempts, please try again later',
-              resetAt: rateLimit.resetAt
-            }
-          },
-        };
+        return new APIError(APIErrorCode.RATE_LIMITED, { resetAt: rateLimit.resetAt }).toResponse();
       }
 
       trackAttempt(rateLimitKey);
@@ -324,44 +287,29 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
   }
 
   if (!email || !password) {
-    return {
-      status: 400,
-      body: { error: { message: 'Invalid credentials' } },
-    };
+    return new APIError(APIErrorCode.INVALID_CREDENTIALS).toResponse();
   }
 
   const normalizedEmail = normalizeEmail(email);
   const user = await UserModel.findOne({ email: normalizedEmail });
 
   if (!user) {
-    return {
-      status: 401,
-      body: { error: { message: 'Invalid credentials' } },
-    };
+    return new APIError(APIErrorCode.INVALID_CREDENTIALS).toResponse();
   }
 
   const credentials = await UserCredentials.findOne({ user_id: user._id });
   if (!credentials) {
-    return {
-      status: 401,
-      body: { error: { message: 'Invalid credentials' } },
-    };
+    return new APIError(APIErrorCode.INVALID_CREDENTIALS).toResponse();
   }
 
   if (credentials.isAccountLocked()) {
-    return {
-      status: 423,
-      body: { error: { message: 'Account is temporarily locked' } },
-    };
+    return new APIError(APIErrorCode.ACCOUNT_LOCKED).toResponse();
   }
 
   const isValidPassword = await verifyPassword(password, credentials.password_hash, credentials.salt);
   if (!isValidPassword) {
     await credentials.incrementLoginAttempts();
-    return {
-      status: 401,
-      body: { error: { message: 'Invalid credentials' } },
-    };
+    return new APIError(APIErrorCode.INVALID_CREDENTIALS).toResponse();
   }
 
   await credentials.resetLoginAttempts();
@@ -443,26 +391,17 @@ async function handleLogout(ctx: BloomHandlerContext, config: BloomAuthConfig): 
 
 async function handleGetSession(ctx: BloomHandlerContext): Promise<GenericResponse> {
   if (!ctx.session?.userId) {
-    return {
-      status: 401,
-      body: { error: { message: 'Not authenticated' } },
-    };
+    return new APIError(APIErrorCode.NOT_AUTHENTICATED).toResponse();
   }
 
   const user = await UserModel.findById(ctx.session.userId);
   if (!user) {
-    return {
-      status: 404,
-      body: { error: { message: 'User not found' } },
-    };
+    return new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
   }
 
   const userSession = await SessionModel.findOne({ session_id: ctx.session.sessionId });
   if (!userSession) {
-    return {
-      status: 404,
-      body: { error: { message: 'Session not found' } },
-    };
+    return new APIError(APIErrorCode.SESSION_NOT_FOUND).toResponse();
   }
 
   return {
@@ -495,10 +434,7 @@ async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConf
   const { token } = ctx.request.body;
 
   if (!token) {
-    return {
-      status: 400,
-      body: { error: { message: 'Verification token is required' } },
-    };
+    return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
   }
 
   const tokenHash = hashToken(token);
@@ -508,18 +444,12 @@ async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConf
   });
 
   if (!verificationToken || !verificationToken.isValid()) {
-    return {
-      status: 400,
-      body: { error: { message: 'Invalid or expired verification token' } },
-    };
+    return new APIError(APIErrorCode.INVALID_TOKEN).toResponse();
   }
 
   const user = await UserModel.findById(verificationToken.user_id);
   if (!user) {
-    return {
-      status: 404,
-      body: { error: { message: 'User not found' } },
-    };
+    return new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
   }
 
   user.email_verified = true;
@@ -570,15 +500,7 @@ async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: Bloo
           });
         }
 
-        return {
-          status: 429,
-          body: {
-            error: {
-              message: 'Too many password reset attempts. Please try again later.',
-              resetAt: rateLimit.resetAt
-            }
-          },
-        };
+        return new APIError(APIErrorCode.RATE_LIMITED, { resetAt: rateLimit.resetAt }).toResponse();
       }
 
       trackAttempt(rateLimitKey);
@@ -586,10 +508,7 @@ async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: Bloo
   }
 
   if (!email || !isValidEmail(email)) {
-    return {
-      status: 400,
-      body: { error: { message: 'Invalid email format' } },
-    };
+    return new APIError(APIErrorCode.INVALID_EMAIL).toResponse();
   }
 
   const normalizedEmail = normalizeEmail(email);
@@ -623,23 +542,12 @@ async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthCo
   const { token, password } = ctx.request.body;
 
   if (!token || !password) {
-    return {
-      status: 400,
-      body: { error: { message: 'Token and password are required' } },
-    };
+    return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
   }
 
   const passwordCheck = checkPasswordStrength(password);
   if (!passwordCheck.isStrong) {
-    return {
-      status: 400,
-      body: {
-        error: {
-          message: 'Password does not meet security requirements',
-          details: passwordCheck.issues,
-        },
-      },
-    };
+    return new APIError(APIErrorCode.WEAK_PASSWORD, passwordCheck.issues).toResponse();
   }
 
   const tokenHash = hashToken(token);
@@ -649,18 +557,12 @@ async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthCo
   });
 
   if (!resetToken || !resetToken.isValid()) {
-    return {
-      status: 400,
-      body: { error: { message: 'Invalid or expired reset token' } },
-    };
+    return new APIError(APIErrorCode.INVALID_TOKEN).toResponse();
   }
 
   const user = await UserModel.findById(resetToken.user_id);
   if (!user) {
-    return {
-      status: 404,
-      body: { error: { message: 'User not found' } },
-    };
+    return new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
   }
 
   const { hash, salt } = await hashPassword(password);
@@ -688,20 +590,14 @@ async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthCo
 
 async function handleDeleteAccount(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   if (!ctx.session?.userId) {
-    return {
-      status: 401,
-      body: { error: { message: 'Not authenticated' } },
-    };
+    return new APIError(APIErrorCode.NOT_AUTHENTICATED).toResponse();
   }
 
   const userId = ctx.session.userId;
 
   const user = await UserModel.findById(userId);
   if (!user) {
-    return {
-      status: 404,
-      body: { error: { message: 'User not found' } },
-    };
+    return new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
   }
 
   if (config.callbacks?.onAccountDelete) {
