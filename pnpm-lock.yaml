@@ -264,6 +264,9 @@ importers:
       next:
         specifier: ^15.5.4
         version: 15.5.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      tsc-alias:
+        specifier: ^1.8.16
+        version: 1.8.16
 
   packages/client:
     devDependencies:
