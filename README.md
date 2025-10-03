@@ -11,29 +11,32 @@
 
 </div>
 
-Bloom is an open-source framework-agnostic authentication SDK for TypeScript, with framework adapters for Express, React, Next.js, and more.
+Bloom is an open-source framework-agnostic authentication SDK for TypeScript, with framework adapters for Express, Next.js, and more.
 
 ## Features
 
-- Framework-agnostic core with React and Express adapters
+- Framework-agnostic core with adapters for Express and Next.js
 - Type-safe authentication SDK
 - Session management with Argon2id password hashing and Redis caching
 - Email verification and password reset flows
+- Server-side rendering support with Next.js adapter
 
 ## Package Structure
 
 ```
 bloom/
 ├── packages/
-│   ├── core/               # @bloom/core - Authentication core
-│   │   └── server/express  # Express server adapter
-│   ├── client/             # @bloom/client - Browser HTTP client
-│   ├── react/              # @bloom/react - React 19 hooks and provider
-│   └── adapters/
-│       └── express         # @bloom/adapters - Express middleware adapters
+│   ├── core/                # @bloom/core - Framework-agnostic authentication core
+│   │   ├── server/express/  # Express server implementation
+│   │   └── server/nextjs/   # Next.js server implementation
+│   ├── client/              # @bloom/client - Browser HTTP client
+│   ├── react/               # @bloom/react - React 19 hooks and provider
+│   └── adapters/            # @bloom/adapters - Framework middleware
+│       └── express/         # Express middleware adapters
 ├── apps/
-│   ├── react-router-v7/    # Example React Router v7 application
-│   └── express-server/     # Example Express server implementation
+│   ├── next15/              # Next.js 15 App Router example
+│   ├── react-router-v7/     # React Router v7 example
+│   └── express-server/      # Express server example
 ```
 
 ## Getting Started
@@ -57,63 +60,13 @@ pnpm build
 pnpm test
 ```
 
-## Usage
+## Templates
 
-**Server (Express):**
+Get started with Bloom using one of our example applications:
 
-```typescript
-import 'dotenv/config';
-import { bloomServer } from '@bloom/core/server/express';
-import type { AuthEventContext } from '@bloom/core';
-
-bloomServer({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
-  session: {
-    secret: process.env.SESSION_SECRET,
-  },
-  sessionStore: {
-    type: 'redis',
-    uri: process.env.REDIS_URL,
-  },
-  emailAndPassword: {
-    requireEmailVerification: true,
-  },
-  callbacks: {
-    onAuthEvent: (ctx: AuthEventContext) => {
-      console.log(`[${ctx.action}] ${ctx.email || ctx.userId}`);
-    },
-  },
-}).start();
-```
-
-**Client (React):**
-
-```typescript
-import { BloomProvider, useAuth } from '@bloom/react';
-
-function App() {
-  return (
-    <BloomProvider baseURL="http://localhost:5000">
-      <Dashboard />
-    </BloomProvider>
-  );
-}
-
-function Dashboard() {
-  const { user, isLoading, signOut } = useAuth();
-
-  if (isLoading) return <div>Loading...</div>;
-
-  return (
-    <div>
-      <h1>Welcome {user?.email}</h1>
-      <button onClick={() => signOut()}>Sign Out</button>
-    </div>
-  );
-}
-```
+- [Next.js 15](apps/next15) - Full-stack Next.js App Router with SSR
+- [React Router v7 + Express](apps/react-router-v7) - Client-side React with Express backend
+- [Express Server](apps/express-server) - Standalone Express authentication server
 
 ## License
 
