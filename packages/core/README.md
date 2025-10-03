@@ -1,20 +1,15 @@
 # @bloom/core
 
-Framework-agnostic authentication core for Bloom, providing a complete authentication system with session management, password hashing, and extensible middleware support.
+Framework-agnostic authentication core for Bloom, providing a complete authentication system with session management, password hashing, and server adapters for Express and Next.js.
 
 ## Features
 
-- Framework-agnostic authentication logic
 - Argon2id password hashing with salt
-- Session management with expiry and sliding window support
-- Email verification and password reset flows
+- Session expiry and sliding window support
 - Rate limiting with configurable windows
-- Redis session storage support
-- MongoDB database integration
 - Type-safe error handling with structured error codes
 - Pino structured logging with dev/production modes
-- CORS support for cross-origin requests
-- Extensible plugin system
+- CORS configuration for cross-origin requests
 
 ## Installation
 
@@ -24,53 +19,11 @@ pnpm add @bloom/core
 
 ## Quick Start
 
-### Next.js Setup
+See the example apps for complete setup:
 
-```typescript
-import { createAuthHandler } from '@bloom/core/server/nextjs';
-import { bloomAuth } from '@bloom/core';
-
-const auth = bloomAuth({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
-  session: {
-    secret: process.env.SESSION_SECRET,
-    expiresIn: 7 * 24 * 60 * 60 * 1000,
-    slidingWindow: true,
-  },
-  sessionStore: {
-    type: 'redis',
-    uri: process.env.REDIS_URL,
-  },
-});
-
-const handler = createAuthHandler({ auth });
-
-export const GET = handler.GET;
-export const POST = handler.POST;
-export const DELETE = handler.DELETE;
-export const OPTIONS = handler.OPTIONS;
-```
-
-### Express Setup
-
-```typescript
-import { bloomServer } from '@bloom/core/server/express';
-
-bloomServer({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
-  session: {
-    secret: process.env.SESSION_SECRET,
-  },
-  sessionStore: {
-    type: 'redis',
-    uri: process.env.REDIS_URL,
-  },
-}).start();
-```
+- [Next.js 15](../../apps/next15) - App Router with server components
+- [Express Server](../../apps/express-server) - Standalone authentication server
+- [React Router v7](../../apps/react-router-v7) - Client-side React with Express backend
 
 ## Configuration
 
@@ -200,17 +153,15 @@ bloomAuth({
 
 ## API Routes
 
-The following routes are automatically available:
-
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/me` - Get current session
-- `DELETE /api/auth/account` - Delete account
-- `POST /api/auth/email/verify` - Verify email
-- `POST /api/auth/email/request-verification` - Request verification email
-- `POST /api/auth/password/reset` - Reset password
-- `POST /api/auth/password/request-reset` - Request password reset
+- `POST /register` - Register new user
+- `POST /login` - Login user
+- `POST /logout` - Logout user
+- `GET /me` - Get current session
+- `DELETE /account` - Delete account
+- `POST /email/verify` - Verify email
+- `POST /email/request-verification` - Request verification email
+- `POST /password/reset` - Reset password
+- `POST /password/request-reset` - Request password reset
 
 ## Error Codes
 
@@ -235,7 +186,9 @@ enum APIErrorCode {
 }
 ```
 
-## Server Components (Next.js)
+## Next.js Server Utilities
+
+### Get Session in Server Components
 
 ```typescript
 import { getSession } from '@bloom/core/server/nextjs';
@@ -251,7 +204,7 @@ export default async function Page() {
 }
 ```
 
-## Middleware Protection (Next.js)
+### Middleware Protection
 
 ```typescript
 import { bloomMiddleware } from '@bloom/core/server/nextjs';
