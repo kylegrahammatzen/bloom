@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, type ReactNode, useMemo } from "react";
+import { use, createContext, useEffect, useState, type ReactNode } from "react";
 import { createBloomClient } from "@bloom/client";
 import type { User, Session, ClientConfig } from "@bloom/client";
 
@@ -22,13 +22,11 @@ export type BloomProviderProps = {
   config?: ClientConfig;
 }
 
-export function BloomProvider({ children, baseURL, config }: BloomProviderProps) {
+export function BloomProvider(props: BloomProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const client = useMemo(() => {
-    return createBloomClient(config || { baseUrl: baseURL });
-  }, [baseURL, config]);
+  const client = createBloomClient(props.config || { baseUrl: props.baseURL });
 
   const fetchUser = async () => {
     const response = await client.getSession();
@@ -56,11 +54,11 @@ export function BloomProvider({ children, baseURL, config }: BloomProviderProps)
     refetch: fetchUser,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{props.children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = use(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within BloomProvider");
   }
