@@ -1,7 +1,7 @@
 import type { User, Session } from '../types';
-import type { User as UserModel, Session as SessionModel } from '../models';
+import type { IUser, ISession } from '../models';
 
-export function mapUser(user: UserModel): User {
+export function mapUser(user: IUser): User {
   return {
     id: user._id.toString(),
     email: user.email,
@@ -14,7 +14,7 @@ export function mapUser(user: UserModel): User {
   };
 }
 
-export function mapSession(session: SessionModel): Session {
+export function mapSession(session: ISession): Session {
   return {
     id: session.session_id,
     userId: session.user_id.toString(),
