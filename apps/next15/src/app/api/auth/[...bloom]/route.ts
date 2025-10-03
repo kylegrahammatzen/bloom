@@ -1,5 +1,5 @@
 import { createAuthHandler } from '@bloom/core/server/nextjs';
-import { bloomAuth } from '@bloom/core';
+import { bloomAuth, logger } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { connectDB } from '@/lib/db';
 
@@ -21,7 +21,7 @@ export const auth = bloomAuth({
   },
   callbacks: {
     onAuthEvent: (ctx: AuthEventContext) => {
-      console.log(`[${ctx.action}] ${ctx.email || ctx.userId || 'unknown'}`);
+      logger.info({ action: ctx.action, email: ctx.email, userId: ctx.userId }, 'Auth event');
     },
   },
 });
