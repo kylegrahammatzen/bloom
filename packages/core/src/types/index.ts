@@ -58,6 +58,7 @@ export type BloomAuthConfig = {
     expiresIn?: number;
     cookieName?: string;
     secret?: string;
+    slidingWindow?: boolean;
   };
   sessionStore?: {
     type?: 'memory' | 'redis' | 'mongo';
