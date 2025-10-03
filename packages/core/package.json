@@ -16,6 +16,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/express-session": "^1.17.10",
+    "next": "^15.5.4",
     "tsc-alias": "^1.8.16"
   },
   "peerDependencies": {
@@ -26,7 +27,37 @@
     "express": "^4.0.0",
     "express-session": "^1.17.3",
     "helmet": "^7.1.0",
+    "next": "^15.0.0",
     "redis": "^4.6.0"
+  },
+  "peerDependenciesMeta": {
+    "connect-mongo": {
+      "optional": true
+    },
+    "connect-redis": {
+      "optional": true
+    },
+    "cookie-parser": {
+      "optional": true
+    },
+    "cors": {
+      "optional": true
+    },
+    "express": {
+      "optional": true
+    },
+    "express-session": {
+      "optional": true
+    },
+    "helmet": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "redis": {
+      "optional": true
+    }
   },
   "exports": {
     ".": {
@@ -40,6 +71,10 @@
     "./server/express": {
       "types": "./dist/server/express/index.d.ts",
       "default": "./dist/server/express/index.js"
+    },
+    "./server/nextjs": {
+      "types": "./dist/server/nextjs/index.d.ts",
+      "default": "./dist/server/nextjs/index.js"
     }
   }
 }
