@@ -1,11 +1,6 @@
-import { apiFetch } from "./fetch";
-import { setClientConfig } from "./config";
-import type {
-	BloomResponse,
-	Session,
-	RequestOptions,
-	ClientConfig,
-} from "./types";
+import { apiFetch } from "@/fetch";
+import { setClientConfig } from "@/config";
+import type { BloomResponse, Session, RequestOptions, ClientConfig } from "@/types";
 
 export function createBloomClient(config?: ClientConfig) {
 	if (config) {
@@ -13,30 +8,26 @@ export function createBloomClient(config?: ClientConfig) {
 	}
 
 	return {
-		signUp: {
-			email: async (
-				body: { email: string; password: string },
-				options?: RequestOptions<Session>
-			): Promise<BloomResponse<Session>> => {
-				return apiFetch<Session>("/api/auth/register", {
-					method: "POST",
-					body: JSON.stringify(body),
-					requestOptions: options,
-				});
-			},
+		signUp: async (
+			body: { email: string; password: string },
+			options?: RequestOptions<Session>
+		): Promise<BloomResponse<Session>> => {
+			return apiFetch<Session>("/api/auth/register", {
+				method: "POST",
+				body: JSON.stringify(body),
+				requestOptions: options,
+			});
 		},
 
-		signIn: {
-			email: async (
-				body: { email: string; password: string },
-				options?: RequestOptions<Session>
-			): Promise<BloomResponse<Session>> => {
-				return apiFetch<Session>("/api/auth/login", {
-					method: "POST",
-					body: JSON.stringify(body),
-					requestOptions: options,
-				});
-			},
+		signIn: async (
+			body: { email: string; password: string },
+			options?: RequestOptions<Session>
+		): Promise<BloomResponse<Session>> => {
+			return apiFetch<Session>("/api/auth/login", {
+				method: "POST",
+				body: JSON.stringify(body),
+				requestOptions: options,
+			});
 		},
 
 		signOut: async (
@@ -66,5 +57,3 @@ export function createBloomClient(config?: ClientConfig) {
 		},
 	};
 }
-
-export const bloomClient = createBloomClient();

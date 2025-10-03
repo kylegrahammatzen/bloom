@@ -1,5 +1,5 @@
-import type { BloomResponse, CallbackContext, RequestOptions } from "./types";
-import { clientConfig } from "./config";
+import type { BloomResponse, RequestOptions } from "@/types";
+import { clientConfig } from "@/config";
 
 export async function apiFetch<T>(
 	endpoint: string,
@@ -18,7 +18,7 @@ export async function apiFetch<T>(
 	};
 
 	let response: Response;
-	let data: any;
+	let data: T;
 
 	try {
 		response = await fetch(url, defaultOptions);
@@ -52,38 +52,36 @@ export async function apiFetch<T>(
 	if (!response.ok) {
 		const errorResponse = {
 			error: {
-				message: data.error?.message || `Request failed with status ${response.status}`,
+				message: (data as any).error?.message || `Request failed with status ${response.status}`,
 				status: response.status,
 				statusText: response.statusText,
-				details: data.error?.details,
+				details: (data as any).error?.details,
 			},
 		};
 
-		const context: CallbackContext<T> = {
-			error: errorResponse.error,
-			response,
-		};
-
 		if (requestOptions?.onError) {
-			await requestOptions.onError(context);
+			await requestOptions.onError({
+				error: errorResponse.error,
+				response,
+			});
 		}
 
 		if (clientConfig.fetchOptions?.onError) {
-			await clientConfig.fetchOptions.onError(context);
+			await clientConfig.fetchOptions.onError({
+				error: errorResponse.error,
+				response,
+			});
 		}
 
 		return errorResponse;
 	}
 
-	const successResponse = { data };
-	const context: CallbackContext<T> = {
-		data,
-		response,
-	};
-
 	if (requestOptions?.onSuccess) {
-		await requestOptions.onSuccess(context);
+		await requestOptions.onSuccess({
+			data,
+			response,
+		});
 	}
 
-	return successResponse;
+	return { data };
 }

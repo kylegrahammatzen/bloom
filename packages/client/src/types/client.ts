@@ -1,19 +1,12 @@
-import type { BloomResponse } from "./response";
 import type { BloomError } from "./error";
 
-export type CallbackContext<T = any> = {
-	data?: T;
-	error?: BloomError;
-	response: Response;
-};
-
 export type RequestOptions<T = any> = {
-	onSuccess?: (ctx: CallbackContext<T>) => void | Promise<void>;
-	onError?: (ctx: CallbackContext<T>) => void | Promise<void>;
+	onSuccess?: (ctx: { data: T; response: Response }) => void | Promise<void>;
+	onError?: (ctx: { error: BloomError; response: Response }) => void | Promise<void>;
 };
 
 export type FetchOptions = {
-	onError?: (ctx: CallbackContext) => void | Promise<void>;
+	onError?: (ctx: { error: BloomError; response: Response }) => void | Promise<void>;
 };
 
 export type ClientConfig = {
