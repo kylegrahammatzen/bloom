@@ -19,6 +19,10 @@ export async function handleGetSession(ctx: BloomHandlerContext): Promise<Generi
     return new APIError(APIErrorCode.SESSION_NOT_FOUND).toResponse();
   }
 
+  if (userSession.isExpired()) {
+    return new APIError(APIErrorCode.SESSION_EXPIRED).toResponse();
+  }
+
   return APIResponse.success({
     user: mapUser(user),
     session: mapSession(userSession),

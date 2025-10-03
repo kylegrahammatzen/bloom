@@ -21,7 +21,22 @@ export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
       return mapSession(session, user);
     },
     verifySession: async (sessionId: string) => {
-      return auth.getSession(sessionId);
+      const session = await SessionModel.findOne({ session_id: sessionId });
+      if (!session) return null;
+
+      if (session.isExpired()) {
+        return null;
+      }
+
+      if (defaultConfig.session?.slidingWindow) {
+        session.extendExpiration(defaultConfig.session.expiresIn ? defaultConfig.session.expiresIn / (24 * 60 * 60 * 1000) : 7);
+        await session.save();
+      }
+
+      const user = await UserModel.findById(session.user_id);
+      if (!user) return null;
+
+      return mapSession(session, user);
     },
   };
 
