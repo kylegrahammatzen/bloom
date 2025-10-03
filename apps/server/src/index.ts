@@ -1,78 +1,19 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config';
+import { bloomServer } from '@bloom/core/server/express';
 
-import { bloomServer } from '@bloom/server/dist/express';
-import { bloomAuth } from '@bloom/core';
-
-const auth = bloomAuth({
+bloomServer({
   database: {
-    provider: "mongodb",
-    uri:
-      process.env.MONGODB_URI ||
-      "mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin",
+    uri: process.env.MONGODB_URI || "mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin",
   },
   session: {
-    expiresIn: 7 * 24 * 60 * 60 * 1000,
-    cookieName: "bloom.sid",
-    secret:
-      process.env.SESSION_SECRET || "bloom-dev-secret-change-in-production",
+    secret: process.env.SESSION_SECRET || "bloom-dev-secret-change-in-production",
   },
   emailAndPassword: {
-    enabled: true,
     requireEmailVerification: true,
   },
-  rateLimit: {
-    enabled: false,
-    login: {
-      max: 5,
-      window: 15 * 60 * 1000,
-    },
-    registration: {
-      max: 3,
-      window: 60 * 60 * 1000,
-    },
-    passwordReset: {
-      max: 3,
-      window: 60 * 60 * 1000,
-    },
-  },
   callbacks: {
-    onSignIn: async (ctx) => {
-      console.log(`User signed in: ${ctx.user.email} (Session: ${ctx.session.id})`);
-    },
-    onSignOut: async (ctx) => {
-      console.log(`User signed out: ${ctx.userId}`);
-    },
-    onRegister: async (ctx) => {
-      console.log(`New user registered: ${ctx.user.email}`);
-    },
-    onAccountDelete: async (ctx) => {
-      console.log(`Account deleted: ${ctx.email} (User ID: ${ctx.userId})`);
-    },
-    onEmailVerify: async (ctx) => {
-      console.log(`Email verified: ${ctx.email} (User ID: ${ctx.userId})`);
-    },
-    onPasswordReset: async (ctx) => {
-      console.log(`Password reset: ${ctx.email} (User ID: ${ctx.userId})`);
-    },
-    onError: async (ctx) => {
-      console.error(`Auth error on ${ctx.method} ${ctx.endpoint}:`, ctx.error.message, {
-        userId: ctx.userId,
-        ip: ctx.ip,
-      });
-    },
-    onRateLimit: async (ctx) => {
-      console.warn(`Rate limit hit: ${ctx.ip} on ${ctx.endpoint}`, {
-        userId: ctx.userId,
-        limit: `${ctx.limit.max}/${ctx.limit.window}ms`,
-      });
-    },
-    onAuthEvent: async (ctx) => {
-      console.log(`Auth event: ${ctx.action} - ${ctx.email || ctx.userId || 'unknown'}`);
+    onAuthEvent: (ctx) => {
+      console.log(`[${ctx.action}] ${ctx.email || ctx.userId || 'unknown'}${ctx.userId ? ` (${ctx.userId})` : ''}`);
     },
   },
-});
-
-const server = bloomServer({ auth });
-
-server.start();
+}).start();
