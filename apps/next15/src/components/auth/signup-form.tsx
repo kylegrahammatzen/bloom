@@ -26,7 +26,7 @@ const signupSchema = z.object({
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'Password must contain at least one special character'),
+    .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Password must contain at least one special character'),
 });
 
 type SignUpFormData = z.infer<typeof signupSchema>;
@@ -45,8 +45,10 @@ export const SignUpForm = () => {
 
   const handleSubmit = async (data: SignUpFormData) => {
     const res = await signUp(data);
-    await refetch();
-    router.refresh();
+    if (!res.error) {
+      await refetch();
+      router.refresh();
+    }
     toastManager.add({
       title: res.error ? res.error.message : 'Account created successfully',
       type: res.error ? 'error' : 'success',
