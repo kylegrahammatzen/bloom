@@ -6,8 +6,9 @@
   "private": true,
   "scripts": {
     "dev": "turbo dev",
-    "dev:server": "pnpm --filter bloom-server dev",
-    "dev:frontend": "pnpm --filter bloom-frontend dev",
+    "dev:express": "pnpm --filter bloom-server dev",
+    "dev:react-router": "pnpm --filter bloom-frontend dev",
+    "dev:next": "pnpm --filter bloom-next15 dev",
     "build": "turbo build --filter='!./apps/*'",
     "build:prod": "turbo build",
     "start": "pnpm --filter bloom-server build && pnpm --filter bloom-server start",
