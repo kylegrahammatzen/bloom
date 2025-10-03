@@ -1,18 +1,23 @@
 import 'dotenv/config';
 import { bloomServer } from '@bloom/core/server/express';
+import type { AuthEventContext } from '@bloom/core';
 
 bloomServer({
   database: {
-    uri: process.env.MONGODB_URI || "mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin",
+    uri: process.env.DATABASE_URL,
   },
   session: {
-    secret: process.env.SESSION_SECRET || "bloom-dev-secret-change-in-production",
+    secret: process.env.SESSION_SECRET,
+  },
+  sessionStore: {
+    type: 'redis',
+    uri: process.env.REDIS_URL,
   },
   emailAndPassword: {
     requireEmailVerification: true,
   },
   callbacks: {
-    onAuthEvent: (ctx) => {
+    onAuthEvent: (ctx: AuthEventContext) => {
       console.log(`[${ctx.action}] ${ctx.email || ctx.userId || 'unknown'}${ctx.userId ? ` (${ctx.userId})` : ''}`);
     },
   },
