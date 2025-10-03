@@ -1,9 +1,10 @@
-import { bloomMiddleware, config as bloomConfig } from '@bloom/adapters/nextjs';
+import { bloomMiddleware } from '@bloom/adapters/nextjs';
 
-export default bloomMiddleware({
-  publicRoutes: ['/'],
-  protectedRoutes: ['/dashboard'],
-  apiRoutePrefix: '/api/auth',
-});
+export default bloomMiddleware();
 
-export const config = bloomConfig;
+export const config = {
+  matcher: [
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
+  ],
+};
