@@ -9,14 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout(props: { children: React.ReactNode }) {
-  const baseURL = typeof window !== 'undefined' ? '' : process.env.NEXT_PUBLIC_APP_URL || '';
-
   return (
     <html lang="en">
       <body>
         <ToastProvider>
           <div className="root">
-            <BloomProvider baseURL={baseURL}>
+            <BloomProvider baseURL="">
               {props.children}
             </BloomProvider>
           </div>
