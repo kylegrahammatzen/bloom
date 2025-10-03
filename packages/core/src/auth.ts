@@ -13,6 +13,7 @@ import { APIResponse } from './utils/response';
 import { checkRateLimit } from './api/ratelimit';
 import { validateEmail, validatePassword, validateEmailAndPassword, normalizeEmail } from './api/validation';
 import { emitCallback } from './api/callbacks';
+import { mapUser, mapSession } from './utils/mappers';
 
 export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
   const defaultConfig: BloomAuthConfig = {
@@ -181,40 +182,25 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
   });
   await session.save();
 
-  const responseData = {
-    message: 'Registration successful',
-    user: {
-      id: user._id,
-      email: user.email,
-      email_verified: user.email_verified,
-      name: user.name,
-      image: user.image,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-    },
-    session: {
-      id: session.session_id,
-      userId: session.user_id.toString(),
-      expiresAt: session.expires_at,
-      createdAt: session.created_at,
-      lastAccessedAt: session.last_accessed,
-      ipAddress: session.ip_address,
-      userAgent: session.user_agent,
-    },
-  };
+  const mappedUser = mapUser(user);
+  const mappedSession = mapSession(session);
 
   await emitCallback('onRegister', {
     action: 'register',
     endpoint: '/register',
     ip: ctx.request.ip,
-    userId: user._id.toString(),
-    email: user.email,
-    user: responseData.user,
-    session: responseData.session
+    userId: mappedUser.id,
+    email: mappedUser.email,
+    user: mappedUser,
+    session: mappedSession
   }, config);
 
-  return APIResponse.created(responseData, {
-    userId: user._id.toString(),
+  return APIResponse.created({
+    message: 'Registration successful',
+    user: mappedUser,
+    session: mappedSession
+  }, {
+    userId: mappedUser.id,
     sessionId: sessionId,
   });
 }
@@ -265,41 +251,25 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
   });
   await newSession.save();
 
-  const responseData = {
-    message: 'Login successful',
-    user: {
-      id: user._id,
-      email: user.email,
-      email_verified: user.email_verified,
-      name: user.name,
-      image: user.image,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-      last_login: user.last_login,
-    },
-    session: {
-      id: newSession.session_id,
-      userId: newSession.user_id.toString(),
-      expiresAt: newSession.expires_at,
-      createdAt: newSession.created_at,
-      lastAccessedAt: newSession.last_accessed,
-      ipAddress: newSession.ip_address,
-      userAgent: newSession.user_agent,
-    },
-  };
+  const mappedUser = mapUser(user);
+  const mappedSession = mapSession(newSession);
 
   await emitCallback('onSignIn', {
     action: 'login',
     endpoint: '/login',
     ip: ctx.request.ip,
-    userId: user._id.toString(),
-    email: user.email,
-    user: responseData.user,
-    session: responseData.session
+    userId: mappedUser.id,
+    email: mappedUser.email,
+    user: mappedUser,
+    session: mappedSession
   }, config);
 
-  return APIResponse.success(responseData, {
-    userId: user._id.toString(),
+  return APIResponse.success({
+    message: 'Login successful',
+    user: mappedUser,
+    session: mappedSession
+  }, {
+    userId: mappedUser.id,
     sessionId: sessionId,
   });
 }
@@ -339,25 +309,8 @@ async function handleGetSession(ctx: BloomHandlerContext): Promise<GenericRespon
   }
 
   return APIResponse.success({
-    user: {
-      id: user._id,
-      email: user.email,
-      email_verified: user.email_verified,
-      name: user.name,
-      image: user.image,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-      last_login: user.last_login,
-    },
-    session: {
-      id: userSession.session_id,
-      userId: userSession.user_id.toString(),
-      expiresAt: userSession.expires_at,
-      createdAt: userSession.created_at,
-      lastAccessedAt: userSession.last_accessed,
-      ipAddress: userSession.ip_address,
-      userAgent: userSession.user_agent,
-    },
+    user: mapUser(user),
+    session: mapSession(userSession),
   });
 }
 
@@ -397,11 +350,7 @@ async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConf
 
   return APIResponse.success({
     message: 'Email verified successfully',
-    user: {
-      id: user._id,
-      email: user.email,
-      email_verified: user.email_verified,
-    },
+    user: mapUser(user),
   });
 }
 
