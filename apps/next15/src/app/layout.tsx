@@ -14,7 +14,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
       <body>
         <ToastProvider>
           <div className="root">
-            <BloomProvider baseURL="">
+            <BloomProvider>
               {props.children}
             </BloomProvider>
           </div>
