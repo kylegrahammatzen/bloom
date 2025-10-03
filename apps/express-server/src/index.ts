@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { bloomServer } from '@bloom/core/server/express';
+import { bloomServer, logger } from '@bloom/core/server/express';
 import type { AuthEventContext } from '@bloom/core';
 
 bloomServer({
@@ -18,7 +18,7 @@ bloomServer({
   },
   callbacks: {
     onAuthEvent: (ctx: AuthEventContext) => {
-      console.log(`[${ctx.action}] ${ctx.email || ctx.userId || 'unknown'}${ctx.userId ? ` (${ctx.userId})` : ''}`);
+      logger.info({ action: ctx.action, email: ctx.email, userId: ctx.userId }, 'Auth event');
     },
   },
 }).start();

@@ -87,3 +87,5 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
     start,
   };
 }
+
+export { logger } from '@/utils/logger';
