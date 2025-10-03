@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import type { Session, User } from '@bloom/core';
+import type { Session, User } from '@bloom/core/types';
 
 export type BloomSession = {
   session: Session | null;
@@ -25,8 +25,12 @@ export async function getSession(): Promise<BloomSession> {
   }
 
   try {
+    if (!process.env.NEXT_PUBLIC_APP_URL) {
+      throw new Error('NEXT_PUBLIC_APP_URL environment variable is required');
+    }
+
     // Validate session with backend API
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/auth/session`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/me`, {
       method: 'GET',
       headers: {
         'Cookie': `bloom.session=${sessionCookie.value}`,

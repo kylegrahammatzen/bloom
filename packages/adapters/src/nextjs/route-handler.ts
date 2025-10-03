@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { bloomAuth } from '@bloom/core';
-import type { BloomAuthConfig, BloomHandlerContext, BloomAuth } from '@bloom/core';
+import type { BloomHandlerContext, BloomAuth } from '@bloom/core/types';
 
 export type NextAuthHandlerConfig = {
   auth: BloomAuth;
