@@ -7,6 +7,7 @@ import { setupHelmet, setupCors, setupCookieParser } from '@/server/express/midd
 import { createSessionStore, getSessionOptions } from '@/server/express/session';
 import { setupHealthRoute, setupErrorHandler } from '@/server/express/routes';
 import { connectDatabase } from '@/server/express/database';
+import { logger } from '@/utils/logger';
 import '@/server/express/types';
 
 type ValidatedConfig = BloomServerConfig & {
@@ -64,9 +65,9 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
       await connectDatabase(config.database.uri);
 
       app.listen(serverPort, () => {
-        console.log(`Bloom authentication server running on port ${serverPort}`);
-        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+        logger.info(`Bloom authentication server running on port ${serverPort}`);
+        logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 
         if (config.onReady) {
           config.onReady(serverPort);
@@ -74,7 +75,7 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
       });
 
     } catch (error) {
-      console.error('Failed to start server:', error);
+      logger.error({ error }, 'Failed to start server');
       process.exit(1);
     }
   };

@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import type { BloomAuth, BloomHandlerContext } from '@/types';
 import { APIError, APIErrorCode } from '@/types/errors';
+import { logger } from '@/utils/logger';
 import './types';
 
 export function toExpressHandler(auth: BloomAuth): Router {
@@ -42,7 +43,7 @@ export function toExpressHandler(auth: BloomAuth): Router {
 
       if (result.clearSession && req.session) {
         req.session.destroy((err) => {
-          if (err) console.error('Session destruction error:', err);
+          if (err) logger.error({ error: err }, 'Session destruction error');
         });
         res.clearCookie(auth.config.session?.cookieName || 'bloom.sid');
       }
@@ -50,7 +51,7 @@ export function toExpressHandler(auth: BloomAuth): Router {
       res.status(result.status).json(result.body);
     } catch (error) {
       if (!(error instanceof APIError || error instanceof SyntaxError)) {
-        console.error('Auth API error:', error);
+        logger.error({ error, path: req.path }, 'Auth API error');
       }
 
       const apiError = error instanceof APIError

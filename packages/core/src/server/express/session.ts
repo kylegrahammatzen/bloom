@@ -3,6 +3,7 @@ import MongoStore from 'connect-mongo';
 import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
 import type { BloomServerConfig } from '@/types/server';
+import { logger } from '@/utils/logger';
 
 export function createSessionStore(config: BloomServerConfig): RedisStore | MongoStore | undefined {
   const storeType = config.sessionStore?.type || 'redis';
@@ -12,7 +13,7 @@ export function createSessionStore(config: BloomServerConfig): RedisStore | Mong
       url: config.sessionStore?.uri,
     });
 
-    redisClient.connect().catch(console.error);
+    redisClient.connect().catch((error) => logger.error({ error }, 'Redis connection error'));
     return new RedisStore({ client: redisClient, prefix: 'bloom:' });
   } else if (storeType === 'mongo') {
     const mongoUri = config.database?.uri;

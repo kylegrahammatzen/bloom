@@ -1,6 +1,7 @@
 import type { Application } from 'express';
 import express from 'express';
 import { APIError, APIErrorCode } from '@/types/errors';
+import { logger } from '@/utils/logger';
 
 export function setupHealthRoute(app: Application) {
   app.get('/api/health', (_req, res) => {
@@ -16,7 +17,7 @@ export function setupHealthRoute(app: Application) {
 export function setupErrorHandler(app: Application) {
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (!(err instanceof APIError)) {
-      console.error('Error:', err);
+      logger.error({ error: err }, 'Express error');
     }
 
     const apiError = err instanceof APIError
