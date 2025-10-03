@@ -33,6 +33,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
+    },
     "./server/express": {
       "types": "./dist/server/express/index.d.ts",
       "default": "./dist/server/express/index.js"
