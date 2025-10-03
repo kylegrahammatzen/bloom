@@ -58,6 +58,10 @@ export type BloomAuthConfig = {
     cookieName?: string;
     secret?: string;
   };
+  sessionStore?: {
+    type?: 'memory' | 'redis' | 'mongo';
+    uri?: string;
+  };
   emailAndPassword?: {
     enabled?: boolean;
     requireEmailVerification?: boolean;
