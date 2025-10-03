@@ -5,7 +5,7 @@
 [![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](LICENSE)
 [![MongoDB](https://img.shields.io/badge/MongoDB-8.7-green.svg)](https://www.mongodb.com/)
 [![Express.js](https://img.shields.io/badge/Express.js-4.21-green.svg)](https://expressjs.com/)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
@@ -17,7 +17,7 @@ Bloom is an open-source framework-agnostic authentication SDK for TypeScript, wi
 
 - Framework-agnostic core with React and Express adapters
 - Type-safe authentication SDK
-- Session management with Argon2id password hashing
+- Session management with Argon2id password hashing and Redis caching
 - Email verification and password reset flows
 
 ## Package Structure
@@ -25,15 +25,15 @@ Bloom is an open-source framework-agnostic authentication SDK for TypeScript, wi
 ```
 bloom/
 ├── packages/
-│   ├── core/       # @bloom/core - Server authentication
-│   ├── client/     # @bloom/client - Browser client
-│   ├── react/      # @bloom/react - React bindings
-│   ├── adapters/   # @bloom/adapters - Framework adapters
-│   │   └── express/
-│   └── server/     # @bloom/server - Zero-config server
+│   ├── core/               # @bloom/core - Authentication core
+│   │   └── server/express  # Express server adapter
+│   ├── client/             # @bloom/client - Browser HTTP client
+│   ├── react/              # @bloom/react - React 19 hooks and provider
+│   └── adapters/
+│       └── express         # @bloom/adapters - Express middleware adapters
 ├── apps/
-│   ├── frontend/   # Demo React application
-│   └── server/     # Demo Express server
+│   ├── react-router-v7/    # Example React Router v7 application
+│   └── express-server/     # Example Express server implementation
 ```
 
 ## Getting Started
@@ -42,48 +42,77 @@ bloom/
 # Clone and install
 git clone https://github.com/kylegrahammatzen/bloom.git
 cd bloom
-npm install
+pnpm install
 
-# Start MongoDB
-npm run docker:up
+# Start MongoDB and Redis
+pnpm docker:up
 
 # Start dev servers
-npm run dev
+pnpm dev
 
 # Build all packages
-npm run build
+pnpm build
 
 # Run tests
-npm run test
+pnpm test
 ```
 
 ## Usage
 
-**Server:**
+**Server (Express):**
 
 ```typescript
-import { bloomAuth } from "@bloom/core";
-import { toExpressHandler } from "@bloom/adapters/express";
+import 'dotenv/config';
+import { bloomServer } from '@bloom/core/server/express';
+import type { AuthEventContext } from '@bloom/core';
 
-const auth = bloomAuth({
-  database: { provider: "mongodb", uri: process.env.MONGODB_URI },
-  emailAndPassword: { enabled: true },
-});
-
-app.all("/api/auth/*", toExpressHandler(auth));
+bloomServer({
+  database: {
+    uri: process.env.DATABASE_URL,
+  },
+  session: {
+    secret: process.env.SESSION_SECRET,
+  },
+  sessionStore: {
+    type: 'redis',
+    uri: process.env.REDIS_URL,
+  },
+  emailAndPassword: {
+    requireEmailVerification: true,
+  },
+  callbacks: {
+    onAuthEvent: (ctx: AuthEventContext) => {
+      console.log(`[${ctx.action}] ${ctx.email || ctx.userId}`);
+    },
+  },
+}).start();
 ```
 
-**Client:**
+**Client (React):**
 
 ```typescript
-import { BloomProvider, useAuth } from '@bloom/react'
+import { BloomProvider, useAuth } from '@bloom/react';
 
-<BloomProvider baseURL="http://localhost:5000">
-  <App />
-</BloomProvider>
+function App() {
+  return (
+    <BloomProvider baseURL="http://localhost:5000">
+      <Dashboard />
+    </BloomProvider>
+  );
+}
 
-// In components:
-const { user, signOut } = useAuth()
+function Dashboard() {
+  const { user, isLoading, signOut } = useAuth();
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h1>Welcome {user?.email}</h1>
+      <button onClick={() => signOut()}>Sign Out</button>
+    </div>
+  );
+}
 ```
 
 ## License
