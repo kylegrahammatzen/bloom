@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
 import type { BloomAuth, BloomHandlerContext } from '@/types';
+import { APIError, APIErrorCode } from '@/types/errors';
 import './types';
 
 export function toExpressHandler(auth: BloomAuth): Router {
@@ -48,7 +49,18 @@ export function toExpressHandler(auth: BloomAuth): Router {
 
       res.status(result.status).json(result.body);
     } catch (error) {
-      next(error);
+      if (!(error instanceof APIError || error instanceof SyntaxError)) {
+        console.error('Auth API error:', error);
+      }
+
+      const apiError = error instanceof APIError
+        ? error
+        : error instanceof SyntaxError
+        ? new APIError(APIErrorCode.INVALID_REQUEST)
+        : new APIError(APIErrorCode.INTERNAL_ERROR);
+
+      const response = apiError.toResponse();
+      res.status(response.status).json(response.body);
     }
   });
 
@@ -59,11 +71,8 @@ export function requireAuth() {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.session || !req.session.userId) {
-        return res.status(401).json({
-          error: {
-            message: 'Authentication required',
-          },
-        });
+        const response = new APIError(APIErrorCode.NOT_AUTHENTICATED).toResponse();
+        return res.status(response.status).json(response.body);
       }
       next();
     } catch (error) {

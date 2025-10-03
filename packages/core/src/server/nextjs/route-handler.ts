@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { BloomHandlerContext, BloomAuth } from '@/types';
 import { parseSessionCookie } from '@/types/session';
+import { APIError, APIErrorCode } from '@/types/errors';
 
 export type NextAuthHandlerConfig = {
   auth: BloomAuth;
@@ -20,7 +21,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       const pathname = request.nextUrl.pathname;
       const path = pathname.replace(API_AUTH_PREFIX, '');
 
-      const body = method !== 'GET' ? await request.json().catch(() => undefined) : undefined;
+      const body = method !== 'GET' ? await request.json() : undefined;
 
       const sessionCookie = request.cookies.get(cookieName);
       const session = sessionCookie ? parseSessionCookie(sessionCookie.value) ?? undefined : undefined;
@@ -56,11 +57,18 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
 
       return response;
     } catch (error) {
-      console.error('Auth API error:', error);
-      return NextResponse.json(
-        { error: { message: 'Internal server error' } },
-        { status: 500 }
-      );
+      if (!(error instanceof APIError || error instanceof SyntaxError)) {
+        console.error('Auth API error:', error);
+      }
+
+      const apiError = error instanceof APIError
+        ? error
+        : error instanceof SyntaxError
+        ? new APIError(APIErrorCode.INVALID_REQUEST)
+        : new APIError(APIErrorCode.INTERNAL_ERROR);
+
+      const response = apiError.toResponse();
+      return NextResponse.json(response.body, { status: response.status });
     }
   }
 

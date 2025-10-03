@@ -1,5 +1,6 @@
 import type { Application } from 'express';
 import express from 'express';
+import { APIError, APIErrorCode } from '@/types/errors';
 
 export function setupHealthRoute(app: Application) {
   app.get('/api/health', (_req, res) => {
@@ -14,12 +15,15 @@ export function setupHealthRoute(app: Application) {
 
 export function setupErrorHandler(app: Application) {
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('Error:', err);
-    res.status(err.status || 500).json({
-      error: {
-        message: err.message || 'Internal server error',
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-      },
-    });
+    if (!(err instanceof APIError)) {
+      console.error('Error:', err);
+    }
+
+    const apiError = err instanceof APIError
+      ? err
+      : new APIError(APIErrorCode.INTERNAL_ERROR);
+
+    const response = apiError.toResponse();
+    res.status(response.status).json(response.body);
   });
 }
