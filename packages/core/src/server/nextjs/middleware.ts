@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 export type BloomMiddlewareConfig = {
   protectedRoutes?: string[];
   afterAuth?: (request: NextRequest, session: any) => NextResponse | Promise<NextResponse>;
+  cookieName?: string;
 };
 
 export function bloomMiddleware(config: BloomMiddlewareConfig = {}) {
@@ -16,7 +17,8 @@ export function bloomMiddleware(config: BloomMiddlewareConfig = {}) {
     }
 
     // Get session from cookie
-    const sessionCookie = request.cookies.get('bloom.session');
+    const cookieName = config.cookieName || 'bloom.sid';
+    const sessionCookie = request.cookies.get(cookieName);
     const session = sessionCookie ? JSON.parse(sessionCookie.value) : null;
 
     // Check if route is protected

@@ -30,6 +30,23 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
         }
       }
 
+      // Get session from cookie
+      const cookieName = auth.config.session?.cookieName || 'bloom.sid';
+      const sessionCookie = request.cookies.get(cookieName);
+      let session = undefined;
+
+      if (sessionCookie) {
+        try {
+          const sessionData = JSON.parse(sessionCookie.value);
+          session = {
+            userId: sessionData.userId,
+            sessionId: sessionData.sessionId,
+          };
+        } catch {
+          // Invalid session cookie, ignore
+        }
+      }
+
       // Build Bloom context
       const context: BloomHandlerContext = {
         request: {
@@ -41,7 +58,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
           ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
           userAgent: request.headers.get('user-agent') || undefined,
         },
-        session: undefined,
+        session,
       };
 
       // Call Bloom handler
@@ -54,7 +71,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
 
       // Handle session data (using cookies)
       if (result.sessionData) {
-        response.cookies.set('bloom.session', JSON.stringify(result.sessionData), {
+        response.cookies.set(cookieName, JSON.stringify(result.sessionData), {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
@@ -64,7 +81,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
 
       // Clear session if requested
       if (result.clearSession) {
-        response.cookies.delete('bloom.session');
+        response.cookies.delete(cookieName);
       }
 
       return response;

@@ -12,9 +12,9 @@ export type BloomSession = {
  * Use this in Server Components, Server Actions, and Route Handlers
  * Validates session with the backend API
  */
-export async function getSession(): Promise<BloomSession> {
+export async function getSession(cookieName: string = 'bloom.sid'): Promise<BloomSession> {
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('bloom.session');
+  const sessionCookie = cookieStore.get(cookieName);
 
   if (!sessionCookie) {
     return {
@@ -33,7 +33,7 @@ export async function getSession(): Promise<BloomSession> {
     const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/me`, {
       method: 'GET',
       headers: {
-        'Cookie': `bloom.session=${sessionCookie.value}`,
+        'Cookie': `${cookieName}=${sessionCookie.value}`,
       },
     } as RequestInit & { next?: { revalidate: number } });
 
