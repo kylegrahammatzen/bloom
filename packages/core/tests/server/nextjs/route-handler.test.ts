@@ -162,6 +162,8 @@ describe('Next.js route handler', () => {
 
       mockAuth.handler = vi.fn().mockRejectedValue(new Error('Database error'));
 
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       const request = new NextRequest('http://localhost/api/auth/me', {
         method: 'GET',
       });
@@ -170,6 +172,9 @@ describe('Next.js route handler', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.error.message).toBe('Internal server error');
+      expect(consoleErrorSpy).toHaveBeenCalled();
+
+      consoleErrorSpy.mockRestore();
     });
 
     it('should parse request body for POST requests', async () => {

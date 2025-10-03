@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { BloomProvider, useAuth } from '@/provider';
+import { BloomProvider, useAuth } from '../src/provider';
 
 // Mock the client
 vi.mock('@bloom/client', () => ({
@@ -18,14 +18,16 @@ describe('BloomProvider', () => {
     vi.clearAllMocks();
   });
 
-  it('should render children', () => {
+  it('should render children', async () => {
     render(
       <BloomProvider>
         <div>Test Child</div>
       </BloomProvider>
     );
 
-    expect(screen.getByText('Test Child')).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByText('Test Child')).toBeDefined();
+    });
   });
 
   it('should provide auth context', async () => {
