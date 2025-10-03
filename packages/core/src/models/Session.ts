@@ -68,4 +68,4 @@ SessionSchema.methods.extendExpiration = function (days: number = 7): void {
   this.last_accessed = new Date();
 };
 
-export const Session = mongoose.model<ISession>('Session', SessionSchema);
+export const Session = mongoose.models.Session || mongoose.model<ISession>('Session', SessionSchema);

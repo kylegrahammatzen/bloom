@@ -66,4 +66,4 @@ TokenSchema.methods.isValid = function (): boolean {
   return !this.isExpired() && !this.isUsed();
 };
 
-export const Token = mongoose.model<IToken>('Token', TokenSchema);
+export const Token = mongoose.models.Token || mongoose.model<IToken>('Token', TokenSchema);

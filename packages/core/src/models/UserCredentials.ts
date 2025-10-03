@@ -66,4 +66,4 @@ UserCredentialsSchema.methods.resetLoginAttempts = function (): Promise<UpdateWr
   });
 };
 
-export const UserCredentials = mongoose.model<IUserCredentials>('UserCredentials', UserCredentialsSchema);
+export const UserCredentials = mongoose.models.UserCredentials || mongoose.model<IUserCredentials>('UserCredentials', UserCredentialsSchema);
