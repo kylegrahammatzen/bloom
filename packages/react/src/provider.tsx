@@ -1,3 +1,5 @@
+'use client';
+
 import { use, createContext, useEffect, useState, type ReactNode } from "react";
 import { createBloomClient } from "@bloom/client";
 import type { User, Session, ClientConfig } from "@bloom/client";
