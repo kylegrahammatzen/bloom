@@ -1,4 +1,4 @@
-import session, { type SessionOptions } from 'express-session';
+import { type SessionOptions } from 'express-session';
 import MongoStore from 'connect-mongo';
 import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
