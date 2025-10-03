@@ -1,7 +1,9 @@
 import * as React from "react"
 import { AlertDialog as BaseAlertDialog } from "@base-ui-components/react/alert-dialog"
+import { type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
 
 function AlertDialog({
 	...props
@@ -9,10 +11,15 @@ function AlertDialog({
 	return <BaseAlertDialog.Root data-slot="alert-dialog" {...props} />
 }
 
+interface AlertDialogTriggerProps extends React.ComponentProps<typeof BaseAlertDialog.Trigger>, VariantProps<typeof buttonVariants> {}
+
 function AlertDialogTrigger({
+	className,
+	variant,
+	size,
 	...props
-}: React.ComponentProps<typeof BaseAlertDialog.Trigger>) {
-	return <BaseAlertDialog.Trigger data-slot="alert-dialog-trigger" {...props} />
+}: AlertDialogTriggerProps) {
+	return <BaseAlertDialog.Trigger data-slot="alert-dialog-trigger" className={cn(buttonVariants({ variant, size }), className)} {...props} />
 }
 
 function AlertDialogPortal({
@@ -21,10 +28,15 @@ function AlertDialogPortal({
 	return <BaseAlertDialog.Portal data-slot="alert-dialog-portal" {...props} />
 }
 
+interface AlertDialogCloseProps extends React.ComponentProps<typeof BaseAlertDialog.Close>, VariantProps<typeof buttonVariants> {}
+
 function AlertDialogClose({
+	className,
+	variant,
+	size,
 	...props
-}: React.ComponentProps<typeof BaseAlertDialog.Close>) {
-	return <BaseAlertDialog.Close data-slot="alert-dialog-close" {...props} />
+}: AlertDialogCloseProps) {
+	return <BaseAlertDialog.Close data-slot="alert-dialog-close" className={cn(buttonVariants({ variant, size }), className)} {...props} />
 }
 
 function AlertDialogOverlay({
