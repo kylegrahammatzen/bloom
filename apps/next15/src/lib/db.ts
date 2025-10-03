@@ -1,0 +1,20 @@
+import mongoose from 'mongoose';
+
+let isConnected = false;
+
+export async function connectDB() {
+  if (isConnected) return;
+
+  try {
+    await mongoose.connect(process.env.DATABASE_URL!, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    isConnected = true;
+    console.log('Connected to MongoDB');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
+}
