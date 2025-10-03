@@ -9,7 +9,7 @@ import {
 } from './utils/crypto';
 import { createRouter, addRoute, findRoute } from './utils/router';
 import { APIError, APIErrorCode } from './types/errors';
-import { createSuccess } from './utils/response';
+import { APIResponse } from './utils/response';
 import { checkRateLimit } from './api/ratelimit';
 import { validateEmail, validatePassword, validateEmailAndPassword, normalizeEmail } from './api/validation';
 import { emitCallback } from './api/callbacks';
@@ -140,8 +140,8 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
   const rateLimitError = await checkRateLimit('registration', ctx, config);
   if (rateLimitError) return rateLimitError;
 
-  const validationError = validateEmailAndPassword(email, password);
-  if (validationError) return validationError;
+  const error = validateEmailAndPassword(email, password);
+  if (error) return error;
 
   const normalizedEmail = normalizeEmail(email);
 
@@ -213,14 +213,10 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
     session: responseData.session
   }, config);
 
-  return {
-    status: 201,
-    body: responseData,
-    sessionData: {
-      userId: user._id.toString(),
-      sessionId: sessionId,
-    },
-  };
+  return APIResponse.created(responseData, {
+    userId: user._id.toString(),
+    sessionId: sessionId,
+  });
 }
 
 async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -302,14 +298,10 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
     session: responseData.session
   }, config);
 
-  return {
-    status: 200,
-    body: responseData,
-    sessionData: {
-      userId: user._id.toString(),
-      sessionId: sessionId,
-    },
-  };
+  return APIResponse.success(responseData, {
+    userId: user._id.toString(),
+    sessionId: sessionId,
+  });
 }
 
 async function handleLogout(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -328,11 +320,7 @@ async function handleLogout(ctx: BloomHandlerContext, config: BloomAuthConfig): 
     }, config);
   }
 
-  return {
-    status: 200,
-    body: { message: 'Logout successful' },
-    clearSession: true,
-  };
+  return APIResponse.logout();
 }
 
 async function handleGetSession(ctx: BloomHandlerContext): Promise<GenericResponse> {
@@ -350,30 +338,27 @@ async function handleGetSession(ctx: BloomHandlerContext): Promise<GenericRespon
     return new APIError(APIErrorCode.SESSION_NOT_FOUND).toResponse();
   }
 
-  return {
-    status: 200,
-    body: {
-      user: {
-        id: user._id,
-        email: user.email,
-        email_verified: user.email_verified,
-        name: user.name,
-        image: user.image,
-        created_at: user.created_at,
-        updated_at: user.updated_at,
-        last_login: user.last_login,
-      },
-      session: {
-        id: userSession.session_id,
-        userId: userSession.user_id.toString(),
-        expiresAt: userSession.expires_at,
-        createdAt: userSession.created_at,
-        lastAccessedAt: userSession.last_accessed,
-        ipAddress: userSession.ip_address,
-        userAgent: userSession.user_agent,
-      },
+  return APIResponse.success({
+    user: {
+      id: user._id,
+      email: user.email,
+      email_verified: user.email_verified,
+      name: user.name,
+      image: user.image,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+      last_login: user.last_login,
     },
-  };
+    session: {
+      id: userSession.session_id,
+      userId: userSession.user_id.toString(),
+      expiresAt: userSession.expires_at,
+      createdAt: userSession.created_at,
+      lastAccessedAt: userSession.last_accessed,
+      ipAddress: userSession.ip_address,
+      userAgent: userSession.user_agent,
+    },
+  });
 }
 
 async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -410,17 +395,14 @@ async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConf
     email: user.email
   }, config);
 
-  return {
-    status: 200,
-    body: {
-      message: 'Email verified successfully',
-      user: {
-        id: user._id,
-        email: user.email,
-        email_verified: user.email_verified,
-      },
+  return APIResponse.success({
+    message: 'Email verified successfully',
+    user: {
+      id: user._id,
+      email: user.email,
+      email_verified: user.email_verified,
     },
-  };
+  });
 }
 
 async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -429,17 +411,14 @@ async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: Bloo
   const rateLimitError = await checkRateLimit('passwordReset', ctx, config);
   if (rateLimitError) return rateLimitError;
 
-  const emailError = validateEmail(email);
-  if (emailError) return emailError;
+  const error = validateEmail(email);
+  if (error) return error;
 
   const normalizedEmail = normalizeEmail(email);
   const user = await UserModel.findOne({ email: normalizedEmail });
 
   if (!user) {
-    return {
-      status: 200,
-      body: { message: 'If an account with this email exists, a password reset link has been sent.' }
-    };
+    return APIResponse.success({ message: 'If an account with this email exists, a password reset link has been sent.' });
   }
 
   const token = generateSecureToken();
@@ -452,10 +431,7 @@ async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: Bloo
   });
   await resetToken.save();
 
-  return {
-    status: 200,
-    body: { message: 'If an account with this email exists, a password reset link has been sent.' },
-  };
+  return APIResponse.success({ message: 'If an account with this email exists, a password reset link has been sent.' });
 }
 
 async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -463,8 +439,8 @@ async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthCo
 
   if (!token || !password) return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
 
-  const passwordError = validatePassword(password);
-  if (passwordError) return passwordError;
+  const error = validatePassword(password);
+  if (error) return error;
 
   const tokenHash = hashToken(token);
   const resetToken = await Token.findOne({
@@ -498,10 +474,7 @@ async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthCo
     email: user.email
   }, config);
 
-  return {
-    status: 200,
-    body: { message: 'Password reset successful' },
-  };
+  return APIResponse.success({ message: 'Password reset successful' });
 }
 
 async function handleDeleteAccount(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -529,11 +502,7 @@ async function handleDeleteAccount(ctx: BloomHandlerContext, config: BloomAuthCo
   await UserCredentials.deleteOne({ user_id: userId });
   await UserModel.findByIdAndDelete(userId);
 
-  return {
-    status: 200,
-    body: { message: 'Account deleted successfully' },
-    clearSession: true,
-  };
+  return APIResponse.logout('Account deleted successfully');
 }
 
 export { User, Session, BloomAuthConfig, BloomAuth } from './types';
