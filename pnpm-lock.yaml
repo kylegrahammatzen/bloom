@@ -186,7 +186,11 @@ importers:
         specifier: ^4.18.2
         version: 4.21.2
 
-  packages/client: {}
+  packages/client:
+    devDependencies:
+      tsc-alias:
+        specifier: ^1.8.16
+        version: 1.8.16
 
   packages/core:
     dependencies:
