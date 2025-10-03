@@ -64,6 +64,10 @@ export type BloomAuthConfig = {
     type?: 'memory' | 'redis' | 'mongo';
     uri?: string;
   };
+  logging?: {
+    level?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+    enabled?: boolean;
+  };
   emailAndPassword?: {
     enabled?: boolean;
     requireEmailVerification?: boolean;

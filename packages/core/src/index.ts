@@ -3,3 +3,4 @@ export type { BloomAuthConfig, BloomAuth, User, Session, BloomPlugin, BloomHandl
 export type { BloomServerConfig, BloomServerInstance } from './types/server';
 export * from './utils/crypto';
 export * from './models';
+export { logger, createLogger } from './utils/logger';
