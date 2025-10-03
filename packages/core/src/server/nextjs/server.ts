@@ -1,76 +1,40 @@
 import { cookies } from 'next/headers';
-import type { Session, User } from '@/types';
+import { parseSessionCookie } from '@/types/session';
+import { APIError, APIErrorCode } from '@/types/errors';
 
 export type BloomSession = {
-  session: Session | null;
-  user: User | null;
-  isSignedIn: boolean;
-};
+  userId: string;
+  sessionId: string;
+} | null;
 
 /**
- * Get the current session from cookies (server-side only)
+ * Get the current session data from cookies (server-side only)
  * Use this in Server Components, Server Actions, and Route Handlers
- * Validates session with the backend API
+ * Note: This only reads the cookie, it does NOT validate the session with the database
+ * For validated sessions, use the /api/auth/me endpoint from client components
  */
 export async function getSession(cookieName: string = 'bloom.sid'): Promise<BloomSession> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(cookieName);
 
   if (!sessionCookie) {
-    return {
-      session: null,
-      user: null,
-      isSignedIn: false,
-    };
+    return null;
   }
 
-  try {
-    if (!process.env.NEXT_PUBLIC_APP_URL) {
-      throw new Error('NEXT_PUBLIC_APP_URL environment variable is required');
-    }
-
-    // Validate session with backend API
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Cookie': `${cookieName}=${sessionCookie.value}`,
-      },
-    } as RequestInit & { next?: { revalidate: number } });
-
-    if (!response.ok) {
-      return {
-        session: null,
-        user: null,
-        isSignedIn: false,
-      };
-    }
-
-    const validatedSession = await response.json() as { session?: Session; user?: User };
-
-    return {
-      session: validatedSession.session || null,
-      user: validatedSession.user || null,
-      isSignedIn: !!validatedSession.session,
-    };
-  } catch {
-    return {
-      session: null,
-      user: null,
-      isSignedIn: false,
-    };
-  }
+  return parseSessionCookie(sessionCookie.value);
 }
 
 
 /**
  * Require authentication in Server Components
- * Throws error if not authenticated
+ * Throws APIError if not authenticated
+ * Note: This only checks for session cookie presence, not validity
  */
-export async function requireAuth(): Promise<BloomSession> {
-  const session = await getSession();
+export async function requireAuth(cookieName?: string): Promise<BloomSession> {
+  const session = await getSession(cookieName);
 
-  if (!session.isSignedIn) {
-    throw new Error('Authentication required');
+  if (!session) {
+    throw new APIError(APIErrorCode.NOT_AUTHENTICATED);
   }
 
   return session;

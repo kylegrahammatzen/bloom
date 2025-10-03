@@ -27,10 +27,10 @@ export function toExpressHandler(auth: BloomAuth): Router {
           ip,
           userAgent,
         },
-        session: req.session && {
+        session: req.session?.userId && req.session?.sessionId ? {
           userId: req.session.userId,
           sessionId: req.session.sessionId,
-        },
+        } : undefined,
       };
 
       const result = await auth.handler(context);

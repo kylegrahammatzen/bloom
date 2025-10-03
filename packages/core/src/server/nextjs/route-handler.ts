@@ -21,7 +21,17 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       const pathname = request.nextUrl.pathname;
       const path = pathname.replace(API_AUTH_PREFIX, '');
 
-      const body = method !== 'GET' ? await request.json() : undefined;
+      let body: any = undefined;
+      if (method !== 'GET') {
+        try {
+          body = await request.json();
+        } catch (error) {
+          if (error instanceof SyntaxError) {
+            throw error;
+          }
+          body = undefined;
+        }
+      }
 
       const sessionCookie = request.cookies.get(cookieName);
       const session = sessionCookie ? parseSessionCookie(sessionCookie.value) ?? undefined : undefined;
