@@ -21,23 +21,12 @@ Bloom is an open-source framework-agnostic authentication SDK for TypeScript, wi
 - Email verification and password reset flows
 - Server-side rendering support with Next.js adapter
 
-## Package Structure
+## Packages
 
-```
-bloom/
-├── packages/
-│   ├── core/                # @bloom/core - Framework-agnostic authentication core
-│   │   ├── server/express/  # Express server implementation
-│   │   └── server/nextjs/   # Next.js server implementation
-│   ├── client/              # @bloom/client - Browser HTTP client
-│   ├── react/               # @bloom/react - React 19 hooks and provider
-│   └── adapters/            # @bloom/adapters - Framework middleware
-│       └── express/         # Express middleware adapters
-├── apps/
-│   ├── next15/              # Next.js 15 App Router example
-│   ├── react-router-v7/     # React Router v7 example
-│   └── express-server/      # Express server example
-```
+- [@bloom/core](packages/core) - Framework-agnostic authentication core with Express and Next.js adapters
+- [@bloom/client](packages/client) - Browser HTTP client for authentication
+- [@bloom/react](packages/react) - React hooks and context provider
+- [@bloom/adapters](packages/adapters) - Framework middleware adapters
 
 ## Getting Started
 
