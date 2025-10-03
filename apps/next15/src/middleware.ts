@@ -1,4 +1,4 @@
-import { bloomMiddleware } from '@bloom/adapters/nextjs';
+import { bloomMiddleware } from '@bloom/core/server/nextjs';
 
 export default bloomMiddleware();
 

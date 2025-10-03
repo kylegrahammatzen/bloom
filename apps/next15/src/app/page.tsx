@@ -1,4 +1,4 @@
-import { getSession } from '@bloom/adapters/nextjs';
+import { getSession } from '@bloom/core/server/nextjs';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/login-form';

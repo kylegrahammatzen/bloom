@@ -1,15 +1,7 @@
-import { createAuthHandler } from '@bloom/adapters/nextjs';
+import { createAuthHandler } from '@bloom/core/server/nextjs';
 import { bloomAuth } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { connectDB } from '@/lib/db';
-
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required');
-}
-
-if (!process.env.SESSION_SECRET) {
-  throw new Error('SESSION_SECRET environment variable is required');
-}
 
 const auth = bloomAuth({
   database: {
