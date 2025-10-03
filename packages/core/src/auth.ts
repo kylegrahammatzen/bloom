@@ -88,17 +88,17 @@ function createHandler(config: BloomAuthConfig) {
   addRoute(router, 'POST', '/login', async (ctx: BloomHandlerContext) =>
     handleLogin(ctx, config));
   addRoute(router, 'POST', '/logout', async (ctx: BloomHandlerContext) =>
-    handleLogout(ctx));
+    handleLogout(ctx, config));
   addRoute(router, 'GET', '/me', async (ctx: BloomHandlerContext) =>
     handleGetSession(ctx));
   addRoute(router, 'POST', '/verify-email', async (ctx: BloomHandlerContext) =>
-    handleVerifyEmail(ctx));
+    handleVerifyEmail(ctx, config));
   addRoute(router, 'POST', '/request-password-reset', async (ctx: BloomHandlerContext) =>
     handleRequestPasswordReset(ctx, config));
   addRoute(router, 'POST', '/reset-password', async (ctx: BloomHandlerContext) =>
-    handleResetPassword(ctx));
+    handleResetPassword(ctx, config));
   addRoute(router, 'DELETE', '/account', async (ctx: BloomHandlerContext) =>
-    handleDeleteAccount(ctx));
+    handleDeleteAccount(ctx, config));
 
   return async (ctx: BloomHandlerContext): Promise<GenericResponse> => {
     const method = ctx.request.method;
@@ -268,7 +268,11 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
   };
 
   if (config.callbacks?.onRegister) {
-    await config.callbacks.onRegister({ user: responseData.user, session: responseData.session });
+    await config.callbacks.onRegister({ user: responseData.user, session: responseData.session, ip: ctx.request.ip });
+  }
+
+  if (config.callbacks?.onAuthEvent) {
+    await config.callbacks.onAuthEvent({ action: 'register', userId: user._id.toString(), email: user.email, endpoint: '/register', ip: ctx.request.ip });
   }
 
   return {
@@ -308,7 +312,7 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
           status: 429,
           body: {
             error: {
-              message: 'Too many login attempts. Please try again later.',
+              message: 'Too many login attempts, please try again later',
               resetAt: rateLimit.resetAt
             }
           },
@@ -398,7 +402,11 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
   };
 
   if (config.callbacks?.onSignIn) {
-    await config.callbacks.onSignIn({ user: responseData.user, session: responseData.session });
+    await config.callbacks.onSignIn({ user: responseData.user, session: responseData.session, ip: ctx.request.ip });
+  }
+
+  if (config.callbacks?.onAuthEvent) {
+    await config.callbacks.onAuthEvent({ action: 'login', userId: user._id.toString(), email: user.email, endpoint: '/login', ip: ctx.request.ip });
   }
 
   return {
@@ -411,9 +419,19 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
   };
 }
 
-async function handleLogout(ctx: BloomHandlerContext): Promise<GenericResponse> {
+async function handleLogout(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
+  const userId = ctx.session?.userId;
+
   if (ctx.session?.sessionId) {
     await SessionModel.deleteOne({ session_id: ctx.session.sessionId });
+  }
+
+  if (config.callbacks?.onSignOut && userId) {
+    await config.callbacks.onSignOut({ userId, ip: ctx.request.ip });
+  }
+
+  if (config.callbacks?.onAuthEvent && userId) {
+    await config.callbacks.onAuthEvent({ action: 'logout', userId, endpoint: '/logout', ip: ctx.request.ip });
   }
 
   return {
@@ -473,7 +491,7 @@ async function handleGetSession(ctx: BloomHandlerContext): Promise<GenericRespon
   };
 }
 
-async function handleVerifyEmail(ctx: BloomHandlerContext): Promise<GenericResponse> {
+async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { token } = ctx.request.body;
 
   if (!token) {
@@ -507,6 +525,14 @@ async function handleVerifyEmail(ctx: BloomHandlerContext): Promise<GenericRespo
   user.email_verified = true;
   await user.save();
   await verificationToken.markAsUsed();
+
+  if (config.callbacks?.onEmailVerify) {
+    await config.callbacks.onEmailVerify({ userId: user._id.toString(), email: user.email, ip: ctx.request.ip });
+  }
+
+  if (config.callbacks?.onAuthEvent) {
+    await config.callbacks.onAuthEvent({ action: 'email_verify', userId: user._id.toString(), email: user.email, endpoint: '/verify-email', ip: ctx.request.ip });
+  }
 
   return {
     status: 200,
@@ -593,7 +619,7 @@ async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: Bloo
   };
 }
 
-async function handleResetPassword(ctx: BloomHandlerContext): Promise<GenericResponse> {
+async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { token, password } = ctx.request.body;
 
   if (!token || !password) {
@@ -646,13 +672,21 @@ async function handleResetPassword(ctx: BloomHandlerContext): Promise<GenericRes
   await resetToken.markAsUsed();
   await SessionModel.deleteMany({ user_id: user._id });
 
+  if (config.callbacks?.onPasswordReset) {
+    await config.callbacks.onPasswordReset({ userId: user._id.toString(), email: user.email, ip: ctx.request.ip });
+  }
+
+  if (config.callbacks?.onAuthEvent) {
+    await config.callbacks.onAuthEvent({ action: 'password_reset', userId: user._id.toString(), email: user.email, endpoint: '/reset-password', ip: ctx.request.ip });
+  }
+
   return {
     status: 200,
     body: { message: 'Password reset successful' },
   };
 }
 
-async function handleDeleteAccount(ctx: BloomHandlerContext): Promise<GenericResponse> {
+async function handleDeleteAccount(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   if (!ctx.session?.userId) {
     return {
       status: 401,
@@ -661,6 +695,22 @@ async function handleDeleteAccount(ctx: BloomHandlerContext): Promise<GenericRes
   }
 
   const userId = ctx.session.userId;
+
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    return {
+      status: 404,
+      body: { error: { message: 'User not found' } },
+    };
+  }
+
+  if (config.callbacks?.onAccountDelete) {
+    await config.callbacks.onAccountDelete({ userId, email: user.email, ip: ctx.request.ip });
+  }
+
+  if (config.callbacks?.onAuthEvent) {
+    await config.callbacks.onAuthEvent({ action: 'account_delete', userId, email: user.email, endpoint: '/account', ip: ctx.request.ip });
+  }
 
   await SessionModel.deleteMany({ user_id: userId });
   await Token.deleteMany({ user_id: userId });
