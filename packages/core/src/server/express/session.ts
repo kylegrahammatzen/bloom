@@ -1,10 +1,10 @@
-import session from 'express-session';
+import session, { type SessionOptions } from 'express-session';
 import MongoStore from 'connect-mongo';
 import RedisStore from 'connect-redis';
 import { createClient } from 'redis';
 import type { BloomServerConfig } from '@/types/server';
 
-export function createSessionStore(config: BloomServerConfig) {
+export function createSessionStore(config: BloomServerConfig): RedisStore | MongoStore | undefined {
   const storeType = config.sessionStore?.type || 'redis';
 
   if (storeType === 'redis') {
@@ -25,12 +25,12 @@ export function createSessionStore(config: BloomServerConfig) {
   return undefined;
 }
 
-export function setupSession(config: BloomServerConfig, store: any) {
+export function getSessionOptions(config: BloomServerConfig, store: RedisStore | MongoStore | undefined): SessionOptions {
   const sessionSecret = config.session?.secret;
   const sessionCookieName = config.session?.cookieName || 'bloom.sid';
   const sessionMaxAge = config.session?.expiresIn || 7 * 24 * 60 * 60 * 1000;
 
-  return session({
+  return {
     secret: sessionSecret!,
     resave: false,
     saveUninitialized: false,
@@ -42,5 +42,5 @@ export function setupSession(config: BloomServerConfig, store: any) {
       sameSite: 'lax',
     },
     name: sessionCookieName,
-  });
+  };
 }

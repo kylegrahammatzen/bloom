@@ -12,14 +12,14 @@ import { handleDeleteAccount } from '@/api/routes/account';
 export function createHandler(config: BloomAuthConfig) {
   const router = createRouter();
 
-  addRoute(router, 'POST', '/register', (ctx) => handleRegister(ctx, config));
-  addRoute(router, 'POST', '/login', (ctx) => handleLogin(ctx, config));
-  addRoute(router, 'POST', '/logout', (ctx) => handleLogout(ctx, config));
+  addRoute(router, 'POST', '/register', (ctx: BloomHandlerContext) => handleRegister(ctx, config));
+  addRoute(router, 'POST', '/login', (ctx: BloomHandlerContext) => handleLogin(ctx, config));
+  addRoute(router, 'POST', '/logout', (ctx: BloomHandlerContext) => handleLogout(ctx, config));
   addRoute(router, 'GET', '/me', handleGetSession);
-  addRoute(router, 'POST', '/verify-email', (ctx) => handleVerifyEmail(ctx, config));
-  addRoute(router, 'POST', '/request-password-reset', (ctx) => handleRequestPasswordReset(ctx, config));
-  addRoute(router, 'POST', '/reset-password', (ctx) => handleResetPassword(ctx, config));
-  addRoute(router, 'DELETE', '/account', (ctx) => handleDeleteAccount(ctx, config));
+  addRoute(router, 'POST', '/verify-email', (ctx: BloomHandlerContext) => handleVerifyEmail(ctx, config));
+  addRoute(router, 'POST', '/request-password-reset', (ctx: BloomHandlerContext) => handleRequestPasswordReset(ctx, config));
+  addRoute(router, 'POST', '/reset-password', (ctx: BloomHandlerContext) => handleResetPassword(ctx, config));
+  addRoute(router, 'DELETE', '/account', (ctx: BloomHandlerContext) => handleDeleteAccount(ctx, config));
 
   return async (ctx: BloomHandlerContext): Promise<GenericResponse> => {
     const method = ctx.request.method;

@@ -1,9 +1,10 @@
 import express, { type Application } from 'express';
+import session from 'express-session';
 import { bloomAuth } from '@/auth';
 import type { BloomServerConfig, BloomServerInstance } from '@/types/server';
 import { toExpressHandler, requireAuth } from '@/server/express/handlers';
 import { setupHelmet, setupCors, setupCookieParser } from '@/server/express/middleware';
-import { createSessionStore, setupSession } from '@/server/express/session';
+import { createSessionStore, getSessionOptions } from '@/server/express/session';
 import { setupHealthRoute, setupErrorHandler } from '@/server/express/routes';
 import { connectDatabase } from '@/server/express/database';
 import '@/server/express/types';
@@ -38,7 +39,7 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
   setupCookieParser(app);
 
   const store = createSessionStore(config);
-  app.use(setupSession(config, store));
+  app.use(session(getSessionOptions(config, store)));
 
   app.all('/api/auth/*', toExpressHandler(auth));
 
