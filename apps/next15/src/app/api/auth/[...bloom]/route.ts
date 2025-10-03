@@ -3,7 +3,7 @@ import { bloomAuth } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { connectDB } from '@/lib/db';
 
-const auth = bloomAuth({
+export const auth = bloomAuth({
   database: {
     uri: process.env.DATABASE_URL,
   },

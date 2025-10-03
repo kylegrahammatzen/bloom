@@ -7,7 +7,8 @@ import { LogoutButton } from '@/components/auth/logout-button';
 import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog';
 
 export default async function Home() {
-  const { isSignedIn, user } = await getSession();
+  const session = await getSession();
+  const isSignedIn = !!session;
 
   return (
     <div className="p-4 space-y-4">
@@ -20,7 +21,7 @@ export default async function Home() {
         {isSignedIn ? (
           <Card>
             <CardHeader>
-              <CardTitle>Logged in as: {user?.email}</CardTitle>
+              <CardTitle>Logged in (userId: {session.userId})</CardTitle>
             </CardHeader>
             <div className="flex gap-2 px-6 pb-6">
               <LogoutButton />
