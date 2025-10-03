@@ -13,21 +13,41 @@
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/express-session": "^1.17.10",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "next": "^15.5.4"
   },
   "peerDependencies": {
-    "express": "^4.0.0"
+    "express": "^4.0.0",
+    "next": "^15.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    }
   },
   "exports": {
     "./express": {
       "types": "./dist/express/index.d.ts",
       "require": "./dist/express/index.js",
       "default": "./dist/express/index.js"
+    },
+    "./nextjs": {
+      "types": "./dist/nextjs/index.d.ts",
+      "require": "./dist/nextjs/index.js",
+      "default": "./dist/nextjs/index.js"
     }
   },
   "typesVersions": {
     "*": {
-      "express": ["./dist/express/index.d.ts"]
+      "express": [
+        "./dist/express/index.d.ts"
+      ],
+      "nextjs": [
+        "./dist/nextjs/index.d.ts"
+      ]
     }
   }
 }
