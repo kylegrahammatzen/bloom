@@ -12,7 +12,6 @@
     "build:prod": "turbo build",
     "start": "pnpm --filter bloom-server build && pnpm --filter bloom-server start",
     "test": "turbo test",
-    "lint": "turbo lint",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f"
