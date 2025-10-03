@@ -8,7 +8,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
 
 type DeleteAccountDialogProps = {
   onConfirm: () => void
@@ -17,7 +16,7 @@ type DeleteAccountDialogProps = {
 export const DeleteAccountDialog = (props: DeleteAccountDialogProps) => {
   return (
     <AlertDialog>
-      <AlertDialogTrigger render={<Button variant="destructive" />}>
+      <AlertDialogTrigger variant="destructive">
         Delete Account
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -29,10 +28,10 @@ export const DeleteAccountDialog = (props: DeleteAccountDialogProps) => {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogClose render={<Button variant="outline" />}>
+          <AlertDialogClose variant="outline">
             Cancel
           </AlertDialogClose>
-          <AlertDialogClose render={<Button variant="destructive" />} onClick={props.onConfirm}>
+          <AlertDialogClose variant="destructive" onClick={props.onConfirm}>
             Delete Account
           </AlertDialogClose>
         </AlertDialogFooter>
