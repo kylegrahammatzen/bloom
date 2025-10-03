@@ -70,11 +70,15 @@ export type BloomAuthConfig = {
     };
   };
   callbacks?: {
-    onSignIn?: (ctx: { user: User; session: Session }) => Promise<void> | void;
-    onSignOut?: (ctx: { userId: string }) => Promise<void> | void;
-    onRegister?: (ctx: { user: User; session: Session }) => Promise<void> | void;
+    onSignIn?: (ctx: { user: User; session: Session; ip?: string }) => Promise<void> | void;
+    onSignOut?: (ctx: { userId: string; ip?: string }) => Promise<void> | void;
+    onRegister?: (ctx: { user: User; session: Session; ip?: string }) => Promise<void> | void;
+    onAccountDelete?: (ctx: { userId: string; email: string; ip?: string }) => Promise<void> | void;
+    onEmailVerify?: (ctx: { userId: string; email: string; ip?: string }) => Promise<void> | void;
+    onPasswordReset?: (ctx: { userId: string; email: string; ip?: string }) => Promise<void> | void;
     onError?: (ctx: { error: Error; endpoint: string; method: string; path: string; userId?: string; ip?: string }) => Promise<void> | void;
     onRateLimit?: (ctx: { ip: string; endpoint: string; limit: { max: number; window: number }; userId?: string }) => Promise<void> | void;
+    onAuthEvent?: (ctx: { action: string; userId?: string; email?: string; endpoint: string; ip?: string }) => Promise<void> | void;
   };
   plugins?: BloomPlugin[];
 }
