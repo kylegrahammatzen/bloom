@@ -1,7 +1,7 @@
-import type { GenericResponse } from '@/types';
+import type { GenericResponse, SessionCookieData } from '@/types';
 
 export class APIResponse {
-  static success(body: any, sessionData?: { userId: string; sessionId: string }): GenericResponse {
+  static success(body: any, sessionData?: SessionCookieData): GenericResponse {
     return {
       status: 200,
       body,
@@ -9,7 +9,7 @@ export class APIResponse {
     };
   }
 
-  static created(body: any, sessionData?: { userId: string; sessionId: string }): GenericResponse {
+  static created(body: any, sessionData?: SessionCookieData): GenericResponse {
     return {
       status: 201,
       body,
@@ -26,7 +26,7 @@ export class APIResponse {
   }
 }
 
-export function createSuccess(status: number, body: any, sessionData?: { userId: string; sessionId: string }, clearSession?: boolean): GenericResponse {
+export function createSuccess(status: number, body: any, sessionData?: SessionCookieData, clearSession?: boolean): GenericResponse {
   return {
     status,
     body,
