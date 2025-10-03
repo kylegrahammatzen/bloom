@@ -48,7 +48,6 @@ Update `.env` with your values:
 DATABASE_URL=mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin
 REDIS_URL=redis://localhost:6379
 SESSION_SECRET=your-super-secret-session-key
-NEXT_PUBLIC_APP_URL=http://localhost:3001
 ```
 
 Start MongoDB and Redis:
@@ -73,13 +72,13 @@ Server Component:
 import { getSession } from '@bloom/core/server/nextjs';
 
 export default async function Page() {
-  const { isSignedIn, user } = await getSession();
+  const session = await getSession();
 
-  if (!isSignedIn) {
+  if (!session) {
     return <div>Please sign in</div>;
   }
 
-  return <div>Welcome {user?.email}</div>;
+  return <div>Welcome (userId: {session.userId})</div>;
 }
 ```
 
