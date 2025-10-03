@@ -22,7 +22,7 @@ const auth = bloomAuth({
     requireEmailVerification: true,
   },
   rateLimit: {
-    enabled: true,
+    enabled: false,
     login: {
       max: 5,
       window: 15 * 60 * 1000,
@@ -46,6 +46,15 @@ const auth = bloomAuth({
     onRegister: async (ctx) => {
       console.log(`New user registered: ${ctx.user.email}`);
     },
+    onAccountDelete: async (ctx) => {
+      console.log(`Account deleted: ${ctx.email} (User ID: ${ctx.userId})`);
+    },
+    onEmailVerify: async (ctx) => {
+      console.log(`Email verified: ${ctx.email} (User ID: ${ctx.userId})`);
+    },
+    onPasswordReset: async (ctx) => {
+      console.log(`Password reset: ${ctx.email} (User ID: ${ctx.userId})`);
+    },
     onError: async (ctx) => {
       console.error(`Auth error on ${ctx.method} ${ctx.endpoint}:`, ctx.error.message, {
         userId: ctx.userId,
@@ -57,6 +66,9 @@ const auth = bloomAuth({
         userId: ctx.userId,
         limit: `${ctx.limit.max}/${ctx.limit.window}ms`,
       });
+    },
+    onAuthEvent: async (ctx) => {
+      console.log(`Auth event: ${ctx.action} - ${ctx.email || ctx.userId || 'unknown'}`);
     },
   },
 });
