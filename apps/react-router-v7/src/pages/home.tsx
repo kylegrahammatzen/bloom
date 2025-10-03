@@ -41,10 +41,10 @@ export default function Home() {
               <TabsTrigger value="signup">Sign up</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
-              <LoginForm onSubmit={handleAuth(signIn.email, "Logged in successfully")} />
+              <LoginForm onSubmit={handleAuth(signIn, "Logged in successfully")} />
             </TabsContent>
             <TabsContent value="signup">
-              <SignUpForm onSubmit={handleAuth(signUp.email, "Account created successfully")} />
+              <SignUpForm onSubmit={handleAuth(signUp, "Account created successfully")} />
             </TabsContent>
           </Tabs>
         )}
