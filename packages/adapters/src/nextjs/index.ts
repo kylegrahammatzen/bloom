@@ -1,6 +1,6 @@
-export { bloomMiddleware, config } from './middleware.js';
-export type { BloomMiddlewareConfig } from './middleware.js';
-export { getSession, requireAuth } from './server.js';
-export type { BloomSession } from './server.js';
-export { createAuthHandler } from './route-handler.js';
-export type { NextAuthHandlerConfig } from './route-handler.js';
+export { bloomMiddleware } from '@/nextjs/middleware';
+export type { BloomMiddlewareConfig } from '@/nextjs/middleware';
+export { getSession, requireAuth } from '@/nextjs/server';
+export type { BloomSession } from '@/nextjs/server';
+export { createAuthHandler } from '@/nextjs/route-handler';
+export type { NextAuthHandlerConfig } from '@/nextjs/route-handler';
