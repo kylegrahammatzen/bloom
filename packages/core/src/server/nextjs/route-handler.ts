@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { BloomHandlerContext, BloomAuth } from '@/types';
+import { parseSessionCookie } from '@/types/session';
 
 export type NextAuthHandlerConfig = {
   auth: BloomAuth;
@@ -7,15 +8,6 @@ export type NextAuthHandlerConfig = {
 };
 
 const API_AUTH_PREFIX = '/api/auth';
-
-function parseSessionCookie(cookieValue: string) {
-  try {
-    const data = JSON.parse(cookieValue);
-    return { userId: data.userId, sessionId: data.sessionId };
-  } catch {
-    return undefined;
-  }
-}
 
 export function createAuthHandler(config: NextAuthHandlerConfig) {
   const { auth, connectDB } = config;
@@ -31,7 +23,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       const body = method !== 'GET' ? await request.json().catch(() => undefined) : undefined;
 
       const sessionCookie = request.cookies.get(cookieName);
-      const session = sessionCookie ? parseSessionCookie(sessionCookie.value) : undefined;
+      const session = sessionCookie ? parseSessionCookie(sessionCookie.value) ?? undefined : undefined;
 
       const context: BloomHandlerContext = {
         request: {

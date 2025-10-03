@@ -1,3 +1,7 @@
+import type { SessionCookieData } from './session';
+
+export type { SessionCookieData } from './session';
+
 export type User = {
   id: string;
   email: string;
@@ -33,10 +37,7 @@ export type GenericRequest = {
 export type GenericResponse = {
   status: number;
   body: any;
-  sessionData?: {
-    userId: string;
-    sessionId: string;
-  };
+  sessionData?: SessionCookieData;
   clearSession?: boolean;
 }
 
@@ -109,8 +110,5 @@ export type BloomAuth = {
 
 export type BloomHandlerContext = {
   request: GenericRequest;
-  session?: {
-    userId?: string;
-    sessionId?: string;
-  };
+  session?: SessionCookieData;
 }
