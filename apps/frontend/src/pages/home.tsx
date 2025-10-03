@@ -1,24 +1,14 @@
-import { useEffect, useState } from 'react'
 import { useAuth } from '@bloom/react'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toastManager } from '@/hooks/use-toast'
 import { SignUpForm } from '@/components/auth/signup-form'
 import { LoginForm } from '@/components/auth/login-form'
 import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog'
-import { config } from '@/config'
 
 export default function Home() {
-  const [status, setStatus] = useState<string>("Checking...")
-  const [data, setData] = useState<any>(null)
   const { isSignedIn, user, signIn, signUp, signOut, deleteAccount, refetch } = useAuth()
-
-  useEffect(() => {
-    fetch(`${config.apiUrl}/api/health`)
-      .then(res => res.ok ? res.json().then(data => (setStatus("Connected"), setData(data))) : (setStatus("Disconnected"), setData({ error: "Failed" })))
-      .catch(error => (setStatus("Disconnected"), setData({ error: String(error) })))
-  }, [])
 
   const handleAuth = (fn: any, success: string) => async (body?: any) => {
     const res = await fn(body)
@@ -31,17 +21,6 @@ export default function Home() {
       <div>
         <h1 className="text-2xl font-bold">Bloom</h1>
         <p>An open-source project to show how authentication really works</p>
-      </div>
-
-      <div className="space-y-2">
-        <div>
-          <span>API Status: {status}</span>
-          {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
-        </div>
-        <div>
-          <span>Auth Status: {isSignedIn ? "Signed In" : "Signed Out"}</span>
-          {user && <pre>{JSON.stringify(user, null, 2)}</pre>}
-        </div>
       </div>
 
       <div>
