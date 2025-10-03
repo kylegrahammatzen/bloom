@@ -28,7 +28,7 @@ export function BloomProvider(props: BloomProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const client = createBloomClient(props.config || { baseUrl: props.baseURL });
+  const client = createBloomClient(props.config || { baseUrl: props.baseURL ?? '' });
 
   const fetchUser = async () => {
     const response = await client.getSession();
