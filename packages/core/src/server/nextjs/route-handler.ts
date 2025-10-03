@@ -8,46 +8,27 @@ export type NextAuthHandlerConfig = {
 
 export function createAuthHandler(config: NextAuthHandlerConfig) {
   const { auth, connectDB } = config;
+  const cookieName = auth.config.session?.cookieName || 'bloom.sid';
 
   async function handleRequest(request: NextRequest, method: string) {
     try {
-      // Connect to database if needed
-      if (connectDB) {
-        await connectDB();
-      }
+      await connectDB?.();
 
-      // Extract path from URL
       const pathname = request.nextUrl.pathname;
       const path = pathname.replace('/api/auth', '');
 
-      // Get body for POST/DELETE requests
-      let body = undefined;
-      if (method !== 'GET') {
-        try {
-          body = await request.json();
-        } catch {
-          body = undefined;
-        }
-      }
+      const body = method !== 'GET' ? await request.json().catch(() => undefined) : undefined;
 
-      // Get session from cookie
-      const cookieName = auth.config.session?.cookieName || 'bloom.sid';
       const sessionCookie = request.cookies.get(cookieName);
-      let session = undefined;
-
-      if (sessionCookie) {
+      const session = sessionCookie ? (() => {
         try {
-          const sessionData = JSON.parse(sessionCookie.value);
-          session = {
-            userId: sessionData.userId,
-            sessionId: sessionData.sessionId,
-          };
+          const data = JSON.parse(sessionCookie.value);
+          return { userId: data.userId, sessionId: data.sessionId };
         } catch {
-          // Invalid session cookie, ignore
+          return undefined;
         }
-      }
+      })() : undefined;
 
-      // Build Bloom context
       const context: BloomHandlerContext = {
         request: {
           method,
@@ -61,15 +42,9 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
         session,
       };
 
-      // Call Bloom handler
       const result = await auth.handler(context);
+      const response = NextResponse.json(result.body, { status: result.status });
 
-      // Create response
-      const response = NextResponse.json(result.body, {
-        status: result.status,
-      });
-
-      // Handle session data (using cookies)
       if (result.sessionData) {
         response.cookies.set(cookieName, JSON.stringify(result.sessionData), {
           httpOnly: true,
@@ -79,7 +54,6 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
         });
       }
 
-      // Clear session if requested
       if (result.clearSession) {
         response.cookies.delete(cookieName);
       }
