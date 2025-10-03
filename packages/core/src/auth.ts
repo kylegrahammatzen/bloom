@@ -5,15 +5,14 @@ import {
   verifyPassword,
   generateSecureToken,
   hashToken,
-  generateSessionId,
-  normalizeEmail,
-  checkPasswordStrength,
-  isValidEmail
+  generateSessionId
 } from './utils/crypto';
-import { checkRateLimit, trackAttempt } from './utils/rateLimit';
 import { createRouter, addRoute, findRoute } from './utils/router';
 import { APIError, APIErrorCode } from './types/errors';
 import { createSuccess } from './utils/response';
+import { checkRateLimitMiddleware } from './middleware/rateLimit';
+import { validateEmail, validatePassword, validateEmailAndPassword, normalizeEmail } from './middleware/validation';
+import { emitCallback } from './middleware/callbacks';
 
 export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
   const defaultConfig: BloomAuthConfig = {
@@ -139,46 +138,14 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
   const { email, password } = ctx.request.body;
 
   // Rate limiting
-  if (config.rateLimit?.enabled && config.rateLimit.registration) {
-    const rateLimitConfig = config.rateLimit.registration;
-    if (rateLimitConfig.max && rateLimitConfig.window) {
-      const rateLimitKey = `register:${ctx.request.ip || 'unknown'}`;
-      const rateLimit = checkRateLimit(rateLimitKey, {
-        max: rateLimitConfig.max,
-        window: rateLimitConfig.window
-      });
+  const rateLimitError = await checkRateLimitMiddleware('registration', ctx, config);
+  if (rateLimitError) return rateLimitError;
 
-      if (rateLimit.isLimited) {
-        if (config.callbacks?.onRateLimit) {
-          await config.callbacks.onRateLimit({
-            ip: ctx.request.ip || 'unknown',
-            endpoint: '/register',
-            limit: { max: rateLimitConfig.max, window: rateLimitConfig.window },
-            userId: ctx.session?.userId
-          });
-        }
-
-        return new APIError(APIErrorCode.RATE_LIMITED, { resetAt: rateLimit.resetAt }).toResponse();
-      }
-
-      trackAttempt(rateLimitKey);
-    }
-  }
-
-  if (!email || !isValidEmail(email)) {
-    return new APIError(APIErrorCode.INVALID_EMAIL).toResponse();
-  }
-
-  if (!password || password.length < 8 || password.length > 256) {
-    return new APIError(APIErrorCode.PASSWORD_REQUIRED).toResponse();
-  }
+  // Validation
+  const validationError = validateEmailAndPassword(email, password);
+  if (validationError) return validationError;
 
   const normalizedEmail = normalizeEmail(email);
-  const passwordCheck = checkPasswordStrength(password);
-
-  if (!passwordCheck.isStrong) {
-    return new APIError(APIErrorCode.WEAK_PASSWORD, passwordCheck.issues).toResponse();
-  }
 
   const existingUser = await UserModel.findOne({ email: normalizedEmail });
   if (existingUser) {
@@ -238,13 +205,15 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
     },
   };
 
-  if (config.callbacks?.onRegister) {
-    await config.callbacks.onRegister({ user: responseData.user, session: responseData.session, ip: ctx.request.ip });
-  }
-
-  if (config.callbacks?.onAuthEvent) {
-    await config.callbacks.onAuthEvent({ action: 'register', userId: user._id.toString(), email: user.email, endpoint: '/register', ip: ctx.request.ip });
-  }
+  await emitCallback('onRegister', {
+    action: 'register',
+    endpoint: '/register',
+    ip: ctx.request.ip,
+    userId: user._id.toString(),
+    email: user.email,
+    user: responseData.user,
+    session: responseData.session
+  }, config);
 
   return {
     status: 201,
@@ -260,31 +229,8 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
   const { email, password } = ctx.request.body;
 
   // Rate limiting
-  if (config.rateLimit?.enabled && config.rateLimit.login) {
-    const rateLimitConfig = config.rateLimit.login;
-    if (rateLimitConfig.max && rateLimitConfig.window) {
-      const rateLimitKey = `login:${ctx.request.ip || 'unknown'}`;
-      const rateLimit = checkRateLimit(rateLimitKey, {
-        max: rateLimitConfig.max,
-        window: rateLimitConfig.window
-      });
-
-      if (rateLimit.isLimited) {
-        if (config.callbacks?.onRateLimit) {
-          await config.callbacks.onRateLimit({
-            ip: ctx.request.ip || 'unknown',
-            endpoint: '/login',
-            limit: { max: rateLimitConfig.max, window: rateLimitConfig.window },
-            userId: ctx.session?.userId
-          });
-        }
-
-        return new APIError(APIErrorCode.RATE_LIMITED, { resetAt: rateLimit.resetAt }).toResponse();
-      }
-
-      trackAttempt(rateLimitKey);
-    }
-  }
+  const rateLimitError = await checkRateLimitMiddleware('login', ctx, config);
+  if (rateLimitError) return rateLimitError;
 
   if (!email || !password) {
     return new APIError(APIErrorCode.INVALID_CREDENTIALS).toResponse();
@@ -349,13 +295,15 @@ async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): P
     },
   };
 
-  if (config.callbacks?.onSignIn) {
-    await config.callbacks.onSignIn({ user: responseData.user, session: responseData.session, ip: ctx.request.ip });
-  }
-
-  if (config.callbacks?.onAuthEvent) {
-    await config.callbacks.onAuthEvent({ action: 'login', userId: user._id.toString(), email: user.email, endpoint: '/login', ip: ctx.request.ip });
-  }
+  await emitCallback('onSignIn', {
+    action: 'login',
+    endpoint: '/login',
+    ip: ctx.request.ip,
+    userId: user._id.toString(),
+    email: user.email,
+    user: responseData.user,
+    session: responseData.session
+  }, config);
 
   return {
     status: 200,
@@ -374,12 +322,13 @@ async function handleLogout(ctx: BloomHandlerContext, config: BloomAuthConfig): 
     await SessionModel.deleteOne({ session_id: ctx.session.sessionId });
   }
 
-  if (config.callbacks?.onSignOut && userId) {
-    await config.callbacks.onSignOut({ userId, ip: ctx.request.ip });
-  }
-
-  if (config.callbacks?.onAuthEvent && userId) {
-    await config.callbacks.onAuthEvent({ action: 'logout', userId, endpoint: '/logout', ip: ctx.request.ip });
+  if (userId) {
+    await emitCallback('onSignOut', {
+      action: 'logout',
+      endpoint: '/logout',
+      ip: ctx.request.ip,
+      userId
+    }, config);
   }
 
   return {
@@ -456,13 +405,13 @@ async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConf
   await user.save();
   await verificationToken.markAsUsed();
 
-  if (config.callbacks?.onEmailVerify) {
-    await config.callbacks.onEmailVerify({ userId: user._id.toString(), email: user.email, ip: ctx.request.ip });
-  }
-
-  if (config.callbacks?.onAuthEvent) {
-    await config.callbacks.onAuthEvent({ action: 'email_verify', userId: user._id.toString(), email: user.email, endpoint: '/verify-email', ip: ctx.request.ip });
-  }
+  await emitCallback('onEmailVerify', {
+    action: 'email_verify',
+    endpoint: '/verify-email',
+    ip: ctx.request.ip,
+    userId: user._id.toString(),
+    email: user.email
+  }, config);
 
   return {
     status: 200,
@@ -481,35 +430,12 @@ async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: Bloo
   const { email } = ctx.request.body;
 
   // Rate limiting
-  if (config.rateLimit?.enabled && config.rateLimit.passwordReset) {
-    const rateLimitConfig = config.rateLimit.passwordReset;
-    if (rateLimitConfig.max && rateLimitConfig.window) {
-      const rateLimitKey = `password-reset:${ctx.request.ip || 'unknown'}`;
-      const rateLimit = checkRateLimit(rateLimitKey, {
-        max: rateLimitConfig.max,
-        window: rateLimitConfig.window
-      });
+  const rateLimitError = await checkRateLimitMiddleware('passwordReset', ctx, config);
+  if (rateLimitError) return rateLimitError;
 
-      if (rateLimit.isLimited) {
-        if (config.callbacks?.onRateLimit) {
-          await config.callbacks.onRateLimit({
-            ip: ctx.request.ip || 'unknown',
-            endpoint: '/request-password-reset',
-            limit: { max: rateLimitConfig.max, window: rateLimitConfig.window },
-            userId: ctx.session?.userId
-          });
-        }
-
-        return new APIError(APIErrorCode.RATE_LIMITED, { resetAt: rateLimit.resetAt }).toResponse();
-      }
-
-      trackAttempt(rateLimitKey);
-    }
-  }
-
-  if (!email || !isValidEmail(email)) {
-    return new APIError(APIErrorCode.INVALID_EMAIL).toResponse();
-  }
+  // Validation
+  const emailError = validateEmail(email);
+  if (emailError) return emailError;
 
   const normalizedEmail = normalizeEmail(email);
   const user = await UserModel.findOne({ email: normalizedEmail });
@@ -545,10 +471,9 @@ async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthCo
     return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
   }
 
-  const passwordCheck = checkPasswordStrength(password);
-  if (!passwordCheck.isStrong) {
-    return new APIError(APIErrorCode.WEAK_PASSWORD, passwordCheck.issues).toResponse();
-  }
+  // Validation
+  const passwordError = validatePassword(password);
+  if (passwordError) return passwordError;
 
   const tokenHash = hashToken(token);
   const resetToken = await Token.findOne({
@@ -574,13 +499,13 @@ async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthCo
   await resetToken.markAsUsed();
   await SessionModel.deleteMany({ user_id: user._id });
 
-  if (config.callbacks?.onPasswordReset) {
-    await config.callbacks.onPasswordReset({ userId: user._id.toString(), email: user.email, ip: ctx.request.ip });
-  }
-
-  if (config.callbacks?.onAuthEvent) {
-    await config.callbacks.onAuthEvent({ action: 'password_reset', userId: user._id.toString(), email: user.email, endpoint: '/reset-password', ip: ctx.request.ip });
-  }
+  await emitCallback('onPasswordReset', {
+    action: 'password_reset',
+    endpoint: '/reset-password',
+    ip: ctx.request.ip,
+    userId: user._id.toString(),
+    email: user.email
+  }, config);
 
   return {
     status: 200,
@@ -600,13 +525,13 @@ async function handleDeleteAccount(ctx: BloomHandlerContext, config: BloomAuthCo
     return new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
   }
 
-  if (config.callbacks?.onAccountDelete) {
-    await config.callbacks.onAccountDelete({ userId, email: user.email, ip: ctx.request.ip });
-  }
-
-  if (config.callbacks?.onAuthEvent) {
-    await config.callbacks.onAuthEvent({ action: 'account_delete', userId, email: user.email, endpoint: '/account', ip: ctx.request.ip });
-  }
+  await emitCallback('onAccountDelete', {
+    action: 'account_delete',
+    endpoint: '/account',
+    ip: ctx.request.ip,
+    userId,
+    email: user.email
+  }, config);
 
   await SessionModel.deleteMany({ user_id: userId });
   await Token.deleteMany({ user_id: userId });
