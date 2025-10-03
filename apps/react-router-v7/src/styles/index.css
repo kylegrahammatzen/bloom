@@ -2,11 +2,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
 @layer base {
+
   *,
   ::after,
   ::before,
@@ -14,6 +11,7 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentColor);
   }
+
   .theme {
     --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: "Geist Mono", 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace';
@@ -58,6 +56,7 @@
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
   }
+
   :root {
     --background: oklch(98.5% 0 0);
     --foreground: oklch(14.5% 0 0);
@@ -97,6 +96,7 @@
     --chart-5: oklch(51.4% 0.222 16.935);
     --radius: 0.625rem;
   }
+
   .dark {
     --background: oklch(14.5% 0 0);
     --foreground: oklch(98.5% 0 0);
@@ -135,41 +135,50 @@
     --chart-4: oklch(70.5% 0.213 47.604);
     --chart-5: oklch(64.5% 0.246 16.439);
   }
+
   * {
     border-color: var(--border);
     outline-color: oklch(from var(--ring) l c h / 0.5);
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
+
   html {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-tap-highlight-color: transparent;
   }
+
   html[data-base-ui-scroll-locked] {
     scroll-behavior: auto;
   }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
     overscroll-behavior: none;
   }
+
   .root {
     isolation: isolate;
     min-height: 100vh;
   }
+
   ::-webkit-scrollbar {
     width: 4px;
   }
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
+
   ::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 4px;
   }
 }
+
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-mono: "Geist Mono", 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', '"Liberation Mono"', '"Courier New"', 'monospace';
