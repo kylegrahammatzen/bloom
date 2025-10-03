@@ -1,25 +1,21 @@
 import type { BloomAuthConfig, BloomHandlerContext } from '../types';
-import { checkRateLimit, trackAttempt } from '../utils/rateLimit';
+import { checkRateLimit as checkLimit, trackAttempt } from '../utils/rateLimit';
 import { APIError, APIErrorCode } from '../types/errors';
 
 type RateLimitEndpoint = 'login' | 'registration' | 'passwordReset';
 
-export async function checkRateLimitMiddleware(
+export async function checkRateLimit(
   endpoint: RateLimitEndpoint,
   ctx: BloomHandlerContext,
   config: BloomAuthConfig
 ) {
-  if (!config.rateLimit?.enabled || !config.rateLimit[endpoint]) {
-    return null;
-  }
+  if (!config.rateLimit?.enabled || !config.rateLimit[endpoint]) return null;
 
   const rateLimitConfig = config.rateLimit[endpoint];
-  if (!rateLimitConfig?.max || !rateLimitConfig?.window) {
-    return null;
-  }
+  if (!rateLimitConfig?.max || !rateLimitConfig?.window) return null;
 
   const rateLimitKey = `${endpoint}:${ctx.request.ip || 'unknown'}`;
-  const rateLimit = checkRateLimit(rateLimitKey, {
+  const rateLimit = checkLimit(rateLimitKey, {
     max: rateLimitConfig.max,
     window: rateLimitConfig.window
   });

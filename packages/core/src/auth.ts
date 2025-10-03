@@ -10,9 +10,9 @@ import {
 import { createRouter, addRoute, findRoute } from './utils/router';
 import { APIError, APIErrorCode } from './types/errors';
 import { createSuccess } from './utils/response';
-import { checkRateLimitMiddleware } from './middleware/rateLimit';
-import { validateEmail, validatePassword, validateEmailAndPassword, normalizeEmail } from './middleware/validation';
-import { emitCallback } from './middleware/callbacks';
+import { checkRateLimit } from './api/ratelimit';
+import { validateEmail, validatePassword, validateEmailAndPassword, normalizeEmail } from './api/validation';
+import { emitCallback } from './api/callbacks';
 
 export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
   const defaultConfig: BloomAuthConfig = {
@@ -137,11 +137,9 @@ function createHandler(config: BloomAuthConfig) {
 async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { email, password } = ctx.request.body;
 
-  // Rate limiting
-  const rateLimitError = await checkRateLimitMiddleware('registration', ctx, config);
+  const rateLimitError = await checkRateLimit('registration', ctx, config);
   if (rateLimitError) return rateLimitError;
 
-  // Validation
   const validationError = validateEmailAndPassword(email, password);
   if (validationError) return validationError;
 
@@ -228,8 +226,7 @@ async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig)
 async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { email, password } = ctx.request.body;
 
-  // Rate limiting
-  const rateLimitError = await checkRateLimitMiddleware('login', ctx, config);
+  const rateLimitError = await checkRateLimit('login', ctx, config);
   if (rateLimitError) return rateLimitError;
 
   if (!email || !password) {
@@ -429,23 +426,20 @@ async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConf
 async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { email } = ctx.request.body;
 
-  // Rate limiting
-  const rateLimitError = await checkRateLimitMiddleware('passwordReset', ctx, config);
+  const rateLimitError = await checkRateLimit('passwordReset', ctx, config);
   if (rateLimitError) return rateLimitError;
 
-  // Validation
   const emailError = validateEmail(email);
   if (emailError) return emailError;
 
   const normalizedEmail = normalizeEmail(email);
   const user = await UserModel.findOne({ email: normalizedEmail });
 
-  const successResponse = {
-    message: 'If an account with this email exists, a password reset link has been sent.',
-  };
-
   if (!user) {
-    return { status: 200, body: successResponse };
+    return {
+      status: 200,
+      body: { message: 'If an account with this email exists, a password reset link has been sent.' }
+    };
   }
 
   const token = generateSecureToken();
@@ -460,18 +454,15 @@ async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: Bloo
 
   return {
     status: 200,
-    body: successResponse,
+    body: { message: 'If an account with this email exists, a password reset link has been sent.' },
   };
 }
 
 async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   const { token, password } = ctx.request.body;
 
-  if (!token || !password) {
-    return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
-  }
+  if (!token || !password) return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
 
-  // Validation
   const passwordError = validatePassword(password);
   if (passwordError) return passwordError;
 
