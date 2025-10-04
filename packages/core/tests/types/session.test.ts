@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isValidSessionData, parseSessionCookie, type SessionCookieData } from '../../src/types/session';
+import { isValidSessionData, parseSessionCookie, type SessionCookieData } from '../../src/schemas/session';
 
 describe('Session Type Validation', () => {
   describe('isValidSessionData', () => {

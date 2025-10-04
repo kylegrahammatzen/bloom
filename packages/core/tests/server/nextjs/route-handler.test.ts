@@ -1,22 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { createAuthHandler } from '../../../src/server/nextjs/route-handler';
-import type { BloomAuth } from '../../../src/types';
+import type { BloomAuth } from '../../../src/schemas';
 
-// Mock NextResponse
+const mockSetCookie = vi.fn();
+const mockDeleteCookie = vi.fn();
+const mockHeadersSet = vi.fn();
+
 vi.mock('next/server', async () => {
   const actual = await vi.importActual('next/server');
   return {
     ...actual,
     NextResponse: {
-      json: vi.fn((body: any, init?: any) => ({
-        body,
-        status: init?.status || 200,
-        cookies: {
-          set: vi.fn(),
-          delete: vi.fn(),
-        },
-      })),
+      json: vi.fn((body: any, init?: any) => {
+        return {
+          body,
+          status: init?.status || 200,
+          headers: {
+            set: mockHeadersSet,
+          },
+          cookies: {
+            set: mockSetCookie,
+            delete: mockDeleteCookie,
+          },
+        };
+      }),
     },
   };
 });
@@ -27,6 +35,9 @@ describe('Next.js route handler', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSetCookie.mockClear();
+    mockDeleteCookie.mockClear();
+    mockHeadersSet.mockClear();
 
     mockAuth = {
       handler: vi.fn(),
@@ -39,6 +50,9 @@ describe('Next.js route handler', () => {
   });
 
   describe('createAuthHandler', () => {
+    /**
+     * Verify that createAuthHandler returns an object with GET, POST, and DELETE methods
+     */
     it('should create handler with GET, POST, DELETE methods', () => {
       const handler = createAuthHandler({ auth: mockAuth });
 
@@ -50,6 +64,9 @@ describe('Next.js route handler', () => {
       expect(typeof handler.DELETE).toBe('function');
     });
 
+    /**
+     * Verify that the optional connectDB callback is called before handling requests
+     */
     it('should connect to database if connectDB is provided', async () => {
       const handler = createAuthHandler({ auth: mockAuth, connectDB: mockConnectDB });
 
@@ -67,6 +84,9 @@ describe('Next.js route handler', () => {
       expect(mockConnectDB).toHaveBeenCalled();
     });
 
+    /**
+     * Verify that session cookies are correctly parsed and passed to the auth handler
+     */
     it('should parse session cookie from request', async () => {
       const handler = createAuthHandler({ auth: mockAuth });
       const sessionData = { userId: 'user123', sessionId: 'session123' };
@@ -92,6 +112,9 @@ describe('Next.js route handler', () => {
       );
     });
 
+    /**
+     * Verify that requests without session cookies are handled correctly
+     */
     it('should handle request without session cookie', async () => {
       const handler = createAuthHandler({ auth: mockAuth });
 
@@ -100,11 +123,11 @@ describe('Next.js route handler', () => {
         body: { message: 'Success' },
       });
 
-      const request = new NextRequest('http://localhost/api/auth/login', {
-        method: 'POST',
+      const request = new NextRequest('http://localhost/api/auth/me', {
+        method: 'GET',
       });
 
-      await handler.POST(request);
+      await handler.GET(request);
 
       expect(mockAuth.handler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -113,6 +136,9 @@ describe('Next.js route handler', () => {
       );
     });
 
+    /**
+     * Verify that session cookies are set when sessionData is returned
+     */
     it('should set session cookie when sessionData is returned', async () => {
       const handler = createAuthHandler({ auth: mockAuth });
       const sessionData = { userId: 'user123', sessionId: 'session123' };
@@ -125,11 +151,15 @@ describe('Next.js route handler', () => {
 
       const request = new NextRequest('http://localhost/api/auth/register', {
         method: 'POST',
+        body: JSON.stringify({ email: 'test@example.com', password: 'Password123!' }),
+        headers: {
+          'content-type': 'application/json',
+        },
       });
 
       const response = await handler.POST(request) as any;
 
-      expect(response.cookies.set).toHaveBeenCalledWith(
+      expect(mockSetCookie).toHaveBeenCalledWith(
         'test.sid',
         JSON.stringify(sessionData),
         expect.objectContaining({
@@ -139,6 +169,9 @@ describe('Next.js route handler', () => {
       );
     });
 
+    /**
+     * Verify that session cookies are deleted when clearSession flag is set
+     */
     it('should delete session cookie when clearSession is true', async () => {
       const handler = createAuthHandler({ auth: mockAuth });
 
@@ -149,20 +182,25 @@ describe('Next.js route handler', () => {
       });
 
       const request = new NextRequest('http://localhost/api/auth/logout', {
-        method: 'DELETE',
+        method: 'POST',
+        body: JSON.stringify({}),
+        headers: {
+          'content-type': 'application/json',
+        },
       });
 
-      const response = await handler.DELETE(request) as any;
+      const response = await handler.POST(request) as any;
 
-      expect(response.cookies.delete).toHaveBeenCalledWith('test.sid');
+      expect(mockDeleteCookie).toHaveBeenCalledWith('test.sid');
     });
 
+    /**
+     * Verify that errors are caught and converted to 500 responses
+     */
     it('should handle errors gracefully', async () => {
       const handler = createAuthHandler({ auth: mockAuth });
 
       mockAuth.handler = vi.fn().mockRejectedValue(new Error('Database error'));
-
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const request = new NextRequest('http://localhost/api/auth/me', {
         method: 'GET',
@@ -172,11 +210,11 @@ describe('Next.js route handler', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.error.message).toBe('Internal server error');
-      expect(consoleErrorSpy).toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
     });
 
+    /**
+     * Verify that JSON request bodies are correctly parsed for POST requests
+     */
     it('should parse request body for POST requests', async () => {
       const handler = createAuthHandler({ auth: mockAuth });
       const requestBody = { email: 'test@example.com', password: 'Password123!' };
@@ -205,6 +243,9 @@ describe('Next.js route handler', () => {
       );
     });
 
+    /**
+     * Verify that client IP addresses are extracted from x-forwarded-for header
+     */
     it('should extract IP from headers', async () => {
       const handler = createAuthHandler({ auth: mockAuth });
 
@@ -231,6 +272,9 @@ describe('Next.js route handler', () => {
       );
     });
 
+    /**
+     * Verify that default cookie name 'bloom.sid' is used when not configured
+     */
     it('should use default cookie name if not configured', async () => {
       const authWithoutConfig = {
         handler: vi.fn().mockResolvedValue({

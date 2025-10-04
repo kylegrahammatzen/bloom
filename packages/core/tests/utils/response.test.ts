@@ -1,72 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { APIResponse, createSuccess } from '../../src/utils/response';
+import { json } from '../../src/utils/response';
 
 describe('response utils', () => {
-  describe('APIResponse.success', () => {
-    it('should create success response without session data', () => {
+  describe('json', () => {
+    it('should create success response without options', () => {
       const body = { message: 'Success' };
-      const response = APIResponse.success(body);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(body);
-      expect(response.sessionData).toBeUndefined();
-    });
-
-    it('should create success response with session data', () => {
-      const body = { message: 'Success' };
-      const sessionData = { userId: 'user123', sessionId: 'session123' };
-      const response = APIResponse.success(body, sessionData);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual(body);
-      expect(response.sessionData).toEqual(sessionData);
-    });
-  });
-
-  describe('APIResponse.created', () => {
-    it('should create created response without session data', () => {
-      const body = { message: 'Created' };
-      const response = APIResponse.created(body);
-
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual(body);
-      expect(response.sessionData).toBeUndefined();
-    });
-
-    it('should create created response with session data', () => {
-      const body = { message: 'Created' };
-      const sessionData = { userId: 'user123', sessionId: 'session123' };
-      const response = APIResponse.created(body, sessionData);
-
-      expect(response.status).toBe(201);
-      expect(response.body).toEqual(body);
-      expect(response.sessionData).toEqual(sessionData);
-    });
-  });
-
-  describe('APIResponse.logout', () => {
-    it('should create logout response with default message', () => {
-      const response = APIResponse.logout();
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ message: 'Logout successful' });
-      expect(response.clearSession).toBe(true);
-    });
-
-    it('should create logout response with custom message', () => {
-      const message = 'Custom logout message';
-      const response = APIResponse.logout(message);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual({ message });
-      expect(response.clearSession).toBe(true);
-    });
-  });
-
-  describe('createSuccess', () => {
-    it('should create custom success response', () => {
-      const body = { data: 'test' };
-      const response = createSuccess(200, body);
+      const response = json(body);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(body);
@@ -74,10 +13,18 @@ describe('response utils', () => {
       expect(response.clearSession).toBeUndefined();
     });
 
+    it('should create success response with custom status', () => {
+      const body = { message: 'Created' };
+      const response = json(body, { status: 201 });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(body);
+    });
+
     it('should create response with session data', () => {
-      const body = { data: 'test' };
+      const body = { message: 'Success' };
       const sessionData = { userId: 'user123', sessionId: 'session123' };
-      const response = createSuccess(200, body, sessionData);
+      const response = json(body, { sessionData });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(body);
@@ -85,23 +32,60 @@ describe('response utils', () => {
     });
 
     it('should create response with clearSession flag', () => {
-      const body = { data: 'test' };
-      const response = createSuccess(200, body, undefined, true);
+      const body = { message: 'Logout successful' };
+      const response = json(body, { clearSession: true });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(body);
       expect(response.clearSession).toBe(true);
     });
 
-    it('should create response with both session data and clearSession', () => {
-      const body = { data: 'test' };
+    it('should create response with status, session data, and clearSession', () => {
+      const body = { message: 'Test' };
       const sessionData = { userId: 'user123', sessionId: 'session123' };
-      const response = createSuccess(200, body, sessionData, true);
+      const response = json(body, {
+        status: 201,
+        sessionData,
+        clearSession: true
+      });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(201);
       expect(response.body).toEqual(body);
       expect(response.sessionData).toEqual(sessionData);
       expect(response.clearSession).toBe(true);
+    });
+
+    it('should validate response with GenericResponseSchema', () => {
+      const body = { user: { id: '123', email: 'test@example.com' } };
+
+      expect(() => json(body)).not.toThrow();
+    });
+
+    it('should default to status 200 when not provided', () => {
+      const response = json({ data: 'test' });
+      expect(response.status).toBe(200);
+    });
+
+    it('should handle empty body object', () => {
+      const response = json({});
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({});
+    });
+
+    it('should handle complex nested objects', () => {
+      const body = {
+        user: {
+          id: '123',
+          profile: {
+            name: 'Test User',
+            settings: {
+              theme: 'dark'
+            }
+          }
+        }
+      };
+      const response = json(body);
+      expect(response.body).toEqual(body);
     });
   });
 });
