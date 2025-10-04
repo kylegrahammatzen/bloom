@@ -100,37 +100,72 @@ bloomAuth({
 });
 ```
 
+### Logger Configuration
+
+```typescript
+import { bloomAuth, createLogger } from '@bloom/core';
+
+// Use default logger
+bloomAuth({
+  logger: createLogger(),
+});
+
+// Custom configuration
+bloomAuth({
+  logger: createLogger({
+    level: 'debug',
+    prefix: '[My App Auth]',
+    colors: true,
+  }),
+});
+
+// Disable logging
+bloomAuth({
+  logger: { disabled: true },
+});
+
+// Provide your own logger (winston, pino, etc)
+bloomAuth({
+  logger: myCustomLogger,
+});
+```
+
 ### Callbacks
 
 ```typescript
+import { createLogger } from '@bloom/core';
+
+const logger = createLogger({ level: 'info' });
+
 bloomAuth({
+  logger,
   callbacks: {
     onSignIn: async ({ user, session, ip }) => {
-      console.log(`[SignIn] User ${user.id} from ${ip}`);
+      logger.info('User signed in', { userId: user.id, ip });
     },
     onSignOut: async ({ userId, ip }) => {
-      console.log(`[SignOut] User ${userId} from ${ip}`);
+      logger.info('User signed out', { userId, ip });
     },
     onRegister: async ({ user, session, ip }) => {
-      console.log(`[Register] User ${user.id} from ${ip}`);
+      logger.info('User registered', { userId: user.id, ip });
     },
     onAccountDelete: async ({ userId, email, ip }) => {
-      console.log(`[Delete] Account ${userId} (${email}) from ${ip}`);
+      logger.warn('Account deleted', { userId, email, ip });
     },
     onEmailVerify: async ({ userId, email, ip }) => {
-      console.log(`[Verify] Email ${email} for user ${userId}`);
+      logger.info('Email verified', { userId, email });
     },
     onPasswordReset: async ({ userId, email, ip }) => {
-      console.log(`[Reset] Password for ${email}`);
+      logger.info('Password reset', { email });
     },
     onError: async ({ error, endpoint, userId, ip }) => {
-      console.error(`[Error] ${endpoint}: ${error}`);
+      logger.error('Auth error', { endpoint, error, userId, ip });
     },
     onRateLimit: async ({ ip, endpoint, limit, userId }) => {
-      console.warn(`[RateLimit] ${endpoint} exceeded for ${ip}`);
+      logger.warn('Rate limit exceeded', { endpoint, ip, limit });
     },
     onAuthEvent: async (ctx) => {
-      console.log(`[Auth] ${ctx.action} - ${ctx.email || ctx.userId}`);
+      logger.info('Auth event', { action: ctx.action, email: ctx.email, userId: ctx.userId });
     },
   },
 });
