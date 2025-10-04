@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-import { zodSchema } from '@zodyac/zod-mongoose';
+import { mongooseSchema } from '@/utils/mongoose-schema';
 import { UserModelSchema } from '@/schemas/models';
 
-const schema = zodSchema(UserModelSchema);
+const schema = mongooseSchema(UserModelSchema);
 
 schema.index({ email: 1 }, { unique: true });
 schema.index({ created_at: 1 });

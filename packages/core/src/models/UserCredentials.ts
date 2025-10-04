@@ -1,8 +1,8 @@
 import mongoose, { UpdateWriteOpResult } from 'mongoose';
-import { zodSchema } from '@zodyac/zod-mongoose';
+import { mongooseSchema } from '@/utils/mongoose-schema';
 import { UserCredentialsModelSchema } from '@/schemas/models';
 
-const schema = zodSchema(UserCredentialsModelSchema);
+const schema = mongooseSchema(UserCredentialsModelSchema);
 
 schema.index({ user_id: 1 }, { unique: true });
 schema.index({ locked_until: 1 });

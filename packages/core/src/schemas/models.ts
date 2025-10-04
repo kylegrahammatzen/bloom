@@ -1,7 +1,5 @@
 import { z } from 'zod';
-import { extendZod, zId } from '@zodyac/zod-mongoose';
-
-extendZod(z);
+import { zId } from '@/utils/mongoose-schema';
 
 /**
  * User model schema

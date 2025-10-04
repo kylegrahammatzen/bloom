@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-import { zodSchema } from '@zodyac/zod-mongoose';
+import { mongooseSchema } from '@/utils/mongoose-schema';
 import { TokenModelSchema } from '@/schemas/models';
 
-const schema = zodSchema(TokenModelSchema);
+const schema = mongooseSchema(TokenModelSchema);
 
 schema.index({ token_hash: 1 }, { unique: true });
 schema.index({ user_id: 1 });

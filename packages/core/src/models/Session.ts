@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-import { zodSchema } from '@zodyac/zod-mongoose';
+import { mongooseSchema } from '@/utils/mongoose-schema';
 import { SessionModelSchema } from '@/schemas/models';
 
-const schema = zodSchema(SessionModelSchema);
+const schema = mongooseSchema(SessionModelSchema);
 
 schema.index({ session_id: 1 }, { unique: true });
 schema.index({ user_id: 1 });
