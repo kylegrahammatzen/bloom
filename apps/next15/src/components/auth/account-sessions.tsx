@@ -9,6 +9,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { SessionRevokeButton } from './session-revoke-button';
 
 export const AccountSessions = async () => {
   const headersList = await headers();
@@ -28,49 +31,59 @@ export const AccountSessions = async () => {
     return 'Unknown Device';
   };
 
+  const formatLocation = (ipAddress?: string) => {
+    if (!ipAddress) return 'Unknown';
+    if (ipAddress === '::1' || ipAddress === '127.0.0.1') return 'localhost';
+    return ipAddress;
+  };
+
   if (!sessions || sessions.length === 0) {
     return "No active sessions found.";
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Device</TableHead>
-          <TableHead>Location</TableHead>
-          <TableHead>Last Active</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sessions.map((session: Session) => (
-          <TableRow key={session.id}>
-            <TableCell>
-              <div>
-                <div className="font-medium">{getDeviceDisplay(session)}</div>
-                <div className="text-sm text-gray-500">{session.deviceType}</div>
-              </div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm">{session.ipAddress || 'Unknown'}</div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm">{formatDate(session.lastAccessedAt)}</div>
-            </TableCell>
-            <TableCell>
-              {session.isCurrent ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Current
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                  Active
-                </span>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="max-w-3xl">
+      <Card className="py-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Device</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Last Active</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sessions.map((session: Session) => (
+              <TableRow key={session.id}>
+                <TableCell>
+                  <div>
+                    <div className="font-medium">{getDeviceDisplay(session)}</div>
+                    <div className="text-sm text-gray-500">{session.deviceType}</div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">{formatLocation(session.ipAddress)}</div>
+                </TableCell>
+                <TableCell>
+                  <div className="text-sm">{formatDate(session.lastAccessedAt)}</div>
+                </TableCell>
+                <TableCell>
+                  {session.isCurrent ? (
+                    <Badge variant="secondary">Current</Badge>
+                  ) : (
+                    <Badge variant="outline">Active</Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <SessionRevokeButton sessionId={session.id} isCurrent={session.isCurrent || false} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
   );
 };
