@@ -1,7 +1,6 @@
 import type { Application } from 'express';
 import express from 'express';
 import { APIError, APIErrorCode } from '@bloom/core/schemas/errors';
-import { logger } from '@bloom/core/utils/logger';
 
 export function setupHealthRoute(app: Application) {
   app.get('/api/health', (_req, res) => {
@@ -17,7 +16,7 @@ export function setupHealthRoute(app: Application) {
 export function setupErrorHandler(app: Application) {
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (!(err instanceof APIError)) {
-      logger.error({ error: err }, 'Express error');
+      console.error('[Bloom Express Error]', err);
     }
 
     const apiError = err instanceof APIError

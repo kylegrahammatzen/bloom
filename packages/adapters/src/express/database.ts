@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { logger } from '@bloom/core/utils/logger';
 
 export async function connectDatabase(mongoUri: string) {
   if (!mongoose.connection.readyState) {
@@ -8,14 +7,13 @@ export async function connectDatabase(mongoUri: string) {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
-    logger.info('Connected to MongoDB successfully');
   }
 
   mongoose.connection.on('error', (error) => {
-    logger.error({ error }, 'MongoDB connection error');
+    console.error('[Bloom MongoDB Error]', error);
   });
 
   mongoose.connection.on('disconnected', () => {
-    logger.warn('MongoDB disconnected');
+    console.warn('[Bloom MongoDB] Disconnected');
   });
 }

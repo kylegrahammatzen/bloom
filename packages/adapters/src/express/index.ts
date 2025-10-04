@@ -4,7 +4,6 @@ import type { BloomServerConfig, BloomServerInstance } from '@bloom/core/schemas
 import { toExpressHandler, requireAuth } from './handlers';
 import { setupHelmet, setupCors, setupCookieParser } from './middleware';
 import { setupHealthRoute, setupErrorHandler } from './routes';
-import { logger } from '@bloom/core/utils/logger';
 
 export function bloomServer(config: BloomServerConfig): BloomServerInstance {
   if (!config.session?.secret) {
@@ -38,10 +37,6 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
     const serverPort = port || config.port || parseInt(process.env.PORT || '5000', 10);
 
     app.listen(serverPort, () => {
-      logger.info(`Bloom authentication server running on port ${serverPort}`);
-      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-
       if (config.onReady) {
         config.onReady(serverPort);
       }
