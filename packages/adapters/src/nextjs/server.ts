@@ -1,6 +1,9 @@
 import { cookies, headers } from 'next/headers';
 import { parseSessionCookie } from '@bloom/core/schemas/session';
 import type { Session, User } from '@bloom/core';
+import { createLogger } from '@bloom/core';
+
+const logger = createLogger();
 
 export type ValidatedSession = {
   user: User;
@@ -46,18 +49,18 @@ export async function getSession(cookieName: string = 'bloom.sid', baseUrl?: str
     const latency = Date.now() - startTime;
 
     if (!response.ok) {
-      console.log(`[Session] Validation failed - ${latency}ms (status: ${response.status})`);
+      logger.debug('Session validation failed', { latency, status: response.status });
       return null;
     }
 
     const data = await response.json() as { user: User; session: Session };
 
     if (!data.user || !data.session) {
-      console.log(`[Session] Invalid data returned - ${latency}ms`);
+      logger.debug('Invalid session data returned', { latency });
       return null;
     }
 
-    console.log(`[Session] Validated successfully - ${latency}ms (userId: ${data.user.id})`);
+    logger.debug('Session validated successfully', { latency, userId: data.user.id });
 
     return {
       user: data.user,
@@ -65,7 +68,7 @@ export async function getSession(cookieName: string = 'bloom.sid', baseUrl?: str
     };
   } catch (error) {
     const latency = Date.now() - startTime;
-    console.error(`[Session] Validation error - ${latency}ms`, error);
+    logger.error('Session validation error', { latency, error });
     return null;
   }
 }

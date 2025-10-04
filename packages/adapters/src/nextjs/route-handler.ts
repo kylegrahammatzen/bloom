@@ -48,6 +48,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
   const { auth, cors: corsConfig } = config;
   const cookieName = getCookieName(auth.config);
   const cookieOptions = getCookieOptionsForNextJS(auth.config);
+  const logger = auth.config.logger;
 
   // Pre-compute static CORS headers once at handler creation
   const staticCorsHeaders = corsConfig !== false ? {
@@ -109,7 +110,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
     } catch (error) {
       if (!(error instanceof APIError || error instanceof SyntaxError)) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`Auth API error at ${request.nextUrl.pathname}: ${message}`);
+        logger?.error('Auth API error', { path: request.nextUrl.pathname, message });
       }
 
       const apiError = toAPIError(error);

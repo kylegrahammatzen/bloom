@@ -2,12 +2,13 @@ import express, { Request, Response, NextFunction, Router } from 'express';
 import type { BloomAuth, BloomHandlerContext } from '@bloom/core';
 import { parseSessionCookie } from '@bloom/core/schemas/session';
 import { APIError, APIErrorCode } from '@bloom/core/schemas/errors';
-import { getCookieName, getCookieOptions } from '@bloom/core';
+import { getCookieName, getCookieOptions, createLogger } from '@bloom/core';
 
 export function toExpressHandler(auth: BloomAuth): Router {
   const router = express.Router();
   const cookieName = getCookieName(auth.config);
   const cookieOptions = getCookieOptions(auth.config);
+  const logger = auth.config.logger;
 
   router.use(express.json({ limit: '10mb' }));
   router.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -48,7 +49,7 @@ export function toExpressHandler(auth: BloomAuth): Router {
       res.status(result.status).json(result.body);
     } catch (error) {
       if (!(error instanceof APIError || error instanceof SyntaxError)) {
-        console.error('[Bloom Auth API Error]', { error, path: req.path });
+        logger?.error('Auth API error', { error, path: req.path });
       }
 
       const apiError = error instanceof APIError
