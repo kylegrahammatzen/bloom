@@ -1,4 +1,4 @@
-import { bloomAuth, RedisStorage } from '@bloom/core';
+import { bloomAuth, RedisStorage, createLogger } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { mongoose } from './db';
 
@@ -7,6 +7,8 @@ const redisStorage = new RedisStorage({
   poolSize: 10,
   namespace: 'bloom',
 });
+
+const logger = createLogger({ level: 'info', prefix: '[Bloom Auth]' });
 
 export const auth = bloomAuth({
   database: mongoose,
@@ -20,9 +22,10 @@ export const auth = bloomAuth({
     enabled: true,
     requireEmailVerification: false,
   },
+  logger,
   callbacks: {
     onAuthEvent: (ctx: AuthEventContext) => {
-      console.log('[Auth Event]', { action: ctx.action, email: ctx.email, userId: ctx.userId });
+      logger.info('Auth event', { action: ctx.action, email: ctx.email, userId: ctx.userId });
     },
   },
 });
