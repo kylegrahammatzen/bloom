@@ -68,45 +68,20 @@ app.get('/api/protected', requireAuth(), (req, res) => {
 });
 ```
 
-## Session Type Declaration
-
-Add session types to your Express app:
-
-```typescript
-declare module 'express-session' {
-  interface SessionData {
-    userId: string;
-    sessionId: string;
-  }
-}
-```
-
 ## Complete Express Example
 
+See the [Express Server example app](../../apps/express-server) for a complete implementation.
+
+## Next.js Adapter
+
+### API Route Handler
+
+Create authentication API routes with the Next.js App Router:
+
 ```typescript
-import express from 'express';
-import session from 'express-session';
-import RedisStore from 'connect-redis';
-import { createClient } from 'redis';
-import { toExpressHandler, requireAuth } from '@bloom/adapters/express';
+import { createAuthHandler } from '@bloom/adapters/nextjs';
 import { bloomAuth } from '@bloom/core';
-
-const app = express();
-
-const redisClient = createClient();
-await redisClient.connect();
-
-app.use(session({
-  store: new RedisStore({ client: redisClient }),
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  },
-}));
+import { connectDB } from '@/lib/db';
 
 const auth = bloomAuth({
   database: {
@@ -114,17 +89,65 @@ const auth = bloomAuth({
   },
   session: {
     secret: process.env.SESSION_SECRET,
+    expiresIn: 7 * 24 * 60 * 60 * 1000,
   },
 });
 
-app.use('/api/auth', toExpressHandler(auth));
+const handler = createAuthHandler({ auth, connectDB });
 
-app.get('/api/protected', requireAuth(), (req, res) => {
-  res.json({ message: 'Protected route', userId: req.session.userId });
+export const GET = handler.GET;
+export const POST = handler.POST;
+export const DELETE = handler.DELETE;
+export const OPTIONS = handler.OPTIONS;
+```
+
+### Server-Side Session Validation
+
+Get validated session in Server Components:
+
+```typescript
+import { getSession } from '@bloom/adapters/nextjs/server';
+
+export default async function Page() {
+  const session = await getSession();
+
+  if (!session) {
+    return <div>Please sign in</div>;
+  }
+
+  return <div>Welcome, {session.user.email}</div>;
+}
+```
+
+### Middleware Protection
+
+Protect routes with middleware:
+
+```typescript
+import { bloomMiddleware } from '@bloom/adapters/nextjs/middleware';
+
+export default bloomMiddleware({
+  protectedRoutes: ['/dashboard', '/settings'],
 });
 
-app.listen(5000, () => {
-  console.log('Server running on port 5000');
+export const config = {
+  matcher: [
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
+  ],
+};
+```
+
+### CORS Configuration
+
+```typescript
+const handler = createAuthHandler({
+  auth,
+  connectDB,
+  cors: {
+    origin: ['https://app.example.com'],
+    credentials: true,
+  },
 });
 ```
 

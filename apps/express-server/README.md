@@ -37,13 +37,12 @@ Update `.env` with your values:
 
 ```env
 DATABASE_URL=mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin
-REDIS_URL=redis://localhost:6379
 SESSION_SECRET=your-super-secret-session-key
 PORT=5000
 FRONTEND_URL=http://localhost:3000
 ```
 
-Start MongoDB and Redis:
+Start MongoDB:
 
 ```bash
 pnpm docker:up
@@ -73,10 +72,6 @@ bloomServer({
   session: {
     secret: process.env.SESSION_SECRET,
     expiresIn: 7 * 24 * 60 * 60 * 1000,
-  },
-  sessionStore: {
-    type: 'redis',
-    uri: process.env.REDIS_URL,
   },
   emailAndPassword: {
     requireEmailVerification: false,

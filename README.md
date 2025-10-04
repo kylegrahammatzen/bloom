@@ -17,7 +17,7 @@ Bloom is an open-source framework-agnostic authentication SDK for TypeScript, wi
 
 - Framework-agnostic core with adapters for Express and Next.js
 - Type-safe authentication SDK
-- Session management with Argon2id password hashing and Redis caching
+- Cookie-based session management with Argon2id password hashing
 - Email verification and password reset flows
 - Server-side rendering support with Next.js adapter
 
@@ -29,10 +29,10 @@ Bloom is an open-source framework-agnostic authentication SDK for TypeScript, wi
 
 ## Packages
 
-- [@bloom/core](packages/core) - Framework-agnostic authentication core with Express and Next.js adapters
+- [@bloom/core](packages/core) - Framework-agnostic authentication core
+- [@bloom/adapters](packages/adapters) - Framework adapters for Express and Next.js
 - [@bloom/client](packages/client) - Browser HTTP client for authentication
 - [@bloom/react](packages/react) - React hooks and context provider
-- [@bloom/adapters](packages/adapters) - Framework middleware adapters
 
 ## Getting Started
 

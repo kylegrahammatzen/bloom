@@ -100,52 +100,37 @@ bloomAuth({
 });
 ```
 
-### Logging Configuration
-
-```typescript
-bloomAuth({
-  logging: {
-    level: 'info',
-    enabled: true,
-  },
-});
-```
-
-Log levels: `trace`, `debug`, `info`, `warn`, `error`, `fatal`
-
 ### Callbacks
 
 ```typescript
-import { logger } from '@bloom/core';
-
 bloomAuth({
   callbacks: {
     onSignIn: async ({ user, session, ip }) => {
-      logger.info({ userId: user.id, ip }, 'User signed in');
+      console.log(`[SignIn] User ${user.id} from ${ip}`);
     },
     onSignOut: async ({ userId, ip }) => {
-      logger.info({ userId, ip }, 'User signed out');
+      console.log(`[SignOut] User ${userId} from ${ip}`);
     },
     onRegister: async ({ user, session, ip }) => {
-      logger.info({ userId: user.id, ip }, 'User registered');
+      console.log(`[Register] User ${user.id} from ${ip}`);
     },
     onAccountDelete: async ({ userId, email, ip }) => {
-      logger.warn({ userId, email, ip }, 'Account deleted');
+      console.log(`[Delete] Account ${userId} (${email}) from ${ip}`);
     },
     onEmailVerify: async ({ userId, email, ip }) => {
-      logger.info({ userId, email, ip }, 'Email verified');
+      console.log(`[Verify] Email ${email} for user ${userId}`);
     },
     onPasswordReset: async ({ userId, email, ip }) => {
-      logger.info({ userId, email, ip }, 'Password reset');
+      console.log(`[Reset] Password for ${email}`);
     },
     onError: async ({ error, endpoint, userId, ip }) => {
-      logger.error({ error, endpoint, userId, ip }, 'Auth error');
+      console.error(`[Error] ${endpoint}: ${error}`);
     },
     onRateLimit: async ({ ip, endpoint, limit, userId }) => {
-      logger.warn({ ip, endpoint, limit, userId }, 'Rate limit exceeded');
+      console.warn(`[RateLimit] ${endpoint} exceeded for ${ip}`);
     },
     onAuthEvent: async (ctx) => {
-      logger.info({ action: ctx.action, email: ctx.email }, 'Auth event');
+      console.log(`[Auth] ${ctx.action} - ${ctx.email || ctx.userId}`);
     },
   },
 });
@@ -188,44 +173,7 @@ enum APIErrorCode {
 
 ## Next.js Server Utilities
 
-### Get Session in Server Components
-
-```typescript
-import { getSession } from '@bloom/core/server/nextjs';
-
-export default async function Page() {
-  const session = await getSession();
-
-  if (!session) {
-    return <div>Please sign in</div>;
-  }
-
-  return <div>Welcome, user {session.userId}</div>;
-}
-```
-
-### Middleware Protection
-
-```typescript
-import { bloomMiddleware } from '@bloom/core/server/nextjs';
-
-export default bloomMiddleware({
-  protectedRoutes: ['/dashboard', '/settings'],
-});
-```
-
-## Logging
-
-```typescript
-import { logger } from '@bloom/core';
-
-logger.info('User action');
-logger.warn({ userId: '123' }, 'Warning message');
-logger.error({ error }, 'Error occurred');
-```
-
-Development mode: Pretty-printed colored logs
-Production mode: Structured JSON logs
+For Next.js specific utilities like getSession() and bloomMiddleware(), see the [@bloom/adapters package](../adapters) documentation.
 
 ## Type Exports
 
