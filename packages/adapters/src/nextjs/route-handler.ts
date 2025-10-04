@@ -15,21 +15,26 @@ export type NextAuthHandlerConfig = {
 
 const API_AUTH_PREFIX = '/api/auth';
 
-function setCorsHeaders(response: NextResponse, request: NextRequest, corsConfig?: NextAuthHandlerConfig['cors']) {
+function applyCorsHeaders(response: NextResponse, request: NextRequest, corsConfig?: NextAuthHandlerConfig['cors']) {
   if (corsConfig === false) return;
 
   const origin = request.headers.get('origin');
   const allowedOrigins = corsConfig?.origin;
 
+  let setOrigin = false;
   if (Array.isArray(allowedOrigins)) {
     if (origin && allowedOrigins.includes(origin)) {
       response.headers.set('Access-Control-Allow-Origin', origin);
-      response.headers.set('Vary', 'Origin');
+      setOrigin = true;
     }
   } else if (allowedOrigins) {
     response.headers.set('Access-Control-Allow-Origin', allowedOrigins);
   } else if (origin) {
     response.headers.set('Access-Control-Allow-Origin', origin);
+    setOrigin = true;
+  }
+
+  if (setOrigin) {
     response.headers.set('Vary', 'Origin');
   }
 
@@ -74,6 +79,20 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
   const cookieName = getCookieName(auth.config);
   const cookieOptions = getCookieOptionsForNextJS(auth.config);
 
+  function createJsonResponse(request: NextRequest, body: any, status: number): NextResponse {
+    const response = NextResponse.json(body, { status });
+    applyCorsHeaders(response, request, corsConfig);
+    return response;
+  }
+
+  function handleSessionCookie(response: NextResponse, sessionData?: any, clearSession?: boolean) {
+    if (sessionData) {
+      response.cookies.set(cookieName, JSON.stringify(sessionData), cookieOptions);
+    } else if (clearSession) {
+      response.cookies.delete(cookieName);
+    }
+  }
+
   async function handleRequest(request: NextRequest, method: string) {
     try {
       await connectDB?.();
@@ -84,17 +103,9 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       const context = buildContext(request, method, body, session);
 
       const result = await auth.handler(context);
-      const response = NextResponse.json(result.body, { status: result.status });
+      const response = createJsonResponse(request, result.body, result.status);
 
-      setCorsHeaders(response, request, corsConfig);
-
-      if (result.sessionData) {
-        response.cookies.set(cookieName, JSON.stringify(result.sessionData), cookieOptions);
-      }
-
-      if (result.clearSession) {
-        response.cookies.delete(cookieName);
-      }
+      handleSessionCookie(response, result.sessionData, result.clearSession);
 
       return response;
     } catch (error) {
@@ -105,15 +116,13 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
 
       const apiError = toAPIError(error);
       const errorResponse = apiError.toResponse();
-      const response = NextResponse.json(errorResponse.body, { status: errorResponse.status });
-      setCorsHeaders(response, request, corsConfig);
-      return response;
+      return createJsonResponse(request, errorResponse.body, errorResponse.status);
     }
   }
 
-  async function handleOptions(request: NextRequest) {
+  function handleOptions(request: NextRequest) {
     const response = new NextResponse(null, { status: 204 });
-    setCorsHeaders(response, request, corsConfig);
+    applyCorsHeaders(response, request, corsConfig);
     return response;
   }
 
