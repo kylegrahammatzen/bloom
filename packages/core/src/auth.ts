@@ -5,14 +5,9 @@ import { mapSession, mapUser } from '@/utils/mappers';
 import { createDefaultConfig } from '@/config';
 import { createHandler } from '@/handler';
 import { parseSessionCookie } from '@/schemas/session';
-import { sessionManagementPlugin } from '@/plugins/session-management';
 
 export function bloomAuth(config: Partial<BloomAuthConfig> = {}): BloomAuth {
   const defaultConfig = createDefaultConfig(config);
-
-  // Register built-in plugins
-  const builtInPlugins = [sessionManagementPlugin()];
-  const allPlugins = [...builtInPlugins, ...(defaultConfig.plugins || [])];
 
   const auth: BloomAuth = {
     config: defaultConfig,
@@ -129,21 +124,23 @@ export function bloomAuth(config: Partial<BloomAuthConfig> = {}): BloomAuth {
     }
   };
 
-  // Register all plugins (built-in + user plugins)
-  for (const plugin of allPlugins) {
-    // Merge plugin API methods into auth.api
-    if (plugin.api) {
-      for (const [namespace, methods] of Object.entries(plugin.api)) {
-        if (!auth.api[namespace]) {
-          auth.api[namespace] = {};
+  // Register plugins
+  if (defaultConfig.plugins) {
+    for (const plugin of defaultConfig.plugins) {
+      // Merge plugin API methods into auth.api
+      if (plugin.api) {
+        for (const [namespace, methods] of Object.entries(plugin.api)) {
+          if (!auth.api[namespace]) {
+            auth.api[namespace] = {};
+          }
+          Object.assign(auth.api[namespace], methods);
         }
-        Object.assign(auth.api[namespace], methods);
       }
-    }
 
-    // Call plugin init hook
-    if (plugin.init) {
-      plugin.init(auth);
+      // Call plugin init hook
+      if (plugin.init) {
+        plugin.init(auth);
+      }
     }
   }
 
