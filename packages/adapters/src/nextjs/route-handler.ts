@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { BloomHandlerContext, BloomAuth } from '@/schemas';
-import { parseSessionCookie } from '@/schemas/session';
-import { APIError, APIErrorCode } from '@/schemas/errors';
-import { logger } from '@/utils/logger';
-import { getCookieName, getCookieOptionsForNextJS } from '@/utils/cookies';
+import type { BloomHandlerContext, BloomAuth } from '@bloom/core';
+import { parseSessionCookie } from '@bloom/core/schemas/session';
+import { APIError, APIErrorCode } from '@bloom/core/schemas/errors';
+import { getCookieName, getCookieOptionsForNextJS } from '@bloom/core';
 
 export type NextAuthHandlerConfig = {
   auth: BloomAuth;
@@ -104,7 +103,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       return response;
     } catch (error) {
       if (!(error instanceof APIError || error instanceof SyntaxError)) {
-        logger.error({ error, path: request.nextUrl.pathname }, 'Auth API error');
+        console.error('Auth API error:', { error, path: request.nextUrl.pathname });
       }
 
       const apiError = error instanceof APIError

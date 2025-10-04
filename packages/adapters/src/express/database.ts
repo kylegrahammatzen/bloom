@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { logger } from '@/utils/logger';
+import { logger } from '@bloom/core/utils/logger';
 
 export async function connectDatabase(mongoUri: string) {
   if (!mongoose.connection.readyState) {

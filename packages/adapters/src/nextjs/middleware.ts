@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { parseSessionCookie, type SessionCookieData } from '@/schemas/session';
+import { parseSessionCookie, type SessionCookieData } from '@bloom/core/schemas/session';
 
 export type BloomMiddlewareConfig = {
   protectedRoutes?: string[];

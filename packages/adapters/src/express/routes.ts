@@ -1,7 +1,7 @@
 import type { Application } from 'express';
 import express from 'express';
-import { APIError, APIErrorCode } from '@/schemas/errors';
-import { logger } from '@/utils/logger';
+import { APIError, APIErrorCode } from '@bloom/core/schemas/errors';
+import { logger } from '@bloom/core/utils/logger';
 
 export function setupHealthRoute(app: Application) {
   app.get('/api/health', (_req, res) => {

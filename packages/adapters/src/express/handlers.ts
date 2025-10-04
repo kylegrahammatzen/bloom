@@ -1,9 +1,9 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
-import type { BloomAuth, BloomHandlerContext } from '@/schemas';
-import { parseSessionCookie } from '@/schemas/session';
-import { APIError, APIErrorCode } from '@/schemas/errors';
-import { logger } from '@/utils/logger';
-import { getCookieName, getCookieOptions } from '@/utils/cookies';
+import type { BloomAuth, BloomHandlerContext } from '@bloom/core';
+import { parseSessionCookie } from '@bloom/core/schemas/session';
+import { APIError, APIErrorCode } from '@bloom/core/schemas/errors';
+import { logger } from '@bloom/core/utils/logger';
+import { getCookieName, getCookieOptions } from '@bloom/core';
 
 export function toExpressHandler(auth: BloomAuth): Router {
   const router = express.Router();
