@@ -1,4 +1,4 @@
-import type { User, Session } from '@/types';
+import type { User, Session } from '@/schemas';
 import type { IUser, ISession } from '@/models';
 
 export function mapUser(user: IUser): User {

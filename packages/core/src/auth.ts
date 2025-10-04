@@ -1,11 +1,11 @@
-export type { User, Session, BloomAuthConfig, BloomAuth } from '@/types';
-import type { BloomAuth, BloomAuthConfig } from '@/types';
+export type { User, Session, BloomAuthConfig, BloomAuth } from '@/schemas';
+import type { BloomAuth, BloomAuthConfig } from '@/schemas';
 import { User as UserModel, Session as SessionModel } from '@/models';
 import { mapSession } from '@/utils/mappers';
 import { createDefaultConfig } from '@/config';
 import { createHandler } from '@/handler';
 
-export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
+export function bloomAuth(config: Partial<BloomAuthConfig> = {}): BloomAuth {
   const defaultConfig = createDefaultConfig(config);
 
   const auth: BloomAuth = {
