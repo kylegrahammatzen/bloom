@@ -32,6 +32,7 @@ export class RedisStorage implements SecondaryStorage {
     if (!this.isConnected) {
       await this.client.connect();
       this.isConnected = true;
+      console.log(`[SecondaryStorage] Connected to Redis (namespace: ${this.namespace})`);
     }
   }
 

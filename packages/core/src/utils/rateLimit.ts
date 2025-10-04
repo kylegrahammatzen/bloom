@@ -13,6 +13,8 @@ type RateLimitConfig = {
 
 const attempts = new Map<string, RateLimitAttempt>();
 
+let hasLoggedStorageMode = false;
+
 /**
  * Check if a rate limit has been exceeded using secondary storage if available
  */
@@ -22,7 +24,15 @@ export async function checkRateLimit(
   storage?: SecondaryStorage
 ): Promise<{ isLimited: boolean; remaining: number; resetAt?: Date }> {
   if (storage) {
+    if (!hasLoggedStorageMode) {
+      console.log('[RateLimit] Using secondary storage for rate limiting');
+      hasLoggedStorageMode = true;
+    }
     return checkRateLimitWithStorage(key, config, storage);
+  }
+  if (!hasLoggedStorageMode) {
+    console.log('[RateLimit] Using in-memory storage for rate limiting');
+    hasLoggedStorageMode = true;
   }
   return checkRateLimitInMemory(key, config);
 }
