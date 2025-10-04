@@ -1,4 +1,5 @@
 import type { SecondaryStorage } from '@/schemas/storage';
+import { logger } from '@/utils/logger';
 
 type RateLimitAttempt = {
   count: number;
@@ -25,13 +26,13 @@ export async function checkRateLimit(
 ): Promise<{ isLimited: boolean; remaining: number; resetAt?: Date }> {
   if (storage) {
     if (!hasLoggedStorageMode) {
-      console.log('[RateLimit] Using secondary storage for rate limiting');
+      logger.debug('Using secondary storage for rate limiting');
       hasLoggedStorageMode = true;
     }
     return checkRateLimitWithStorage(key, config, storage);
   }
   if (!hasLoggedStorageMode) {
-    console.log('[RateLimit] Using in-memory storage for rate limiting');
+    logger.debug('Using in-memory storage for rate limiting');
     hasLoggedStorageMode = true;
   }
   return checkRateLimitInMemory(key, config);
