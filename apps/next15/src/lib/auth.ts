@@ -1,4 +1,4 @@
-import { bloomAuth, RedisStorage, createLogger, sessionManagementPlugin } from '@bloom/core';
+import { bloomAuth, RedisStorage, createLogger, sessions } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { mongoose } from './db';
 
@@ -24,7 +24,7 @@ export const auth = bloomAuth({
   },
   logger,
   plugins: [
-    sessionManagementPlugin(),
+    sessions(),
   ],
   callbacks: {
     onAuthEvent: (ctx: AuthEventContext) => {

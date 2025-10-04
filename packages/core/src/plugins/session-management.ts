@@ -1,18 +1,20 @@
-import type { BloomPlugin, ApiMethodParams, Session } from '@/schemas';
-import { Session as SessionModel, User as UserModel } from '@/models';
+import type { BloomPlugin, BloomAuth, ApiMethodParams, Session } from '@/schemas';
+import { Session as SessionModel } from '@/models';
 import { parseSessionCookie } from '@/schemas/session';
 import { mapSession } from '@/utils/mappers';
 import { APIError, APIErrorCode } from '@/schemas/errors';
 
 /**
- * Session management plugin - provides multi-session management
+ * Sessions plugin - provides multi-session management
  * Adds auth.api.sessions.getAll() and auth.api.sessions.revoke()
  */
-export function sessionManagementPlugin(): BloomPlugin {
+export const sessions = (): BloomPlugin => {
   return {
-    name: 'session-management',
-    api: {
-      sessions: {
+    name: 'sessions',
+    init: (auth: BloomAuth) => {
+      const cookieName = auth.config.session?.cookieName || 'bloom.sid';
+
+      auth.api.sessions = {
         /**
          * Get all sessions for the authenticated user
          */
@@ -24,7 +26,6 @@ export function sessionManagementPlugin(): BloomPlugin {
           }
 
           const cookies = parseCookies(cookieValue);
-          const cookieName = 'bloom.sid'; // TODO: get from config
           const sessionCookie = cookies[cookieName];
 
           if (!sessionCookie) {
@@ -37,16 +38,16 @@ export function sessionManagementPlugin(): BloomPlugin {
           }
 
           // Find all sessions for this user
-          const sessions = await SessionModel.find({
+          const sessionDocs = await SessionModel.find({
             user_id: sessionData.userId
           }).sort({ last_accessed: -1 });
 
-          if (!sessions || sessions.length === 0) {
+          if (!sessionDocs || sessionDocs.length === 0) {
             return [];
           }
 
           // Map sessions with isCurrent flag
-          return sessions.map(session =>
+          return sessionDocs.map(session =>
             mapSession(
               session,
               undefined,
@@ -71,7 +72,6 @@ export function sessionManagementPlugin(): BloomPlugin {
           }
 
           const cookies = parseCookies(cookieValue);
-          const cookieName = 'bloom.sid';
           const sessionCookie = cookies[cookieName];
 
           if (!sessionCookie) {
@@ -105,10 +105,10 @@ export function sessionManagementPlugin(): BloomPlugin {
 
           return { message: 'Session revoked successfully' };
         }
-      }
+      };
     }
   };
-}
+};
 
 /**
  * Simple cookie parser helper

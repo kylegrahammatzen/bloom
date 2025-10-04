@@ -127,17 +127,7 @@ export function bloomAuth(config: Partial<BloomAuthConfig> = {}): BloomAuth {
   // Register plugins
   if (defaultConfig.plugins) {
     for (const plugin of defaultConfig.plugins) {
-      // Merge plugin API methods into auth.api
-      if (plugin.api) {
-        for (const [namespace, methods] of Object.entries(plugin.api)) {
-          if (!auth.api[namespace]) {
-            auth.api[namespace] = {};
-          }
-          Object.assign(auth.api[namespace], methods);
-        }
-      }
-
-      // Call plugin init hook
+      // Call plugin init hook to register API methods
       if (plugin.init) {
         plugin.init(auth);
       }
