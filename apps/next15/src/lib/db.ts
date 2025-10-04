@@ -12,8 +12,9 @@ export async function connectDB() {
       socketTimeoutMS: 45000,
     });
     isConnected = true;
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
+  } catch (error: any) {
+    const message = error?.message || 'Unknown error';
+    console.error(`MongoDB connection failed: ${message}`);
+    throw new Error(`Database connection failed: ${message}`);
   }
 }

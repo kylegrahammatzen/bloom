@@ -103,7 +103,8 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       return response;
     } catch (error) {
       if (!(error instanceof APIError || error instanceof SyntaxError)) {
-        console.error('Auth API error:', { error, path: request.nextUrl.pathname });
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Auth API error at ${request.nextUrl.pathname}: ${message}`);
       }
 
       const apiError = error instanceof APIError
