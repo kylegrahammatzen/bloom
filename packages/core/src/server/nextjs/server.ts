@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
-import { parseSessionCookie } from '@/types/session';
-import { APIError, APIErrorCode } from '@/types/errors';
+import { parseSessionCookie } from '@/schemas/session';
+import { APIError, APIErrorCode } from '@/schemas/errors';
 
 export type BloomSession = {
   userId: string;

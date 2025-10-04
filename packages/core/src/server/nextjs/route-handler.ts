@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { BloomHandlerContext, BloomAuth } from '@/types';
-import { parseSessionCookie } from '@/types/session';
-import { APIError, APIErrorCode } from '@/types/errors';
+import type { BloomHandlerContext, BloomAuth } from '@/schemas';
+import { parseSessionCookie } from '@/schemas/session';
+import { APIError, APIErrorCode } from '@/schemas/errors';
 import { logger } from '@/utils/logger';
+import { getCookieName, getCookieOptionsForNextJS } from '@/utils/cookies';
 
 export type NextAuthHandlerConfig = {
   auth: BloomAuth;
@@ -45,7 +46,8 @@ function setCorsHeaders(response: NextResponse, request: NextRequest, corsConfig
 
 export function createAuthHandler(config: NextAuthHandlerConfig) {
   const { auth, connectDB, cors: corsConfig } = config;
-  const cookieName = auth.config.session?.cookieName || 'bloom.sid';
+  const cookieName = getCookieName(auth.config);
+  const cookieOptions = getCookieOptionsForNextJS(auth.config);
 
   async function handleRequest(request: NextRequest, method: string) {
     try {
@@ -88,12 +90,11 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       setCorsHeaders(response, request, corsConfig);
 
       if (result.sessionData) {
-        response.cookies.set(cookieName, JSON.stringify(result.sessionData), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          maxAge: 7 * 24 * 60 * 60,
-        });
+        response.cookies.set(
+          cookieName,
+          JSON.stringify(result.sessionData),
+          cookieOptions
+        );
       }
 
       if (result.clearSession) {
