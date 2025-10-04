@@ -63,7 +63,7 @@ Basic Server Setup:
 
 ```typescript
 import 'dotenv/config';
-import { bloomServer } from '@bloom/core/server/express';
+import { bloomServer } from '@bloom/adapters/express';
 import type { AuthEventContext } from '@bloom/core';
 
 bloomServer({

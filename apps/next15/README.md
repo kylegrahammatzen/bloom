@@ -69,7 +69,7 @@ Open http://localhost:3001
 Server Component:
 
 ```typescript
-import { getSession } from '@bloom/core/server/nextjs';
+import { getSession } from '@bloom/adapters/nextjs';
 
 export default async function Page() {
   const session = await getSession();
@@ -85,7 +85,7 @@ export default async function Page() {
 Middleware:
 
 ```typescript
-import { bloomMiddleware } from '@bloom/core/server/nextjs';
+import { bloomMiddleware } from '@bloom/adapters/nextjs';
 
 export default bloomMiddleware({
   protectedRoutes: ['/dashboard'],
@@ -102,7 +102,7 @@ export const config = {
 API Route Handler:
 
 ```typescript
-import { createAuthHandler } from '@bloom/core/server/nextjs';
+import { createAuthHandler } from '@bloom/adapters/nextjs';
 import { bloomAuth } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { connectDB } from '@/lib/db';
