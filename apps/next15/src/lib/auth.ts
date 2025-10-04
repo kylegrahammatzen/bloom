@@ -1,6 +1,12 @@
+import mongoose from 'mongoose';
 import { bloomAuth, RedisStorage } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
-import { connectDB } from './db';
+
+await mongoose.connect(process.env.DATABASE_URL!, {
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 1000,
+  socketTimeoutMS: 45000,
+});
 
 const redisStorage = new RedisStorage({
   url: process.env.REDIS_URL!,
@@ -8,12 +14,8 @@ const redisStorage = new RedisStorage({
   namespace: 'bloom',
 });
 
-await redisStorage.connect();
-
 export const auth = bloomAuth({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
+  database: mongoose,
   session: {
     secret: process.env.SESSION_SECRET,
     expiresIn: 7 * 24 * 60 * 60 * 1000,
@@ -30,5 +32,3 @@ export const auth = bloomAuth({
     },
   },
 });
-
-export { connectDB };

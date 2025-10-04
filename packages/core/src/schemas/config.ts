@@ -1,14 +1,12 @@
 import { z } from 'zod';
 import type { SecondaryStorage } from './storage';
+import type { Mongoose } from 'mongoose';
 
 /**
  * Zod schema for BloomAuthConfig with defaults
  */
 export const BloomConfigSchema = z.object({
-  database: z.object({
-    provider: z.literal('mongodb').optional(),
-    uri: z.string().optional(),
-  }).optional(),
+  database: z.custom<Mongoose | { uri: string }>().optional(),
   session: z.object({
     expiresIn: z.number().int().positive().default(7 * 24 * 60 * 60 * 1000),
     cookieName: z.string().default('bloom.sid'),

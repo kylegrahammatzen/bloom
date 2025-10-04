@@ -4,26 +4,12 @@ import type { BloomServerConfig, BloomServerInstance } from '@bloom/core/schemas
 import { toExpressHandler, requireAuth } from './handlers';
 import { setupHelmet, setupCors, setupCookieParser } from './middleware';
 import { setupHealthRoute, setupErrorHandler } from './routes';
-import { connectDatabase } from './database';
 import { logger } from '@bloom/core/utils/logger';
 
-type ValidatedConfig = BloomServerConfig & {
-  database: { uri: string };
-  session: { secret: string };
-};
-
-function validateConfig(config: BloomServerConfig): asserts config is ValidatedConfig {
-  if (!config.database?.uri) {
-    throw new Error('Database URI is required. Please provide config.database.uri');
-  }
-
+export function bloomServer(config: BloomServerConfig): BloomServerInstance {
   if (!config.session?.secret) {
     throw new Error('Session secret is required. Please provide config.session.secret');
   }
-}
-
-export function bloomServer(config: BloomServerConfig): BloomServerInstance {
-  validateConfig(config);
 
   const app: Application = express();
   const auth = bloomAuth(config);
@@ -51,23 +37,15 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
   const start = async (port?: number) => {
     const serverPort = port || config.port || parseInt(process.env.PORT || '5000', 10);
 
-    try {
-      await connectDatabase(config.database.uri);
+    app.listen(serverPort, () => {
+      logger.info(`Bloom authentication server running on port ${serverPort}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 
-      app.listen(serverPort, () => {
-        logger.info(`Bloom authentication server running on port ${serverPort}`);
-        logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-        logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-
-        if (config.onReady) {
-          config.onReady(serverPort);
-        }
-      });
-
-    } catch (error) {
-      logger.error({ error }, 'Failed to start server');
-      process.exit(1);
-    }
+      if (config.onReady) {
+        config.onReady(serverPort);
+      }
+    });
   };
 
   return {

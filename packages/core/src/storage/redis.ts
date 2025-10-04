@@ -36,18 +36,20 @@ export class RedisStorage implements SecondaryStorage {
     return `${this.namespace}:${k}`;
   }
 
-  async connect(): Promise<void> {
+  private async ensureConnected(): Promise<void> {
     if (!this.client.isOpen) {
       await this.client.connect();
     }
   }
 
   async get<T = unknown>(key: string): Promise<T | null> {
+    await this.ensureConnected();
     const value = await this.client.get(this.key(key));
     return value ? JSON.parse(value) : null;
   }
 
   async set(key: string, value: unknown, ttl?: number): Promise<void> {
+    await this.ensureConnected();
     const serialized = JSON.stringify(value);
     if (ttl) {
       await this.client.set(this.key(key), serialized, { EX: ttl });
@@ -57,6 +59,7 @@ export class RedisStorage implements SecondaryStorage {
   }
 
   async delete(key: string): Promise<void> {
+    await this.ensureConnected();
     await this.client.del(this.key(key));
   }
 

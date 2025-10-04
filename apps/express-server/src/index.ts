@@ -1,13 +1,11 @@
 import 'dotenv/config';
 import { bloomServer } from '@bloom/adapters/express';
-import { redisStorage } from './lib/auth';
+import { mongoose, redisStorage } from './lib/auth';
 import { logger } from '@bloom/core/utils/logger';
 import type { AuthEventContext } from '@bloom/core';
 
 bloomServer({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
+  database: mongoose,
   session: {
     secret: process.env.SESSION_SECRET,
   },

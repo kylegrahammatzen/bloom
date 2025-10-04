@@ -6,7 +6,6 @@ import { getCookieName, getCookieOptionsForNextJS } from '@bloom/core';
 
 export type NextJsHandlerOptions = {
   auth: BloomAuth;
-  connectDB?: () => Promise<void>;
   cors?: {
     origin?: string | string[];
     credentials?: boolean;
@@ -46,7 +45,7 @@ function buildContext(request: NextRequest, method: string, body: any, session: 
 }
 
 export function createAuthHandler(config: NextAuthHandlerConfig) {
-  const { auth, connectDB, cors: corsConfig } = config;
+  const { auth, cors: corsConfig } = config;
   const cookieName = getCookieName(auth.config);
   const cookieOptions = getCookieOptionsForNextJS(auth.config);
 
@@ -96,8 +95,6 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
 
   async function handleRequest(request: NextRequest, method: string) {
     try {
-      await connectDB?.();
-
       const body = await parseRequestBody(request, method);
       const sessionCookie = request.cookies.get(cookieName);
       const session = sessionCookie ? parseSessionCookie(sessionCookie.value) : undefined;
