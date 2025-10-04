@@ -29,9 +29,7 @@ export default async function Home() {
 
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Active Sessions</h2>
-            <Suspense fallback={<div>Loading sessions...</div>}>
-              <AccountSessions />
-            </Suspense>
+            <AccountSessions />
           </div>
         </div>
       ) : (
