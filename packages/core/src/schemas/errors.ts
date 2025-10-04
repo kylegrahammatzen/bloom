@@ -14,6 +14,8 @@ export enum APIErrorCode {
   PASSWORD_REQUIRED = 'PASSWORD_REQUIRED',
   ENDPOINT_NOT_FOUND = 'ENDPOINT_NOT_FOUND',
   INVALID_REQUEST = 'INVALID_REQUEST',
+  INVALID_INPUT = 'INVALID_INPUT',
+  UNAUTHORIZED = 'UNAUTHORIZED',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
 
@@ -33,6 +35,8 @@ const ERROR_CONFIG: Record<APIErrorCode, { status: number; message: string }> = 
   [APIErrorCode.PASSWORD_REQUIRED]: { status: 400, message: 'Password must be between 8 and 256 characters' },
   [APIErrorCode.ENDPOINT_NOT_FOUND]: { status: 404, message: 'Endpoint not found' },
   [APIErrorCode.INVALID_REQUEST]: { status: 400, message: 'Malformed request body' },
+  [APIErrorCode.INVALID_INPUT]: { status: 400, message: 'Invalid input provided' },
+  [APIErrorCode.UNAUTHORIZED]: { status: 403, message: 'Unauthorized access' },
   [APIErrorCode.INTERNAL_ERROR]: { status: 500, message: 'Internal server error' },
 }
 

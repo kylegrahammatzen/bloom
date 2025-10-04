@@ -14,7 +14,7 @@ export function mapUser(user: IUser): User {
   };
 }
 
-export function mapSession(session: ISession, user?: IUser): Session {
+export function mapSession(session: ISession, user?: IUser, isCurrent?: boolean): Session {
   return {
     id: session.session_id,
     userId: session.user_id.toString(),
@@ -23,6 +23,10 @@ export function mapSession(session: ISession, user?: IUser): Session {
     lastAccessedAt: session.last_accessed,
     ipAddress: session.ip_address,
     userAgent: session.user_agent,
+    browser: (session as any).browser,
+    os: (session as any).os,
+    deviceType: (session as any).device_type,
+    ...(isCurrent !== undefined && { isCurrent }),
     ...(user && { user: mapUser(user) }),
   };
 }

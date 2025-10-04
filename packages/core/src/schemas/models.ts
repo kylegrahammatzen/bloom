@@ -23,6 +23,9 @@ export const SessionModelSchema = z.object({
   expires_at: z.date(),
   user_agent: z.string().max(500).optional(),
   ip_address: z.string().max(45).optional(),
+  browser: z.string().max(100).optional(),
+  os: z.string().max(100).optional(),
+  device_type: z.enum(['desktop', 'mobile', 'tablet', 'unknown']).default('unknown'),
   created_at: z.date().default(() => new Date()),
   last_accessed: z.date().default(() => new Date()),
 });

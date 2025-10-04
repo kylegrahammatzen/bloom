@@ -25,6 +25,10 @@ export const SessionSchema = z.object({
   lastAccessedAt: z.date(),
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
+  browser: z.string().optional(),
+  os: z.string().optional(),
+  deviceType: z.enum(['desktop', 'mobile', 'tablet', 'unknown']).optional(),
+  isCurrent: z.boolean().optional(),
   user: UserSchema.optional(),
 });
 
