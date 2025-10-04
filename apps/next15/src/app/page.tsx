@@ -1,10 +1,11 @@
+import { Suspense } from 'react';
 import { getSession } from '@bloom/adapters/nextjs/server';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/login-form';
 import { SignUpForm } from '@/components/auth/signup-form';
 import { LogoutButton } from '@/components/auth/logout-button';
 import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog';
+import { AccountSessions } from '@/components/auth/account-sessions';
 
 export default async function Home() {
   const validated = await getSession();
@@ -16,32 +17,37 @@ export default async function Home() {
         <p>An open-source project to show how authentication really works</p>
       </div>
 
-      <div>
-        {validated ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Logged in as {validated.user.email}</CardTitle>
-            </CardHeader>
-            <div className="flex gap-2 px-6 pb-6">
+      {validated ? (
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium mb-2">Logged in as {validated.user.email}</p>
+            <div className="flex gap-2">
               <LogoutButton />
               <DeleteAccountDialog />
             </div>
-          </Card>
-        ) : (
-          <Tabs defaultValue="login" className="w-96">
-            <TabsList className="w-full">
-              <TabsTrigger value="login" className="flex-1">Login</TabsTrigger>
-              <TabsTrigger value="signup" className="flex-1">Sign up</TabsTrigger>
-            </TabsList>
-            <TabsContent value="login">
-              <LoginForm />
-            </TabsContent>
-            <TabsContent value="signup">
-              <SignUpForm />
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Active Sessions</h2>
+            <Suspense fallback={<div>Loading sessions...</div>}>
+              <AccountSessions />
+            </Suspense>
+          </div>
+        </div>
+      ) : (
+        <Tabs defaultValue="login" className="w-96">
+          <TabsList className="w-full">
+            <TabsTrigger value="login" className="flex-1">Login</TabsTrigger>
+            <TabsTrigger value="signup" className="flex-1">Sign up</TabsTrigger>
+          </TabsList>
+          <TabsContent value="login">
+            <LoginForm />
+          </TabsContent>
+          <TabsContent value="signup">
+            <SignUpForm />
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }
