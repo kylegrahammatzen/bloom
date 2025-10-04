@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { SecondaryStorage } from './storage';
 
 /**
  * Zod schema for BloomAuthConfig with defaults
@@ -14,10 +15,6 @@ export const BloomConfigSchema = z.object({
     secret: z.string().optional(),
     slidingWindow: z.boolean().optional(),
   }).optional().default({ expiresIn: 7 * 24 * 60 * 60 * 1000, cookieName: 'bloom.sid' }),
-  sessionStore: z.object({
-    type: z.enum(['memory', 'redis', 'mongo']).optional(),
-    uri: z.string().optional(),
-  }).optional(),
   logging: z.object({
     level: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).optional(),
     enabled: z.boolean().optional(),
@@ -41,6 +38,7 @@ export const BloomConfigSchema = z.object({
       window: z.number().int().positive().optional(),
     }).optional(),
   }).optional().default({ enabled: true }),
+  secondaryStorage: z.custom<SecondaryStorage>().optional(),
   callbacks: z.record(z.string(), z.any()).optional().default({}),
   plugins: z.array(z.any()).optional().default([]),
 });

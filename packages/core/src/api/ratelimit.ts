@@ -15,10 +15,10 @@ export async function checkRateLimit(
   if (!rateLimitConfig?.max || !rateLimitConfig?.window) return null;
 
   const rateLimitKey = `${endpoint}:${ctx.request.ip || 'unknown'}`;
-  const rateLimit = checkLimit(rateLimitKey, {
+  const rateLimit = await checkLimit(rateLimitKey, {
     max: rateLimitConfig.max,
     window: rateLimitConfig.window
-  });
+  }, config.secondaryStorage);
 
   if (rateLimit.isLimited) {
     if (config.callbacks?.onRateLimit) {
@@ -33,6 +33,6 @@ export async function checkRateLimit(
     return new APIError(APIErrorCode.RATE_LIMITED, { resetAt: rateLimit.resetAt }).toResponse();
   }
 
-  trackAttempt(rateLimitKey);
+  await trackAttempt(rateLimitKey, config.secondaryStorage);
   return null;
 }

@@ -1,3 +1,5 @@
+import type { SecondaryStorage } from '@/schemas/storage';
+
 type RateLimitAttempt = {
   count: number;
   firstAttemptAt: number;
@@ -12,12 +14,74 @@ type RateLimitConfig = {
 const attempts = new Map<string, RateLimitAttempt>();
 
 /**
- * Check if a rate limit has been exceeded
- * @param key Unique identifier (IP address, email, etc.)
- * @param config Rate limit configuration
- * @returns Object with isLimited flag and remaining attempts
+ * Check if a rate limit has been exceeded using secondary storage if available
  */
-export function checkRateLimit(
+export async function checkRateLimit(
+  key: string,
+  config: RateLimitConfig,
+  storage?: SecondaryStorage
+): Promise<{ isLimited: boolean; remaining: number; resetAt?: Date }> {
+  if (storage) {
+    return checkRateLimitWithStorage(key, config, storage);
+  }
+  return checkRateLimitInMemory(key, config);
+}
+
+/**
+ * Track a new attempt for rate limiting using secondary storage if available
+ */
+export async function trackAttempt(key: string, storage?: SecondaryStorage): Promise<void> {
+  if (storage) {
+    return trackAttemptWithStorage(key, storage);
+  }
+  return trackAttemptInMemory(key);
+}
+
+async function checkRateLimitWithStorage(
+  key: string,
+  config: RateLimitConfig,
+  storage: SecondaryStorage
+): Promise<{ isLimited: boolean; remaining: number; resetAt?: Date }> {
+  const storageKey = `ratelimit:${key}`;
+  const attempt = await storage.get<RateLimitAttempt>(storageKey);
+
+  if (!attempt) {
+    return { isLimited: false, remaining: config.max };
+  }
+
+  const now = Date.now();
+  if (now - attempt.firstAttemptAt > config.window) {
+    await storage.delete(storageKey);
+    return { isLimited: false, remaining: config.max };
+  }
+
+  if (attempt.count >= config.max) {
+    const resetAt = new Date(attempt.firstAttemptAt + config.window);
+    return { isLimited: true, remaining: 0, resetAt };
+  }
+
+  return { isLimited: false, remaining: config.max - attempt.count };
+}
+
+async function trackAttemptWithStorage(key: string, storage: SecondaryStorage): Promise<void> {
+  const storageKey = `ratelimit:${key}`;
+  const now = Date.now();
+  const attempt = await storage.get<RateLimitAttempt>(storageKey);
+
+  if (!attempt) {
+    await storage.set(storageKey, {
+      count: 1,
+      firstAttemptAt: now,
+      lastAttemptAt: now,
+    }, Math.floor(24 * 60 * 60));
+  } else {
+    attempt.count++;
+    attempt.lastAttemptAt = now;
+    await storage.set(storageKey, attempt, Math.floor((attempt.firstAttemptAt + 24 * 60 * 60 * 1000 - now) / 1000));
+  }
+}
+
+function checkRateLimitInMemory(
   key: string,
   config: RateLimitConfig
 ): { isLimited: boolean; remaining: number; resetAt?: Date } {
@@ -41,11 +105,7 @@ export function checkRateLimit(
   return { isLimited: false, remaining: config.max - attempt.count };
 }
 
-/**
- * Track a new attempt for rate limiting
- * @param key Unique identifier (IP address, email, etc.)
- */
-export function trackAttempt(key: string): void {
+function trackAttemptInMemory(key: string): void {
   const now = Date.now();
   const attempt = attempts.get(key);
 
