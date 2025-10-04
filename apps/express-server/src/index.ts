@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import { bloomServer, logger } from '@bloom/core/server/express';
+import { bloomServer } from '@bloom/adapters/express';
+import { logger } from '@bloom/core/utils/logger';
 import type { AuthEventContext } from '@bloom/core';
 
 bloomServer({
