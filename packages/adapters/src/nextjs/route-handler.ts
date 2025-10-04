@@ -57,13 +57,15 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
 
       let body: any = undefined;
       if (method !== 'GET') {
-        try {
-          body = await request.json();
-        } catch (error) {
-          if (error instanceof SyntaxError) {
-            throw error;
+        const text = await request.text();
+        if (text.trim()) {
+          try {
+            body = JSON.parse(text);
+          } catch (error) {
+            if (error instanceof SyntaxError) {
+              throw error;
+            }
           }
-          body = undefined;
         }
       }
 
