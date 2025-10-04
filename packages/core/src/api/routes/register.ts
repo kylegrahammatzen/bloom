@@ -8,6 +8,7 @@ import { validateRequest, composeMiddleware } from '@/validation';
 import { RegisterSchema, type RegisterInput } from '@/schemas/auth';
 import { emitCallback } from '@/api/callbacks';
 import { mapUser, mapSession } from '@/utils/mappers';
+import { parseUserAgent } from '@/utils/user-agent';
 
 export async function handleRegister(ctx: ValidatedContext<RegisterInput>, config: BloomAuthConfig): Promise<GenericResponse> {
   const validate = composeMiddleware(
@@ -47,13 +48,19 @@ export async function handleRegister(ctx: ValidatedContext<RegisterInput>, confi
   });
   await verificationToken.save();
 
+  const userAgentString = ctx.request.userAgent || ctx.request.headers?.['user-agent'] as string | undefined;
+  const deviceInfo = parseUserAgent(userAgentString);
+
   const sessionId = generateSessionId();
   const session = new SessionModel({
     session_id: sessionId,
     user_id: user._id,
     expires_at: new Date(Date.now() + (config.session?.expiresIn || 7 * 24 * 60 * 60 * 1000)),
-    user_agent: ctx.request.userAgent || ctx.request.headers?.['user-agent'],
+    user_agent: userAgentString,
     ip_address: ctx.request.ip,
+    browser: deviceInfo.browser,
+    os: deviceInfo.os,
+    device_type: deviceInfo.deviceType,
   });
   await session.save();
 
