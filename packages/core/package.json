@@ -11,15 +11,16 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@zodyac/zod-mongoose": "^4.2.0",
     "argon2": "^0.31.2",
     "mongoose": "^7.6.3",
-    "pino": "^10.0.0"
+    "pino": "^10.0.0",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/express-session": "^1.17.10",
     "@vitest/ui": "^2.1.9",
     "next": "^15.5.4",
     "pino-pretty": "^13.1.1",
@@ -27,23 +28,13 @@
     "vitest": "^2.1.9"
   },
   "peerDependencies": {
-    "connect-mongo": "^5.1.0",
-    "connect-redis": "^7.1.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "express": "^4.0.0",
-    "express-session": "^1.17.3",
     "helmet": "^7.1.0",
-    "next": "^15.0.0",
-    "redis": "^4.6.0"
+    "next": "^15.0.0"
   },
   "peerDependenciesMeta": {
-    "connect-mongo": {
-      "optional": true
-    },
-    "connect-redis": {
-      "optional": true
-    },
     "cookie-parser": {
       "optional": true
     },
@@ -53,16 +44,10 @@
     "express": {
       "optional": true
     },
-    "express-session": {
-      "optional": true
-    },
     "helmet": {
       "optional": true
     },
     "next": {
-      "optional": true
-    },
-    "redis": {
       "optional": true
     }
   },
@@ -74,6 +59,54 @@
     "./types": {
       "types": "./dist/types/index.d.ts",
       "default": "./dist/types/index.js"
+    },
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "default": "./dist/schemas/index.js"
+    },
+    "./schemas/auth": {
+      "types": "./dist/schemas/auth.d.ts",
+      "default": "./dist/schemas/auth.js"
+    },
+    "./schemas/auth/client": {
+      "types": "./dist/schemas/auth.client.d.ts",
+      "default": "./dist/schemas/auth.client.js"
+    },
+    "./schemas/config": {
+      "types": "./dist/schemas/config.d.ts",
+      "default": "./dist/schemas/config.js"
+    },
+    "./schemas/cookies": {
+      "types": "./dist/schemas/cookies.d.ts",
+      "default": "./dist/schemas/cookies.js"
+    },
+    "./schemas/api": {
+      "types": "./dist/schemas/api.d.ts",
+      "default": "./dist/schemas/api.js"
+    },
+    "./schemas/errors": {
+      "types": "./dist/schemas/errors.d.ts",
+      "default": "./dist/schemas/errors.js"
+    },
+    "./schemas/handler": {
+      "types": "./dist/schemas/handler.d.ts",
+      "default": "./dist/schemas/handler.js"
+    },
+    "./schemas/plugin": {
+      "types": "./dist/schemas/plugin.d.ts",
+      "default": "./dist/schemas/plugin.js"
+    },
+    "./schemas/server": {
+      "types": "./dist/schemas/server.d.ts",
+      "default": "./dist/schemas/server.js"
+    },
+    "./schemas/session": {
+      "types": "./dist/schemas/session.d.ts",
+      "default": "./dist/schemas/session.js"
+    },
+    "./schemas/validation": {
+      "types": "./dist/schemas/validation.d.ts",
+      "default": "./dist/schemas/validation.js"
     },
     "./server/express": {
       "types": "./dist/server/express/index.d.ts",
