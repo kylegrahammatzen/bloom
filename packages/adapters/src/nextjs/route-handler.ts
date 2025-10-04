@@ -21,15 +21,13 @@ function setCorsHeaders(response: NextResponse, request: NextRequest, corsConfig
   const origin = request.headers.get('origin');
   const allowedOrigins = corsConfig?.origin;
 
-  if (allowedOrigins) {
-    if (Array.isArray(allowedOrigins)) {
-      if (origin && allowedOrigins.includes(origin)) {
-        response.headers.set('Access-Control-Allow-Origin', origin);
-        response.headers.set('Vary', 'Origin');
-      }
-    } else {
-      response.headers.set('Access-Control-Allow-Origin', allowedOrigins);
+  if (Array.isArray(allowedOrigins)) {
+    if (origin && allowedOrigins.includes(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Vary', 'Origin');
     }
+  } else if (allowedOrigins) {
+    response.headers.set('Access-Control-Allow-Origin', allowedOrigins);
   } else if (origin) {
     response.headers.set('Access-Control-Allow-Origin', origin);
     response.headers.set('Vary', 'Origin');
@@ -45,16 +43,30 @@ function setCorsHeaders(response: NextResponse, request: NextRequest, corsConfig
 
 async function parseRequestBody(request: NextRequest, method: string) {
   if (method === 'GET') return undefined;
-
   const text = await request.text();
-  if (!text.trim()) return undefined;
+  return text.trim() ? JSON.parse(text) : undefined;
+}
 
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    if (error instanceof SyntaxError) throw error;
-    return undefined;
-  }
+function toAPIError(error: unknown): APIError {
+  if (error instanceof APIError) return error;
+  if (error instanceof SyntaxError) return new APIError(APIErrorCode.INVALID_REQUEST);
+  return new APIError(APIErrorCode.INTERNAL_ERROR);
+}
+
+function buildContext(request: NextRequest, method: string, body: any, session: any): BloomHandlerContext {
+  const pathname = request.nextUrl.pathname;
+  return {
+    request: {
+      method,
+      path: pathname.replace(API_AUTH_PREFIX, ''),
+      url: pathname,
+      body,
+      headers: Object.fromEntries(request.headers.entries()),
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
+    },
+    session,
+  };
 }
 
 export function createAuthHandler(config: NextAuthHandlerConfig) {
@@ -66,23 +78,10 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
     try {
       await connectDB?.();
 
-      const pathname = request.nextUrl.pathname;
       const body = await parseRequestBody(request, method);
       const sessionCookie = request.cookies.get(cookieName);
-      const session = sessionCookie ? parseSessionCookie(sessionCookie.value) ?? undefined : undefined;
-
-      const context: BloomHandlerContext = {
-        request: {
-          method,
-          path: pathname.replace(API_AUTH_PREFIX, ''),
-          url: pathname,
-          body,
-          headers: Object.fromEntries(request.headers.entries()),
-          ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
-          userAgent: request.headers.get('user-agent') || undefined,
-        },
-        session,
-      };
+      const session = sessionCookie ? parseSessionCookie(sessionCookie.value) : undefined;
+      const context = buildContext(request, method, body, session);
 
       const result = await auth.handler(context);
       const response = NextResponse.json(result.body, { status: result.status });
@@ -104,12 +103,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
         console.error(`Auth API error at ${request.nextUrl.pathname}: ${message}`);
       }
 
-      const apiError = error instanceof APIError
-        ? error
-        : error instanceof SyntaxError
-        ? new APIError(APIErrorCode.INVALID_REQUEST)
-        : new APIError(APIErrorCode.INTERNAL_ERROR);
-
+      const apiError = toAPIError(error);
       const errorResponse = apiError.toResponse();
       const response = NextResponse.json(errorResponse.body, { status: errorResponse.status });
       setCorsHeaders(response, request, corsConfig);
