@@ -1,49 +1,17 @@
-import mongoose, { Document, Schema, UpdateWriteOpResult } from 'mongoose';
+import mongoose, { UpdateWriteOpResult } from 'mongoose';
+import { zodSchema } from '@zodyac/zod-mongoose';
+import { UserCredentialsModelSchema } from '@/schemas/models';
 
-export interface IUserCredentials extends Document {
-  user_id: mongoose.Types.ObjectId;
-  password_hash: string;
-  salt: string;
-  failed_login_attempts: number;
-  locked_until?: Date;
+const schema = zodSchema(UserCredentialsModelSchema);
 
-  isAccountLocked(): boolean;
-  incrementLoginAttempts(): Promise<UpdateWriteOpResult>;
-  resetLoginAttempts(): Promise<UpdateWriteOpResult>;
-}
+schema.index({ user_id: 1 }, { unique: true });
+schema.index({ locked_until: 1 });
 
-const UserCredentialsSchema = new Schema<IUserCredentials>({
-  user_id: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    unique: true,
-  },
-  password_hash: {
-    type: String,
-    required: true,
-  },
-  salt: {
-    type: String,
-    required: true,
-  },
-  failed_login_attempts: {
-    type: Number,
-    default: 0,
-  },
-  locked_until: {
-    type: Date,
-  },
-});
-
-UserCredentialsSchema.index({ user_id: 1 }, { unique: true });
-UserCredentialsSchema.index({ locked_until: 1 });
-
-UserCredentialsSchema.methods.isAccountLocked = function (): boolean {
+schema.methods.isAccountLocked = function (): boolean {
   return !!(this.locked_until && this.locked_until > new Date());
 };
 
-UserCredentialsSchema.methods.incrementLoginAttempts = function (): Promise<UpdateWriteOpResult> {
+schema.methods.incrementLoginAttempts = function (): Promise<UpdateWriteOpResult> {
   if (this.locked_until && this.locked_until < new Date()) {
     return this.updateOne({
       $unset: { locked_until: 1 },
@@ -60,10 +28,16 @@ UserCredentialsSchema.methods.incrementLoginAttempts = function (): Promise<Upda
   return this.updateOne(updates);
 };
 
-UserCredentialsSchema.methods.resetLoginAttempts = function (): Promise<UpdateWriteOpResult> {
+schema.methods.resetLoginAttempts = function (): Promise<UpdateWriteOpResult> {
   return this.updateOne({
     $unset: { failed_login_attempts: 1, locked_until: 1 },
   });
 };
 
-export const UserCredentials = mongoose.models.UserCredentials || mongoose.model<IUserCredentials>('UserCredentials', UserCredentialsSchema);
+export const UserCredentials = mongoose.models.UserCredentials || mongoose.model('UserCredentials', schema);
+
+export interface IUserCredentials extends mongoose.InferSchemaType<typeof schema>, mongoose.Document {
+  isAccountLocked(): boolean;
+  incrementLoginAttempts(): Promise<UpdateWriteOpResult>;
+  resetLoginAttempts(): Promise<UpdateWriteOpResult>;
+}
