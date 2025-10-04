@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { SecondaryStorage } from './storage';
-import type { Logger } from './logger';
+import type { Logger, LoggerConfig } from './logger';
 import type { Mongoose } from 'mongoose';
 
 /**
@@ -34,7 +34,7 @@ export const BloomConfigSchema = z.object({
     }).optional(),
   }).optional().default({ enabled: true }),
   secondaryStorage: z.custom<SecondaryStorage>().optional(),
-  logger: z.custom<Logger>().optional(),
+  logger: z.custom<Logger | LoggerConfig>().optional(),
   callbacks: z.record(z.string(), z.any()).optional().default({}),
   plugins: z.array(z.any()).optional().default([]),
 });

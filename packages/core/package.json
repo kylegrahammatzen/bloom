@@ -7,8 +7,7 @@
   "scripts": {
     "build": "tsc && tsc-alias",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "argon2": "^0.31.2",
@@ -24,7 +23,6 @@
     }
   },
   "devDependencies": {
-    "@vitest/ui": "^2.1.9",
     "redis": "^4.7.0",
     "tsc-alias": "^1.8.16",
     "vitest": "^2.1.9"
@@ -85,6 +83,10 @@
     "./schemas/validation": {
       "types": "./dist/schemas/validation.d.ts",
       "default": "./dist/schemas/validation.js"
+    },
+    "./utils/logger": {
+      "types": "./dist/utils/logger.d.ts",
+      "default": "./dist/utils/logger.js"
     }
   }
 }
