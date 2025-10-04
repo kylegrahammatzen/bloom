@@ -1,7 +1,15 @@
 import { createAuthHandler } from '@bloom/adapters/nextjs';
-import { bloomAuth } from '@bloom/core';
+import { bloomAuth, RedisStorage } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { connectDB } from '@/lib/db';
+
+const redisStorage = new RedisStorage({
+  url: process.env.REDIS_URL!,
+  poolSize: 10,
+  namespace: 'bloom',
+});
+
+await redisStorage.connect();
 
 const auth = bloomAuth({
   database: {
@@ -12,10 +20,7 @@ const auth = bloomAuth({
     expiresIn: 7 * 24 * 60 * 60 * 1000,
     cookieName: 'bloom.sid',
   },
-  sessionStore: {
-    type: 'redis',
-    uri: process.env.REDIS_URL,
-  },
+  secondaryStorage: redisStorage,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
