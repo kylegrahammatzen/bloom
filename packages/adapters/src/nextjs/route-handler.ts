@@ -4,7 +4,7 @@ import { parseSessionCookie } from '@bloom/core/schemas/session';
 import { APIError, APIErrorCode } from '@bloom/core/schemas/errors';
 import { getCookieName, getCookieOptionsForNextJS } from '@bloom/core';
 
-export type NextAuthHandlerConfig = {
+export type NextJsHandlerOptions = {
   auth: BloomAuth;
   connectDB?: () => Promise<void>;
   cors?: {
@@ -12,6 +12,8 @@ export type NextAuthHandlerConfig = {
     credentials?: boolean;
   } | false;
 };
+
+export type NextAuthHandlerConfig = NextJsHandlerOptions;
 
 const API_AUTH_PREFIX = '/api/auth';
 
@@ -132,3 +134,5 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
     OPTIONS: handleOptions,
   };
 }
+
+export const toNextJsHandler = createAuthHandler;

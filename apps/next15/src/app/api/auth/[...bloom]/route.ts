@@ -1,10 +1,4 @@
-import { createAuthHandler } from '@bloom/adapters/nextjs';
-import { auth } from '@/lib/auth';
-import { connectDB } from '@/lib/db';
+import { toNextJsHandler } from '@bloom/adapters/nextjs';
+import { auth, connectDB } from '@/lib/auth';
 
-const handler = createAuthHandler({ auth, connectDB });
-
-export const GET = handler.GET;
-export const POST = handler.POST;
-export const DELETE = handler.DELETE;
-export const OPTIONS = handler.OPTIONS;
+export const { GET, POST, DELETE, OPTIONS } = toNextJsHandler({ auth, connectDB });

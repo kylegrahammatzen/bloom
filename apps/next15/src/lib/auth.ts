@@ -1,5 +1,6 @@
 import { bloomAuth, RedisStorage } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
+import { connectDB } from './db';
 
 const redisStorage = new RedisStorage({
   url: process.env.REDIS_URL!,
@@ -29,3 +30,5 @@ export const auth = bloomAuth({
     },
   },
 });
+
+export { connectDB };
