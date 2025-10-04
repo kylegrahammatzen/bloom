@@ -3,7 +3,7 @@ import { APIError, APIErrorCode } from '@/schemas/errors';
 import { handleRegister } from '@/api/routes/register';
 import { handleLogin } from '@/api/routes/login';
 import { handleLogout } from '@/api/routes/logout';
-import { handleGetSession } from '@/api/routes/session';
+import { handleGetSession, handleGetAllSessions, handleRevokeSession } from '@/api/routes/session';
 import { handleVerifyEmail } from '@/api/routes/email';
 import { handleRequestPasswordReset, handleResetPassword } from '@/api/routes/password';
 import { handleDeleteAccount } from '@/api/routes/account';
@@ -18,9 +18,11 @@ const routes: Record<string, Record<string, RouteHandler>> = {
     '/verify-email': handleVerifyEmail,
     '/request-password-reset': handleRequestPasswordReset,
     '/reset-password': handleResetPassword,
+    '/sessions/revoke': handleRevokeSession,
   },
   GET: {
     '/me': handleGetSession,
+    '/sessions': handleGetAllSessions,
   },
   DELETE: {
     '/account': handleDeleteAccount,
