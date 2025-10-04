@@ -1,6 +1,6 @@
-import type { BloomAuthConfig, BloomHandlerContext } from '@/types';
+import type { BloomAuthConfig, BloomHandlerContext } from '@/schemas';
 import { checkRateLimit as checkLimit, trackAttempt } from '@/utils/rateLimit';
-import { APIError, APIErrorCode } from '@/types/errors';
+import { APIError, APIErrorCode } from '@/schemas/errors';
 
 type RateLimitEndpoint = 'login' | 'registration' | 'passwordReset';
 

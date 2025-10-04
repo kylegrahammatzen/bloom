@@ -1,6 +1,5 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
-import { createRouter, addRoute, findRoute } from '@/utils/router';
-import { APIError, APIErrorCode } from '@/types/errors';
+import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/schemas';
+import { APIError, APIErrorCode } from '@/schemas/errors';
 import { handleRegister } from '@/api/routes/register';
 import { handleLogin } from '@/api/routes/login';
 import { handleLogout } from '@/api/routes/logout';
@@ -9,32 +8,39 @@ import { handleVerifyEmail } from '@/api/routes/email';
 import { handleRequestPasswordReset, handleResetPassword } from '@/api/routes/password';
 import { handleDeleteAccount } from '@/api/routes/account';
 
+type RouteHandler = (ctx: BloomHandlerContext, config: BloomAuthConfig) => Promise<GenericResponse>;
+
+const routes: Record<string, Record<string, RouteHandler>> = {
+  POST: {
+    '/register': handleRegister,
+    '/login': handleLogin,
+    '/logout': handleLogout,
+    '/verify-email': handleVerifyEmail,
+    '/request-password-reset': handleRequestPasswordReset,
+    '/reset-password': handleResetPassword,
+  },
+  GET: {
+    '/me': handleGetSession,
+  },
+  DELETE: {
+    '/account': handleDeleteAccount,
+  },
+};
+
 export function createHandler(config: BloomAuthConfig) {
-  const router = createRouter();
-
-  addRoute(router, 'POST', '/register', (ctx: BloomHandlerContext) => handleRegister(ctx, config));
-  addRoute(router, 'POST', '/login', (ctx: BloomHandlerContext) => handleLogin(ctx, config));
-  addRoute(router, 'POST', '/logout', (ctx: BloomHandlerContext) => handleLogout(ctx, config));
-  addRoute(router, 'GET', '/me', handleGetSession);
-  addRoute(router, 'POST', '/verify-email', (ctx: BloomHandlerContext) => handleVerifyEmail(ctx, config));
-  addRoute(router, 'POST', '/request-password-reset', (ctx: BloomHandlerContext) => handleRequestPasswordReset(ctx, config));
-  addRoute(router, 'POST', '/reset-password', (ctx: BloomHandlerContext) => handleResetPassword(ctx, config));
-  addRoute(router, 'DELETE', '/account', (ctx: BloomHandlerContext) => handleDeleteAccount(ctx, config));
-
   return async (ctx: BloomHandlerContext): Promise<GenericResponse> => {
     const method = ctx.request.method;
     const path = ctx.request.path || ctx.request.url || '';
-    const normalizedPath = path.replace(/^\/api\/auth/, '');
+    const normalizedPath = path.replace(/^\/api\/auth/, '').replace(/\/$/, '') || '/';
 
     try {
-      const match = findRoute(router, method, normalizedPath);
+      const handler = routes[method]?.[normalizedPath];
 
-      if (!match) {
+      if (!handler) {
         return new APIError(APIErrorCode.ENDPOINT_NOT_FOUND).toResponse();
       }
 
-      const handler = match.data as (ctx: BloomHandlerContext) => Promise<GenericResponse>;
-      return await handler(ctx);
+      return await handler(ctx, config);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Internal server error');
 

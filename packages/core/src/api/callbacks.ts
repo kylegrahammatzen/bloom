@@ -1,4 +1,4 @@
-import type { BloomAuthConfig, User, Session } from '@/types';
+import type { BloomAuthConfig, User, Session } from '@/schemas';
 
 type CallbackContext = {
   action: string;
@@ -12,13 +12,11 @@ type CallbackContext = {
 };
 
 export async function emitCallback(type: keyof NonNullable<BloomAuthConfig['callbacks']>, context: CallbackContext, config: BloomAuthConfig) {
-  // Call specific callback if it exists
   const callback = config.callbacks?.[type];
   if (callback) {
     await callback(context as any);
   }
 
-  // Call general auth event callback if it exists
   if (config.callbacks?.onAuthEvent && type !== 'onAuthEvent') {
     await config.callbacks.onAuthEvent({
       action: context.action,
