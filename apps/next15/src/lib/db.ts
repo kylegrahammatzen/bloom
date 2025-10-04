@@ -8,7 +8,7 @@ export async function connectDB() {
   try {
     await mongoose.connect(process.env.DATABASE_URL!, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 1000,
       socketTimeoutMS: 45000,
     });
     isConnected = true;

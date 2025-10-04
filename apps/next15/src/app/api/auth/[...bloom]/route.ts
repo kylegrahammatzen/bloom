@@ -1,9 +1,9 @@
-import { createAuthHandler } from '@bloom/core/server/nextjs';
-import { bloomAuth, logger } from '@bloom/core';
+import { createAuthHandler } from '@bloom/adapters/nextjs';
+import { bloomAuth } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { connectDB } from '@/lib/db';
 
-export const auth = bloomAuth({
+const auth = bloomAuth({
   database: {
     uri: process.env.DATABASE_URL,
   },
@@ -17,11 +17,12 @@ export const auth = bloomAuth({
     uri: process.env.REDIS_URL,
   },
   emailAndPassword: {
+    enabled: true,
     requireEmailVerification: false,
   },
   callbacks: {
     onAuthEvent: (ctx: AuthEventContext) => {
-      logger.info({ action: ctx.action, email: ctx.email, userId: ctx.userId }, 'Auth event');
+      // logger.info({ action: ctx.action, email: ctx.email, userId: ctx.userId }, 'Auth event');
     },
   },
 });

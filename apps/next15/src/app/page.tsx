@@ -1,4 +1,4 @@
-import { getSession } from '@bloom/core/server/nextjs';
+import { getSession } from '@bloom/adapters/nextjs/server';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/login-form';
@@ -7,8 +7,7 @@ import { LogoutButton } from '@/components/auth/logout-button';
 import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog';
 
 export default async function Home() {
-  const session = await getSession();
-  const isSignedIn = !!session;
+  const validated = await getSession();
 
   return (
     <div className="p-4 space-y-4">
@@ -18,10 +17,10 @@ export default async function Home() {
       </div>
 
       <div>
-        {isSignedIn ? (
+        {validated ? (
           <Card>
             <CardHeader>
-              <CardTitle>Logged in (userId: {session.userId})</CardTitle>
+              <CardTitle>Logged in as {validated.user.email}</CardTitle>
             </CardHeader>
             <div className="flex gap-2 px-6 pb-6">
               <LogoutButton />
