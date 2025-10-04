@@ -15,37 +15,6 @@ export type NextAuthHandlerConfig = {
 
 const API_AUTH_PREFIX = '/api/auth';
 
-function applyCorsHeaders(response: NextResponse, request: NextRequest, corsConfig?: NextAuthHandlerConfig['cors']) {
-  if (corsConfig === false) return;
-
-  const origin = request.headers.get('origin');
-  const allowedOrigins = corsConfig?.origin;
-
-  let setOrigin = false;
-  if (Array.isArray(allowedOrigins)) {
-    if (origin && allowedOrigins.includes(origin)) {
-      response.headers.set('Access-Control-Allow-Origin', origin);
-      setOrigin = true;
-    }
-  } else if (allowedOrigins) {
-    response.headers.set('Access-Control-Allow-Origin', allowedOrigins);
-  } else if (origin) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    setOrigin = true;
-  }
-
-  if (setOrigin) {
-    response.headers.set('Vary', 'Origin');
-  }
-
-  if (corsConfig?.credentials !== false) {
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
-  }
-
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Cookie, Authorization');
-}
-
 async function parseRequestBody(request: NextRequest, method: string) {
   if (method === 'GET') return undefined;
   const text = await request.text();
@@ -79,9 +48,39 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
   const cookieName = getCookieName(auth.config);
   const cookieOptions = getCookieOptionsForNextJS(auth.config);
 
+  // Pre-compute static CORS headers once at handler creation
+  const staticCorsHeaders = corsConfig !== false ? {
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Cookie, Authorization',
+    ...(corsConfig?.credentials !== false && { 'Access-Control-Allow-Credentials': 'true' })
+  } : null;
+
+  function applyCors(response: NextResponse, request: NextRequest) {
+    if (!staticCorsHeaders) return;
+
+    // Apply static headers
+    Object.entries(staticCorsHeaders).forEach(([key, value]) => response.headers.set(key, value));
+
+    // Handle dynamic origin per request
+    const origin = request.headers.get('origin');
+    const allowedOrigins = corsConfig !== false ? corsConfig?.origin : undefined;
+
+    if (Array.isArray(allowedOrigins)) {
+      if (origin && allowedOrigins.includes(origin)) {
+        response.headers.set('Access-Control-Allow-Origin', origin);
+        response.headers.set('Vary', 'Origin');
+      }
+    } else if (allowedOrigins) {
+      response.headers.set('Access-Control-Allow-Origin', allowedOrigins);
+    } else if (origin) {
+      response.headers.set('Access-Control-Allow-Origin', origin);
+      response.headers.set('Vary', 'Origin');
+    }
+  }
+
   function createJsonResponse(request: NextRequest, body: any, status: number): NextResponse {
     const response = NextResponse.json(body, { status });
-    applyCorsHeaders(response, request, corsConfig);
+    applyCors(response, request);
     return response;
   }
 
@@ -122,7 +121,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
 
   function handleOptions(request: NextRequest) {
     const response = new NextResponse(null, { status: 204 });
-    applyCorsHeaders(response, request, corsConfig);
+    applyCors(response, request);
     return response;
   }
 
