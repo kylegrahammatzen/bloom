@@ -55,5 +55,3 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
     start,
   };
 }
-
-export { logger } from '@bloom/core/utils/logger';
