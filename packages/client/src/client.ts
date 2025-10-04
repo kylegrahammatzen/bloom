@@ -55,5 +55,24 @@ export function createBloomClient(config?: ClientConfig) {
 				requestOptions: options,
 			});
 		},
+
+		getSessions: async (
+			options?: RequestOptions<{ sessions: Session[] }>
+		): Promise<BloomResponse<{ sessions: Session[] }>> => {
+			return apiFetch<{ sessions: Session[] }>("/api/auth/sessions", {
+				requestOptions: options,
+			});
+		},
+
+		revokeSession: async (
+			sessionId: string,
+			options?: RequestOptions<{ message: string }>
+		): Promise<BloomResponse<{ message: string }>> => {
+			return apiFetch("/api/auth/sessions/revoke", {
+				method: "POST",
+				body: JSON.stringify({ sessionId }),
+				requestOptions: options,
+			});
+		},
 	};
 }
