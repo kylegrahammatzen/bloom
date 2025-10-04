@@ -9,7 +9,7 @@ export type ValidatedSession = {
 
 /**
  * Get validated session (server-side only)
- * Validates session against database by calling /api/auth/session
+ * Validates session against database by calling /api/auth/me
  */
 export async function getSession(cookieName: string = 'bloom.sid', baseUrl?: string): Promise<ValidatedSession> {
   const cookieStore = await cookies();
@@ -30,7 +30,7 @@ export async function getSession(cookieName: string = 'bloom.sid', baseUrl?: str
     const headersList = await headers();
     const host = headersList.get('host') || 'localhost:3000';
     const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const url = baseUrl ? `${baseUrl}/api/auth/session` : `${protocol}://${host}/api/auth/session`;
+    const url = baseUrl ? `${baseUrl}/api/auth/me` : `${protocol}://${host}/api/auth/me`;
 
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
