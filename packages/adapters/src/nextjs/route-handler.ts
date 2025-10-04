@@ -43,6 +43,20 @@ function setCorsHeaders(response: NextResponse, request: NextRequest, corsConfig
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Cookie, Authorization');
 }
 
+async function parseRequestBody(request: NextRequest, method: string) {
+  if (method === 'GET') return undefined;
+
+  const text = await request.text();
+  if (!text.trim()) return undefined;
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    if (error instanceof SyntaxError) throw error;
+    return undefined;
+  }
+}
+
 export function createAuthHandler(config: NextAuthHandlerConfig) {
   const { auth, connectDB, cors: corsConfig } = config;
   const cookieName = getCookieName(auth.config);
@@ -53,29 +67,14 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       await connectDB?.();
 
       const pathname = request.nextUrl.pathname;
-      const path = pathname.replace(API_AUTH_PREFIX, '');
-
-      let body: any = undefined;
-      if (method !== 'GET') {
-        const text = await request.text();
-        if (text.trim()) {
-          try {
-            body = JSON.parse(text);
-          } catch (error) {
-            if (error instanceof SyntaxError) {
-              throw error;
-            }
-          }
-        }
-      }
-
+      const body = await parseRequestBody(request, method);
       const sessionCookie = request.cookies.get(cookieName);
       const session = sessionCookie ? parseSessionCookie(sessionCookie.value) ?? undefined : undefined;
 
       const context: BloomHandlerContext = {
         request: {
           method,
-          path,
+          path: pathname.replace(API_AUTH_PREFIX, ''),
           url: pathname,
           body,
           headers: Object.fromEntries(request.headers.entries()),
@@ -91,11 +90,7 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       setCorsHeaders(response, request, corsConfig);
 
       if (result.sessionData) {
-        response.cookies.set(
-          cookieName,
-          JSON.stringify(result.sessionData),
-          cookieOptions
-        );
+        response.cookies.set(cookieName, JSON.stringify(result.sessionData), cookieOptions);
       }
 
       if (result.clearSession) {
