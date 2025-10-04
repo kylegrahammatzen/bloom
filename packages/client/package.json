@@ -8,8 +8,7 @@
   "scripts": {
     "build": "tsc && tsc-alias",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:watch": "vitest"
   },
   "exports": {
     ".": {
@@ -18,7 +17,6 @@
     }
   },
   "devDependencies": {
-    "@vitest/ui": "^3.2.4",
     "tsc-alias": "^1.8.16",
     "vitest": "^3.2.4"
   }
