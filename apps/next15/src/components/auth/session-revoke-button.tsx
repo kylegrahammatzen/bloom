@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@bloom/react';
 import { Button } from '@/components/ui/button';
 
 type SessionRevokeButtonProps = {
@@ -12,26 +13,17 @@ type SessionRevokeButtonProps = {
 export const SessionRevokeButton = (props: SessionRevokeButtonProps) => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { signOut, revokeSession } = useAuth();
 
   const handleRevoke = async () => {
     setLoading(true);
     try {
       if (props.isCurrent) {
-        const response = await fetch('/api/auth/logout', {
-          method: 'POST',
-        });
-        if (response.ok) {
-          router.refresh();
-        }
+        await signOut();
+        router.push('/');
       } else {
-        const response = await fetch('/api/auth/sessions/revoke', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId: props.sessionId }),
-        });
-        if (response.ok) {
-          router.refresh();
-        }
+        await revokeSession(props.sessionId);
+        router.refresh();
       }
     } catch (error) {
       console.error('Failed to revoke session:', error);
@@ -46,7 +38,7 @@ export const SessionRevokeButton = (props: SessionRevokeButtonProps) => {
       onClick={handleRevoke}
       disabled={loading}
     >
-      {loading ? 'Signing out...' : 'Sign out'}
+      Sign out
     </Button>
   );
 };
