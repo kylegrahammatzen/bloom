@@ -1,6 +1,7 @@
 import { bloomAuth, RedisStorage } from '@bloom/core';
 import type { AuthEventContext } from '@bloom/core';
 import { mongoose } from './db';
+import { logger } from '@bloom/core/utils/logger';
 
 const redisStorage = new RedisStorage({
   url: process.env.REDIS_URL!,
