@@ -13,7 +13,6 @@
   "dependencies": {
     "argon2": "^0.31.2",
     "mongoose": "^7.6.3",
-    "pino": "^10.0.0",
     "zod": "^4.0.0"
   },
   "peerDependencies": {
@@ -26,7 +25,6 @@
   },
   "devDependencies": {
     "@vitest/ui": "^2.1.9",
-    "pino-pretty": "^13.1.1",
     "redis": "^4.7.0",
     "tsc-alias": "^1.8.16",
     "vitest": "^2.1.9"
@@ -87,10 +85,6 @@
     "./schemas/validation": {
       "types": "./dist/schemas/validation.d.ts",
       "default": "./dist/schemas/validation.js"
-    },
-    "./utils/logger": {
-      "types": "./dist/utils/logger.d.ts",
-      "default": "./dist/utils/logger.js"
     }
   }
 }

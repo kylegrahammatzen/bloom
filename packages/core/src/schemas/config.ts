@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { SecondaryStorage } from './storage';
+import type { Logger } from './logger';
 import type { Mongoose } from 'mongoose';
 
 /**
@@ -13,10 +14,6 @@ export const BloomConfigSchema = z.object({
     secret: z.string().optional(),
     slidingWindow: z.boolean().optional(),
   }).optional().default({ expiresIn: 7 * 24 * 60 * 60 * 1000, cookieName: 'bloom.sid' }),
-  logging: z.object({
-    level: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).optional(),
-    enabled: z.boolean().optional(),
-  }).optional(),
   emailAndPassword: z.object({
     enabled: z.boolean().default(true),
     requireEmailVerification: z.boolean().default(false),
@@ -37,6 +34,7 @@ export const BloomConfigSchema = z.object({
     }).optional(),
   }).optional().default({ enabled: true }),
   secondaryStorage: z.custom<SecondaryStorage>().optional(),
+  logger: z.custom<Logger>().optional(),
   callbacks: z.record(z.string(), z.any()).optional().default({}),
   plugins: z.array(z.any()).optional().default([]),
 });

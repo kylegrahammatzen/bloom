@@ -4,6 +4,7 @@ export * from './cookies';
 export * from './api';
 export * from './errors';
 export * from './handler';
+export * from './logger';
 export * from './plugin';
 export * from './server';
 export * from './session';

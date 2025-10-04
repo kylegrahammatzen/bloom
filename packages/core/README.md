@@ -8,7 +8,7 @@ Framework-agnostic authentication core for Bloom, providing a complete authentic
 - Session expiry and sliding window support
 - Rate limiting with configurable windows
 - Type-safe error handling with structured error codes
-- Pino structured logging with dev/production modes
+- Optional logger interface for custom logging
 - CORS configuration for cross-origin requests
 
 ## Installation
