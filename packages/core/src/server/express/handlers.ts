@@ -1,11 +1,14 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
-import type { BloomAuth, BloomHandlerContext } from '@/types';
-import { APIError, APIErrorCode } from '@/types/errors';
+import type { BloomAuth, BloomHandlerContext } from '@/schemas';
+import { parseSessionCookie } from '@/schemas/session';
+import { APIError, APIErrorCode } from '@/schemas/errors';
 import { logger } from '@/utils/logger';
-import './types';
+import { getCookieName, getCookieOptions } from '@/utils/cookies';
 
 export function toExpressHandler(auth: BloomAuth): Router {
   const router = express.Router();
+  const cookieName = getCookieName(auth.config);
+  const cookieOptions = getCookieOptions(auth.config);
 
   router.use(express.json({ limit: '10mb' }));
   router.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -17,6 +20,8 @@ export function toExpressHandler(auth: BloomAuth): Router {
         || req.ip;
 
       const userAgent = req.headers['user-agent'];
+      const sessionCookie = req.cookies[cookieName];
+      const session = sessionCookie ? parseSessionCookie(sessionCookie) ?? undefined : undefined;
 
       const context: BloomHandlerContext = {
         request: {
@@ -28,24 +33,17 @@ export function toExpressHandler(auth: BloomAuth): Router {
           ip,
           userAgent,
         },
-        session: req.session?.userId && req.session?.sessionId ? {
-          userId: req.session.userId,
-          sessionId: req.session.sessionId,
-        } : undefined,
+        session,
       };
 
       const result = await auth.handler(context);
 
-      if (result.sessionData && req.session) {
-        req.session.userId = result.sessionData.userId;
-        req.session.sessionId = result.sessionData.sessionId;
+      if (result.sessionData) {
+        res.cookie(cookieName, JSON.stringify(result.sessionData), cookieOptions);
       }
 
-      if (result.clearSession && req.session) {
-        req.session.destroy((err) => {
-          if (err) logger.error({ error: err }, 'Session destruction error');
-        });
-        res.clearCookie(auth.config.session?.cookieName || 'bloom.sid');
+      if (result.clearSession) {
+        res.clearCookie(cookieName);
       }
 
       res.status(result.status).json(result.body);
@@ -71,7 +69,11 @@ export function toExpressHandler(auth: BloomAuth): Router {
 export function requireAuth() {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (!req.session || !req.session.userId) {
+      const cookieName = process.env.BLOOM_COOKIE_NAME || 'bloom.sid';
+      const sessionCookie = req.cookies[cookieName];
+      const session = sessionCookie ? parseSessionCookie(sessionCookie) : null;
+
+      if (!session) {
         const response = new APIError(APIErrorCode.NOT_AUTHENTICATED).toResponse();
         return res.status(response.status).json(response.body);
       }

@@ -1,14 +1,11 @@
 import express, { type Application } from 'express';
-import session from 'express-session';
 import { bloomAuth } from '@/auth';
-import type { BloomServerConfig, BloomServerInstance } from '@/types/server';
+import type { BloomServerConfig, BloomServerInstance } from '@/schemas/server';
 import { toExpressHandler, requireAuth } from '@/server/express/handlers';
 import { setupHelmet, setupCors, setupCookieParser } from '@/server/express/middleware';
-import { createSessionStore, getSessionOptions } from '@/server/express/session';
 import { setupHealthRoute, setupErrorHandler } from '@/server/express/routes';
 import { connectDatabase } from '@/server/express/database';
 import { logger } from '@/utils/logger';
-import '@/server/express/types';
 
 type ValidatedConfig = BloomServerConfig & {
   database: { uri: string };
@@ -23,10 +20,6 @@ function validateConfig(config: BloomServerConfig): asserts config is ValidatedC
   if (!config.session?.secret) {
     throw new Error('Session secret is required. Please provide config.session.secret');
   }
-
-  if (config.sessionStore?.type === 'redis' && !config.sessionStore?.uri) {
-    throw new Error('Redis URI is required when using Redis session store. Please provide config.sessionStore.uri');
-  }
 }
 
 export function bloomServer(config: BloomServerConfig): BloomServerInstance {
@@ -38,9 +31,6 @@ export function bloomServer(config: BloomServerConfig): BloomServerInstance {
   setupHelmet(app, config);
   setupCors(app, config);
   setupCookieParser(app);
-
-  const store = createSessionStore(config);
-  app.use(session(getSessionOptions(config, store)));
 
   app.all('/api/auth/*', toExpressHandler(auth));
 

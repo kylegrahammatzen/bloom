@@ -2,7 +2,7 @@ import type { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import type { BloomServerConfig } from '@/types/server';
+import type { BloomServerConfig } from '@/schemas/server';
 
 export function setupHelmet(app: Application, config: BloomServerConfig) {
   if (config.helmet !== false) {

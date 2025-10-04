@@ -1,6 +1,6 @@
 import type { Application } from 'express';
 import express from 'express';
-import { APIError, APIErrorCode } from '@/types/errors';
+import { APIError, APIErrorCode } from '@/schemas/errors';
 import { logger } from '@/utils/logger';
 
 export function setupHealthRoute(app: Application) {
