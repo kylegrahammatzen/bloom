@@ -1,7 +1,7 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/schemas';
 import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '@/models';
-import { APIError, APIErrorCode } from '@/types/errors';
-import { APIResponse } from '@/utils/response';
+import { APIError, APIErrorCode } from '@/schemas/errors';
+import { json } from '@/utils/response';
 import { emitCallback } from '@/api/callbacks';
 
 export async function handleDeleteAccount(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -29,5 +29,5 @@ export async function handleDeleteAccount(ctx: BloomHandlerContext, config: Bloo
   await UserCredentials.deleteOne({ user_id: userId });
   await UserModel.findByIdAndDelete(userId);
 
-  return APIResponse.logout('Account deleted successfully');
+  return json({ message: 'Account deleted successfully' }, { clearSession: true });
 }

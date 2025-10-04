@@ -1,8 +1,8 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/schemas';
 import { User as UserModel, Token } from '@/models';
 import { hashToken } from '@/utils/crypto';
-import { APIError, APIErrorCode } from '@/types/errors';
-import { APIResponse } from '@/utils/response';
+import { APIError, APIErrorCode } from '@/schemas/errors';
+import { json } from '@/utils/response';
 import { emitCallback } from '@/api/callbacks';
 import { mapUser } from '@/utils/mappers';
 
@@ -40,7 +40,7 @@ export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomA
     email: user.email
   }, config);
 
-  return APIResponse.success({
+  return json({
     message: 'Email verified successfully',
     user: mapUser(user),
   });

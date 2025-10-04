@@ -1,6 +1,6 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/schemas';
 import { Session as SessionModel } from '@/models';
-import { APIResponse } from '@/utils/response';
+import { json } from '@/utils/response';
 import { emitCallback } from '@/api/callbacks';
 
 export async function handleLogout(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -19,5 +19,5 @@ export async function handleLogout(ctx: BloomHandlerContext, config: BloomAuthCo
     }, config);
   }
 
-  return APIResponse.logout();
+  return json({ message: 'Logout successful' }, { clearSession: true });
 }

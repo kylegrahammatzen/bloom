@@ -1,26 +1,28 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import type { BloomAuthConfig, GenericResponse, ValidatedContext } from '@/schemas';
 import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '@/models';
-import { hashPassword, generateSecureToken, hashToken } from '@/utils/crypto';
-import { APIError, APIErrorCode } from '@/types/errors';
-import { APIResponse } from '@/utils/response';
+import { hashPassword, generateSecureToken, hashToken, normalizeEmail } from '@/utils/crypto';
+import { APIError, APIErrorCode } from '@/schemas/errors';
+import { json } from '@/utils/response';
 import { checkRateLimit } from '@/api/ratelimit';
-import { validateEmail, validatePassword, normalizeEmail } from '@/api/validation';
+import { validateRequest, composeMiddleware } from '@/validation';
+import { PasswordResetRequestSchema, PasswordResetConfirmSchema, type PasswordResetRequestInput, type PasswordResetConfirmInput } from '@/schemas/auth';
 import { emitCallback } from '@/api/callbacks';
 
-export async function handleRequestPasswordReset(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
-  const { email } = ctx.request.body;
+export async function handleRequestPasswordReset(ctx: ValidatedContext<PasswordResetRequestInput>, config: BloomAuthConfig): Promise<GenericResponse> {
+  const validate = composeMiddleware(
+    (ctx) => checkRateLimit('passwordReset', ctx, config),
+    validateRequest(PasswordResetRequestSchema)
+  );
 
-  const rateLimitError = await checkRateLimit('passwordReset', ctx, config);
-  if (rateLimitError) return rateLimitError;
-
-  const error = validateEmail(email);
+  const error = await validate(ctx);
   if (error) return error;
 
+  const { email } = ctx.validatedData!;
   const normalizedEmail = normalizeEmail(email);
   const user = await UserModel.findOne({ email: normalizedEmail });
 
   if (!user) {
-    return APIResponse.success({ message: 'If an account with this email exists, a password reset link has been sent.' });
+    return json({ message: 'If an account with this email exists, a password reset link has been sent.' });
   }
 
   const token = generateSecureToken();
@@ -33,17 +35,14 @@ export async function handleRequestPasswordReset(ctx: BloomHandlerContext, confi
   });
   await resetToken.save();
 
-  return APIResponse.success({ message: 'If an account with this email exists, a password reset link has been sent.' });
+  return json({ message: 'If an account with this email exists, a password reset link has been sent.' });
 }
 
-export async function handleResetPassword(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
-  const { token, password } = ctx.request.body;
-
-  if (!token || !password) return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
-
-  const error = validatePassword(password);
+export async function handleResetPassword(ctx: ValidatedContext<PasswordResetConfirmInput>, config: BloomAuthConfig): Promise<GenericResponse> {
+  const error = await validateRequest(PasswordResetConfirmSchema)(ctx);
   if (error) return error;
 
+  const { token, password } = ctx.validatedData!;
   const tokenHash = hashToken(token);
   const resetToken = await Token.findOne({
     token_hash: tokenHash,
@@ -76,5 +75,5 @@ export async function handleResetPassword(ctx: BloomHandlerContext, config: Bloo
     email: user.email
   }, config);
 
-  return APIResponse.success({ message: 'Password reset successful' });
+  return json({ message: 'Password reset successful' });
 }

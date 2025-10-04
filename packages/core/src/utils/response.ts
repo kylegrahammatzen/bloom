@@ -1,36 +1,16 @@
-import type { GenericResponse, SessionCookieData } from '@/types';
+import { GenericResponseSchema, type SessionCookieData } from '@/schemas';
 
-export class APIResponse {
-  static success(body: any, sessionData?: SessionCookieData): GenericResponse {
-    return {
-      status: 200,
-      body,
-      ...(sessionData && { sessionData })
-    };
-  }
-
-  static created(body: any, sessionData?: SessionCookieData): GenericResponse {
-    return {
-      status: 201,
-      body,
-      ...(sessionData && { sessionData })
-    };
-  }
-
-  static logout(message: string = 'Logout successful'): GenericResponse {
-    return {
-      status: 200,
-      body: { message },
-      clearSession: true
-    };
-  }
-}
-
-export function createSuccess(status: number, body: any, sessionData?: SessionCookieData, clearSession?: boolean): GenericResponse {
-  return {
-    status,
+export const json = (body: any, options?: {
+  status?: number;
+  sessionData?: SessionCookieData;
+  clearSession?: boolean;
+}) => {
+  const response = {
+    status: options?.status ?? 200,
     body,
-    ...(sessionData && { sessionData }),
-    ...(clearSession && { clearSession })
+    ...(options?.sessionData && { sessionData: options.sessionData }),
+    ...(options?.clearSession && { clearSession: true }),
   };
-}
+
+  return GenericResponseSchema.parse(response);
+};

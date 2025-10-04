@@ -1,22 +1,24 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import type { BloomAuthConfig, GenericResponse, ValidatedContext } from '@/schemas';
 import { User as UserModel, UserCredentials, Session as SessionModel } from '@/models';
 import { verifyPassword, generateSessionId, normalizeEmail } from '@/utils/crypto';
-import { APIError, APIErrorCode } from '@/types/errors';
-import { APIResponse } from '@/utils/response';
+import { APIError, APIErrorCode } from '@/schemas/errors';
+import { json } from '@/utils/response';
 import { checkRateLimit } from '@/api/ratelimit';
+import { validateRequest, composeMiddleware } from '@/validation';
+import { LoginSchema, type LoginInput } from '@/schemas/auth';
 import { emitCallback } from '@/api/callbacks';
 import { mapUser, mapSession } from '@/utils/mappers';
 
-export async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
-  const { email, password } = ctx.request.body;
+export async function handleLogin(ctx: ValidatedContext<LoginInput>, config: BloomAuthConfig): Promise<GenericResponse> {
+  const validate = composeMiddleware(
+    (ctx) => checkRateLimit('login', ctx, config),
+    validateRequest(LoginSchema)
+  );
 
-  const rateLimitError = await checkRateLimit('login', ctx, config);
-  if (rateLimitError) return rateLimitError;
+  const error = await validate(ctx);
+  if (error) return error;
 
-  if (!email || !password) {
-    return new APIError(APIErrorCode.INVALID_CREDENTIALS).toResponse();
-  }
-
+  const { email, password } = ctx.validatedData!;
   const normalizedEmail = normalizeEmail(email);
   const user = await UserModel.findOne({ email: normalizedEmail });
 
@@ -66,12 +68,14 @@ export async function handleLogin(ctx: BloomHandlerContext, config: BloomAuthCon
     session: mappedSession
   }, config);
 
-  return APIResponse.success({
+  return json({
     message: 'Login successful',
     user: mappedUser,
     session: mappedSession
   }, {
-    userId: mappedUser.id,
-    sessionId: sessionId,
+    sessionData: {
+      userId: mappedUser.id,
+      sessionId: sessionId,
+    }
   });
 }

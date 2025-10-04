@@ -1,7 +1,7 @@
-import type { BloomHandlerContext, GenericResponse } from '@/types';
+import type { BloomHandlerContext, GenericResponse } from '@/schemas';
 import { User as UserModel, Session as SessionModel } from '@/models';
-import { APIError, APIErrorCode } from '@/types/errors';
-import { APIResponse } from '@/utils/response';
+import { APIError, APIErrorCode } from '@/schemas/errors';
+import { json } from '@/utils/response';
 import { mapUser, mapSession } from '@/utils/mappers';
 
 export async function handleGetSession(ctx: BloomHandlerContext): Promise<GenericResponse> {
@@ -23,7 +23,7 @@ export async function handleGetSession(ctx: BloomHandlerContext): Promise<Generi
     return new APIError(APIErrorCode.SESSION_EXPIRED).toResponse();
   }
 
-  return APIResponse.success({
+  return json({
     user: mapUser(user),
     session: mapSession(userSession),
   });

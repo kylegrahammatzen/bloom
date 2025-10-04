@@ -1,22 +1,24 @@
-import type { BloomAuthConfig, BloomHandlerContext, GenericResponse } from '@/types';
+import type { BloomAuthConfig, GenericResponse, ValidatedContext } from '@/schemas';
 import { User as UserModel, UserCredentials, Session as SessionModel, Token } from '@/models';
-import { hashPassword, generateSecureToken, hashToken, generateSessionId } from '@/utils/crypto';
-import { APIError, APIErrorCode } from '@/types/errors';
-import { APIResponse } from '@/utils/response';
+import { hashPassword, generateSecureToken, hashToken, generateSessionId, normalizeEmail } from '@/utils/crypto';
+import { APIError, APIErrorCode } from '@/schemas/errors';
+import { json } from '@/utils/response';
 import { checkRateLimit } from '@/api/ratelimit';
-import { validateEmailAndPassword, normalizeEmail } from '@/api/validation';
+import { validateRequest, composeMiddleware } from '@/validation';
+import { RegisterSchema, type RegisterInput } from '@/schemas/auth';
 import { emitCallback } from '@/api/callbacks';
 import { mapUser, mapSession } from '@/utils/mappers';
 
-export async function handleRegister(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
-  const { email, password } = ctx.request.body;
+export async function handleRegister(ctx: ValidatedContext<RegisterInput>, config: BloomAuthConfig): Promise<GenericResponse> {
+  const validate = composeMiddleware(
+    (ctx) => checkRateLimit('registration', ctx, config),
+    validateRequest(RegisterSchema)
+  );
 
-  const rateLimitError = await checkRateLimit('registration', ctx, config);
-  if (rateLimitError) return rateLimitError;
-
-  const error = validateEmailAndPassword(email, password);
+  const error = await validate(ctx);
   if (error) return error;
 
+  const { email, password } = ctx.validatedData!;
   const normalizedEmail = normalizeEmail(email);
 
   const existingUser = await UserModel.findOne({ email: normalizedEmail });
@@ -68,12 +70,15 @@ export async function handleRegister(ctx: BloomHandlerContext, config: BloomAuth
     session: mappedSession
   }, config);
 
-  return APIResponse.created({
+  return json({
     message: 'Registration successful',
     user: mappedUser,
     session: mappedSession
   }, {
-    userId: mappedUser.id,
-    sessionId: sessionId,
+    status: 201,
+    sessionData: {
+      userId: mappedUser.id,
+      sessionId: sessionId,
+    }
   });
 }
