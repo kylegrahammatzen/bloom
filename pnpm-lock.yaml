@@ -133,7 +133,7 @@ importers:
         specifier: ^7.6.3
         version: 7.8.7
       next:
-        specifier: ^15.1.6
+        specifier: ^15.5.4
         version: 15.5.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       postcss:
         specifier: ^8.5.6
@@ -275,13 +275,28 @@ importers:
       '@bloom/core':
         specifier: workspace:*
         version: link:../core
+      cookie-parser:
+        specifier: ^1.4.6
+        version: 1.4.7
+      cors:
+        specifier: ^2.8.5
+        version: 2.8.5
+      helmet:
+        specifier: ^7.1.0
+        version: 7.2.0
+      mongoose:
+        specifier: ^7.6.3
+        version: 7.8.7
     devDependencies:
+      '@types/cookie-parser':
+        specifier: ^1.4.6
+        version: 1.4.9(@types/express@4.17.23)
+      '@types/cors':
+        specifier: ^2.8.17
+        version: 2.8.19
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.23
-      '@types/express-session':
-        specifier: ^1.17.10
-        version: 1.18.2
       '@vitest/ui':
         specifier: ^3.2.4
         version: 3.2.4(vitest@3.2.4)
@@ -312,64 +327,22 @@ importers:
 
   packages/core:
     dependencies:
-      '@zodyac/zod-mongoose':
-        specifier: ^4.2.0
-        version: 4.2.0(mongoose@7.8.7)(zod@4.1.11)
       argon2:
         specifier: ^0.31.2
         version: 0.31.2
-      connect-mongo:
-        specifier: ^5.1.0
-        version: 5.1.0(express-session@1.18.2)(mongodb@5.9.2)
-      connect-redis:
-        specifier: ^7.1.0
-        version: 7.1.1(express-session@1.18.2)
-      cookie-parser:
-        specifier: ^1.4.6
-        version: 1.4.7
-      cors:
-        specifier: ^2.8.5
-        version: 2.8.5
-      express:
-        specifier: ^4.0.0
-        version: 4.21.2
-      express-session:
-        specifier: ^1.17.3
-        version: 1.18.2
-      helmet:
-        specifier: ^7.1.0
-        version: 7.2.0
       mongoose:
         specifier: ^7.6.3
         version: 7.8.7
       pino:
         specifier: ^10.0.0
         version: 10.0.0
-      redis:
-        specifier: ^4.6.0
-        version: 4.7.1
       zod:
         specifier: ^4.0.0
         version: 4.1.11
     devDependencies:
-      '@types/cookie-parser':
-        specifier: ^1.4.6
-        version: 1.4.9(@types/express@4.17.23)
-      '@types/cors':
-        specifier: ^2.8.17
-        version: 2.8.19
-      '@types/express':
-        specifier: ^4.17.21
-        version: 4.17.23
-      '@types/express-session':
-        specifier: ^1.17.10
-        version: 1.18.2
       '@vitest/ui':
         specifier: ^2.1.9
         version: 2.1.9(vitest@2.1.9)
-      next:
-        specifier: ^15.5.4
-        version: 15.5.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       pino-pretty:
         specifier: ^13.1.1
         version: 13.1.1
@@ -2018,12 +1991,6 @@ packages:
 
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
-
-  '@zodyac/zod-mongoose@4.2.0':
-    resolution: {integrity: sha512-f1WtA74WCm/1M8x1469C96PtdPw0MwzZofP7CA+HiqIK1ejOw/2AmRKKMQC96GFeHvrb0JDjK6IFADvQGoVNHg==}
-    peerDependencies:
-      mongoose: ^8.0.3
-      zod: ^3.22.4
 
   abbrev@1.1.1:
     resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
@@ -6395,11 +6362,6 @@ snapshots:
       '@vitest/pretty-format': 3.2.4
       loupe: 3.2.1
       tinyrainbow: 2.0.0
-
-  '@zodyac/zod-mongoose@4.2.0(mongoose@7.8.7)(zod@4.1.11)':
-    dependencies:
-      mongoose: 7.8.7
-      zod: 4.1.11
 
   abbrev@1.1.1: {}
 
