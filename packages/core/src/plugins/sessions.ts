@@ -3,6 +3,7 @@ import { Session as SessionModel } from '@/models';
 import { parseSessionCookie } from '@/schemas/session';
 import { mapSession } from '@/utils/mappers';
 import { APIError, APIErrorCode } from '@/schemas/errors';
+import mongoose from 'mongoose';
 
 /**
  * Sessions plugin - provides multi-session management
@@ -39,7 +40,7 @@ export const sessions = (): BloomPlugin => {
 
           // Find all sessions for this user
           const sessionDocs = await SessionModel.find({
-            user_id: sessionData.userId
+            user_id: new mongoose.Types.ObjectId(sessionData.userId)
           }).sort({ last_accessed: -1 });
 
           if (!sessionDocs || sessionDocs.length === 0) {
@@ -92,7 +93,7 @@ export const sessions = (): BloomPlugin => {
             throw new APIError(APIErrorCode.SESSION_NOT_FOUND);
           }
 
-          if (sessionToRevoke.user_id.toString() !== sessionData.userId) {
+          if (!sessionToRevoke.user_id.equals(new mongoose.Types.ObjectId(sessionData.userId))) {
             throw new APIError(APIErrorCode.UNAUTHORIZED);
           }
 
