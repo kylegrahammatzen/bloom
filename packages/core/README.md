@@ -7,6 +7,7 @@ Framework-agnostic authentication core for Bloom, providing a complete authentic
 - Argon2id password hashing with salt
 - Session expiry and sliding window support
 - Rate limiting with configurable windows
+- Extensible via plugins
 - Type-safe error handling with structured error codes
 - Optional logger interface for custom logging
 - CORS configuration for cross-origin requests
@@ -17,6 +18,14 @@ Framework-agnostic authentication core for Bloom, providing a complete authentic
 pnpm add @bloom/core
 ```
 
+## Documentation
+
+- [Plugins](./src/plugins) - Extend Bloom with custom functionality
+- [Configuration](#configuration) - Session, CORS, rate limiting, and logging
+- [Callbacks](#callbacks) - Hook into authentication events
+- [API Routes](#api-routes) - Available HTTP endpoints
+- [Error Codes](#error-codes) - Structured error handling
+
 ## Quick Start
 
 See the example apps for complete setup:
@@ -24,14 +33,6 @@ See the example apps for complete setup:
 - [Next.js 15](../../apps/next15) - App Router with server components
 - [Express Server](../../apps/express-server) - Standalone authentication server
 - [React Router v7](../../apps/react-router-v7) - Client-side React with Express backend
-
-## Documentation
-
-- [Plugin System](./src/plugins) - Extend Bloom with custom functionality
-- [Configuration](#configuration) - Session, CORS, rate limiting, and logging
-- [Callbacks](#callbacks) - Hook into authentication events
-- [API Routes](#api-routes) - Available HTTP endpoints
-- [Error Codes](#error-codes) - Structured error handling
 
 ## Configuration
 
@@ -179,43 +180,19 @@ bloomAuth({
 });
 ```
 
-## Plugin System
+## Plugins
 
-Bloom supports a plugin system for extending authentication functionality. Plugins can add new API methods and routes.
-
-### Using Plugins
+Extend Bloom with plugins for additional functionality:
 
 ```typescript
 import { bloomAuth, sessions } from '@bloom/core';
 
 const auth = bloomAuth({
-  database: mongoose,
-  session: { secret: process.env.SESSION_SECRET },
-  plugins: [
-    sessions(), // Adds session management
-  ],
-});
-```
-
-### Built-in Plugins
-
-#### Sessions Plugin
-
-Provides multi-session management:
-
-```typescript
-import { sessions } from '@bloom/core';
-
-const auth = bloomAuth({
   plugins: [sessions()],
 });
-
-// Server-side usage
-const allSessions = await auth.api.sessions.getAll({ headers });
-await auth.api.sessions.revoke({ body: { sessionId }, headers });
 ```
 
-See the [plugins documentation](./src/plugins) for more details on building custom plugins.
+See the [plugin documentation](./src/plugins) for available plugins and how to build custom ones.
 
 ## API Routes
 
