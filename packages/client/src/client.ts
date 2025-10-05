@@ -76,12 +76,10 @@ export function createBloomClient(config?: ClientConfig) {
 		},
 
 		requestEmailVerification: async (
-			body: { email: string },
 			options?: RequestOptions<{ message: string }>
 		): Promise<BloomResponse<{ message: string }>> => {
 			return apiFetch("/api/auth/request-email-verification", {
 				method: "POST",
-				body: JSON.stringify(body),
 				requestOptions: options,
 			});
 		},
