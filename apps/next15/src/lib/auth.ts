@@ -21,10 +21,11 @@ export const auth = bloomAuth({
   secondaryStorage: redisStorage,
   emailAndPassword: {
     enabled: true,
-  },
-  emailVerification: {
-    enabled: true,
-    sendOnSignUp: false,
+    emailVerification: {
+      enabled: true,
+      sendOnSignUp: false,
+      callbackUrl: '/',
+    },
   },
   rateLimit: {
     enabled: true,

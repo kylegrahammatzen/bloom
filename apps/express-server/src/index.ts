@@ -12,10 +12,11 @@ bloomServer({
   secondaryStorage: redisStorage,
   emailAndPassword: {
     enabled: true,
-  },
-  emailVerification: {
-    enabled: true,
-    sendOnSignUp: false,
+    emailVerification: {
+      enabled: true,
+      sendOnSignUp: false,
+      callbackUrl: '/',
+    },
   },
   callbacks: {
     onAuthEvent: (ctx: AuthEventContext) => {
