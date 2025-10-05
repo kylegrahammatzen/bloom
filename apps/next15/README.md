@@ -28,8 +28,9 @@ apps/next15/
 │   │   ├── auth/                 # Auth components
 │   │   └── ui/                   # UI components
 │   ├── lib/
+│   │   ├── auth.ts               # Auth configuration
 │   │   └── db.ts                 # Database connection
-│   └── middleware.ts             # Route protection
+│   └── middleware.ts             # Cookie check middleware
 ```
 
 ## Setup
@@ -54,10 +55,10 @@ REDIS_URL=redis://localhost:6379
 SESSION_SECRET=your-super-secret-session-key
 ```
 
-Start MongoDB:
+Start MongoDB and Redis (from root directory):
 
 ```bash
-pnpm docker:up
+cd ../.. && pnpm docker:up
 ```
 
 Run development server:
@@ -68,7 +69,7 @@ pnpm dev
 
 Open http://localhost:3001
 
-## Architecture Notes
+## How It Works
 
 **Middleware (`middleware.ts`):**
 - Only performs quick cookie existence checks
