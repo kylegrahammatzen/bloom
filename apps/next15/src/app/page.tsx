@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { getSession } from '@bloom/adapters/nextjs/server';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoginForm } from '@/components/auth/login-form';
