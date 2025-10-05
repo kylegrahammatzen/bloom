@@ -7,6 +7,7 @@ import { LogoutButton } from '@/components/auth/logout-button';
 import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog';
 import { AccountSessions } from '@/components/auth/account-sessions';
 import { AccountVerification } from '@/components/auth/account-verification';
+import { AccountSubscription } from '@/components/auth/account-subscription';
 
 export default async function Home() {
   const validated = await getSession();
@@ -42,6 +43,11 @@ export default async function Home() {
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Active Sessions</h2>
             <AccountSessions />
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Subscription</h2>
+            <AccountSubscription />
           </div>
         </div>
       ) : (

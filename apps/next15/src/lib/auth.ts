@@ -1,4 +1,4 @@
-import { bloomAuth, RedisStorage, createLogger, sessions } from '@bloom/core';
+import { bloomAuth, RedisStorage, createLogger, sessions, autumn } from '@bloom/core';
 import type { AuthEventContext, SendVerificationContext, PasswordResetContext, EmailVerificationContext } from '@bloom/core';
 import { mongoose } from './db';
 
@@ -41,6 +41,7 @@ export const auth = bloomAuth({
   logger,
   plugins: [
     sessions(),
+    autumn(),
   ],
   callbacks: {
     onAuthEvent: (ctx: AuthEventContext) => {
