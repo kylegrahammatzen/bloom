@@ -23,18 +23,18 @@ export const auth = bloomAuth({
     enabled: true,
     emailVerification: {
       enabled: true,
-      sendOnSignUp: false,
+      sendOnSignUp: true,
       callbackUrl: '/',
     },
   },
   rateLimit: {
     enabled: true,
     emailVerification: {
-      max: 3,
+      max: 10,
       window: 60 * 1000, // 60 seconds
     },
     passwordReset: {
-      max: 3,
+      max: 10,
       window: 60 * 1000, // 60 seconds
     },
   },
