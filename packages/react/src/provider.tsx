@@ -15,6 +15,8 @@ type AuthContextType = {
   deleteAccount: ReturnType<typeof createBloomClient>["deleteAccount"];
   getSessions: ReturnType<typeof createBloomClient>["getSessions"];
   revokeSession: ReturnType<typeof createBloomClient>["revokeSession"];
+  requestEmailVerification: ReturnType<typeof createBloomClient>["requestEmailVerification"];
+  requestPasswordReset: ReturnType<typeof createBloomClient>["requestPasswordReset"];
   refetch: () => Promise<void>;
 };
 
@@ -57,6 +59,8 @@ export function BloomProvider(props: BloomProviderProps) {
     deleteAccount: client.deleteAccount,
     getSessions: client.getSessions,
     revokeSession: client.revokeSession,
+    requestEmailVerification: client.requestEmailVerification,
+    requestPasswordReset: client.requestPasswordReset,
     refetch: fetchUser,
   };
 

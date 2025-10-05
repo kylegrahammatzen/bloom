@@ -74,5 +74,27 @@ export function createBloomClient(config?: ClientConfig) {
 				requestOptions: options,
 			});
 		},
+
+		requestEmailVerification: async (
+			body: { email: string },
+			options?: RequestOptions<{ message: string }>
+		): Promise<BloomResponse<{ message: string }>> => {
+			return apiFetch("/api/auth/request-email-verification", {
+				method: "POST",
+				body: JSON.stringify(body),
+				requestOptions: options,
+			});
+		},
+
+		requestPasswordReset: async (
+			body: { email: string },
+			options?: RequestOptions<{ message: string }>
+		): Promise<BloomResponse<{ message: string }>> => {
+			return apiFetch("/api/auth/request-password-reset", {
+				method: "POST",
+				body: JSON.stringify(body),
+				requestOptions: options,
+			});
+		},
 	};
 }
