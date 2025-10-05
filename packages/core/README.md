@@ -25,6 +25,14 @@ See the example apps for complete setup:
 - [Express Server](../../apps/express-server) - Standalone authentication server
 - [React Router v7](../../apps/react-router-v7) - Client-side React with Express backend
 
+## Documentation
+
+- [Plugin System](#plugin-system) - Extend Bloom with custom functionality
+- [Configuration](#configuration) - Session, CORS, rate limiting, and logging
+- [Callbacks](#callbacks) - Hook into authentication events
+- [API Routes](#api-routes) - Available HTTP endpoints
+- [Error Codes](#error-codes) - Structured error handling
+
 ## Configuration
 
 ### Session Configuration
