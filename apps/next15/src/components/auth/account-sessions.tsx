@@ -70,10 +70,8 @@ export const AccountSessions = async () => {
                   <div className="text-sm">{formatDate(session.lastAccessedAt)}</div>
                 </TableCell>
                 <TableCell>
-                  {session.isCurrent ? (
-                    <Badge variant="secondary">Current</Badge>
-                  ) : (
-                    <Badge variant="outline">Active</Badge>
+                  {session.isCurrent && (
+                    <Badge variant="secondary">This device</Badge>
                   )}
                 </TableCell>
                 <TableCell>
