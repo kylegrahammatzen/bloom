@@ -51,15 +51,13 @@ Update `.env` with your values:
 
 ```env
 DATABASE_URL=mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:6379  # Optional: Remove from auth.ts if not using Redis
 SESSION_SECRET=your-super-secret-session-key
 ```
 
-Start MongoDB and Redis (from root directory):
-
-```bash
-cd ../.. && pnpm docker:up
-```
+**Requirements:**
+- MongoDB (required)
+- Redis (optional - can be removed from `src/lib/auth.ts`)
 
 Run development server:
 
