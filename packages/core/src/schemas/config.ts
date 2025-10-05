@@ -49,6 +49,46 @@ export const BloomConfigSchema = z.object({
 });
 
 /**
- * BloomAuthConfig type inferred from Zod schema
+ * BloomAuthConfig type - all fields optional, defaults applied at runtime by Zod
  */
-export type BloomAuthConfig = z.infer<typeof BloomConfigSchema>;
+export type BloomAuthConfig = {
+  baseUrl?: string;
+  database?: Mongoose | { uri: string };
+  session?: {
+    expiresIn?: number;
+    cookieName?: string;
+    secret?: string;
+    slidingWindow?: boolean;
+  };
+  emailAndPassword?: {
+    enabled?: boolean;
+    emailVerification?: {
+      enabled?: boolean;
+      sendOnSignUp?: boolean;
+      callbackUrl?: string;
+    };
+  };
+  rateLimit?: {
+    enabled?: boolean;
+    login?: {
+      max?: number;
+      window?: number;
+    };
+    registration?: {
+      max?: number;
+      window?: number;
+    };
+    passwordReset?: {
+      max?: number;
+      window?: number;
+    };
+    emailVerification?: {
+      max?: number;
+      window?: number;
+    };
+  };
+  secondaryStorage?: SecondaryStorage;
+  logger?: Logger | LoggerConfig;
+  callbacks?: Record<string, any>;
+  plugins?: any[];
+};
