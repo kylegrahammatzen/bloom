@@ -24,6 +24,7 @@ const routes: Record<string, Record<string, RouteHandler>> = {
   GET: {
     '/me': handleGetSession,
     '/sessions': handleGetAllSessions,
+    '/verify-email': handleVerifyEmail,
   },
   DELETE: {
     '/account': handleDeleteAccount,

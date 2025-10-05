@@ -40,6 +40,7 @@ export const GenericRequestSchema = z.object({
   path: z.string(),
   url: z.string().optional(),
   body: z.any().optional(),
+  query: z.record(z.string(), z.any()).optional(),
   headers: z.record(z.string(), z.union([z.string(), z.array(z.string()), z.undefined()])).optional(),
   ip: z.string().optional(),
   userAgent: z.string().optional(),

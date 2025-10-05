@@ -61,7 +61,7 @@ export async function handleRequestEmailVerification(ctx: ValidatedContext<Email
 }
 
 export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
-  const { token } = ctx.request.body;
+  const token = ctx.request.query?.token || ctx.request.body?.token;
 
   if (!token) {
     return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
