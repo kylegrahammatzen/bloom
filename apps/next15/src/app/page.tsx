@@ -1,5 +1,6 @@
 import { getSession } from '@bloom/adapters/nextjs/server';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { LoginForm } from '@/components/auth/login-form';
 import { SignUpForm } from '@/components/auth/signup-form';
 import { LogoutButton } from '@/components/auth/logout-button';
@@ -20,16 +21,18 @@ export default async function Home() {
       {validated ? (
         <div className="space-y-4">
           {!validated.user.email_verified && (
-            <AccountVerification email={validated.user.email} />
+            <AccountVerification />
           )}
 
           <div>
-            <p className="text-sm font-medium mb-2">
-              Logged in as {validated.user.email}
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-sm font-medium">
+                Logged in as {validated.user.email}
+              </p>
               {validated.user.email_verified && (
-                <span className="ml-2 text-xs text-green-600">✓ Verified</span>
+                <Badge variant="success">Verified</Badge>
               )}
-            </p>
+            </div>
             <div className="flex gap-2">
               <LogoutButton />
               <DeleteAccountDialog />

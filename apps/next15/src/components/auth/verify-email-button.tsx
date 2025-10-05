@@ -5,11 +5,7 @@ import { useAuth } from '@bloom/react';
 import { Button } from '@/components/ui/button';
 import { toastManager } from '@/hooks/use-toast';
 
-type VerifyEmailButtonProps = {
-  email: string;
-}
-
-export const VerifyEmailButton = (props: VerifyEmailButtonProps) => {
+export const VerifyEmailButton = () => {
   const { requestEmailVerification } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -17,7 +13,7 @@ export const VerifyEmailButton = (props: VerifyEmailButtonProps) => {
     setIsLoading(true);
     const start = Date.now();
 
-    const res = await requestEmailVerification({ email: props.email });
+    const res = await requestEmailVerification();
 
     // Ensure loading state shows for at least 500ms
     const elapsed = Date.now() - start;
