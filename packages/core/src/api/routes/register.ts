@@ -38,15 +38,33 @@ export async function handleRegister(ctx: ValidatedContext<RegisterInput>, confi
   });
   await credentials.save();
 
-  const token = generateSecureToken();
-  const tokenHash = hashToken(token);
-  const verificationToken = new Token({
-    token_hash: tokenHash,
-    type: 'email_verification',
-    user_id: user._id,
-    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
-  });
-  await verificationToken.save();
+  // Send verification email if enabled and sendOnSignUp is true
+  if (config.emailVerification?.enabled && config.emailVerification?.sendOnSignUp) {
+    const token = generateSecureToken();
+    const tokenHash = hashToken(token);
+    const verificationToken = new Token({
+      token_hash: tokenHash,
+      type: 'email_verification',
+      user_id: user._id,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+    await verificationToken.save();
+
+    // Build verification URL with callback URL (defaults to root)
+    const baseUrl = config.baseUrl || 'http://localhost:3000';
+    const callbackUrl = '/';
+    const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+
+    // Fire callback for sending verification email
+    if (config.callbacks?.onSendVerification) {
+      await config.callbacks.onSendVerification({
+        email: user.email,
+        token,
+        userId: user._id.toString(),
+        verificationUrl,
+      });
+    }
+  }
 
   const userAgentString = ctx.request.userAgent || ctx.request.headers?.['user-agent'] as string | undefined;
   const deviceInfo = parseUserAgent(userAgentString);

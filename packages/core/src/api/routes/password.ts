@@ -39,9 +39,9 @@ export async function handleRequestPasswordReset(ctx: ValidatedContext<PasswordR
   const baseUrl = config.baseUrl || 'http://localhost:3000';
   const resetUrl = `${baseUrl}/api/auth/reset-password?token=${token}`;
 
-  // Fire callback for user to send email
-  if (config.callbacks?.onSendPasswordResetEmail) {
-    await config.callbacks.onSendPasswordResetEmail({
+  // Fire callback to send password reset email
+  if (config.callbacks?.onPasswordReset) {
+    await config.callbacks.onPasswordReset({
       email: user.email,
       token,
       userId: user._id.toString(),
@@ -81,8 +81,9 @@ export async function handleResetPassword(ctx: ValidatedContext<PasswordResetCon
   await resetToken.markAsUsed();
   await SessionModel.deleteMany({ user_id: user._id });
 
-  await emitCallback('onPasswordReset', {
-    action: 'password_reset',
+  // Fire auth event for password reset completion
+  await emitCallback('onAuthEvent', {
+    action: 'password_reset_complete',
     endpoint: '/reset-password',
     ip: ctx.request.ip,
     userId: user._id.toString(),

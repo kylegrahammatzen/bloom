@@ -43,13 +43,14 @@ export async function handleRequestEmailVerification(ctx: ValidatedContext<Email
   });
   await verificationToken.save();
 
-  // Build verification URL
+  // Build verification URL with callback URL (defaults to root)
   const baseUrl = config.baseUrl || 'http://localhost:3000';
-  const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
+  const callbackUrl = '/';
+  const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}&callbackUrl=${encodeURIComponent(callbackUrl)}`;
 
-  // Fire callback for user to send email
-  if (config.callbacks?.onSendVerificationEmail) {
-    await config.callbacks.onSendVerificationEmail({
+  // Fire callback to send verification email
+  if (config.callbacks?.onSendVerification) {
+    await config.callbacks.onSendVerification({
       email: user.email,
       token,
       userId: user._id.toString(),
@@ -61,10 +62,25 @@ export async function handleRequestEmailVerification(ctx: ValidatedContext<Email
 }
 
 export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
+  // Check if email verification is enabled
+  if (!config.emailVerification?.enabled) {
+    const error = new APIError(APIErrorCode.INVALID_REQUEST, 'Email verification is not enabled').toResponse();
+    const callbackUrl = ctx.request.query?.callbackUrl;
+    if (callbackUrl) {
+      return { ...error, callbackUrl: `${callbackUrl}?error=not_enabled` };
+    }
+    return error;
+  }
+
   const token = ctx.request.query?.token || ctx.request.body?.token;
+  const callbackUrl = ctx.request.query?.callbackUrl;
 
   if (!token) {
-    return new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
+    const error = new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
+    if (callbackUrl) {
+      return { ...error, callbackUrl: `${callbackUrl}?error=token_required` };
+    }
+    return error;
   }
 
   const tokenHash = hashToken(token);
@@ -74,28 +90,44 @@ export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomA
   });
 
   if (!verificationToken || !verificationToken.isValid()) {
-    return new APIError(APIErrorCode.INVALID_TOKEN).toResponse();
+    const error = new APIError(APIErrorCode.INVALID_TOKEN).toResponse();
+    if (callbackUrl) {
+      return { ...error, callbackUrl: `${callbackUrl}?error=invalid_token` };
+    }
+    return error;
   }
 
   const user = await UserModel.findById(verificationToken.user_id);
   if (!user) {
-    return new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
+    const error = new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
+    if (callbackUrl) {
+      return { ...error, callbackUrl: `${callbackUrl}?error=user_not_found` };
+    }
+    return error;
   }
 
   user.email_verified = true;
   await user.save();
   await verificationToken.markAsUsed();
 
-  await emitCallback('onEmailVerify', {
-    action: 'email_verify',
-    endpoint: '/verify-email',
-    ip: ctx.request.ip,
-    userId: user._id.toString(),
-    email: user.email
-  }, config);
+  // Fire onEmailVerification callback
+  if (config.callbacks?.onEmailVerification) {
+    await config.callbacks.onEmailVerification({
+      userId: user._id.toString(),
+      email: user.email,
+      ip: ctx.request.ip,
+    });
+  }
 
-  return json({
+  const response = json({
     message: 'Email verified successfully',
     user: mapUser(user),
   });
+
+  // Redirect to callback URL if provided
+  if (callbackUrl) {
+    return { ...response, callbackUrl: `${callbackUrl}?verified=true` };
+  }
+
+  return response;
 }
