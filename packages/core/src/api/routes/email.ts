@@ -43,9 +43,9 @@ export async function handleRequestEmailVerification(ctx: ValidatedContext<Email
   });
   await verificationToken.save();
 
-  // Build verification URL with callback URL (defaults to root)
+  // Build verification URL with callback URL
   const baseUrl = config.baseUrl || 'http://localhost:3000';
-  const callbackUrl = '/';
+  const callbackUrl = config.emailAndPassword?.emailVerification?.callbackUrl || '/';
   const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}&callbackUrl=${encodeURIComponent(callbackUrl)}`;
 
   // Fire callback to send verification email
@@ -63,7 +63,7 @@ export async function handleRequestEmailVerification(ctx: ValidatedContext<Email
 
 export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
   // Check if email verification is enabled
-  if (!config.emailVerification?.enabled) {
+  if (!config.emailAndPassword?.emailVerification?.enabled) {
     const error = new APIError(APIErrorCode.INVALID_REQUEST, 'Email verification is not enabled').toResponse();
     const callbackUrl = ctx.request.query?.callbackUrl;
     if (callbackUrl) {

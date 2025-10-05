@@ -39,7 +39,7 @@ export async function handleRegister(ctx: ValidatedContext<RegisterInput>, confi
   await credentials.save();
 
   // Send verification email if enabled and sendOnSignUp is true
-  if (config.emailVerification?.enabled && config.emailVerification?.sendOnSignUp) {
+  if (config.emailAndPassword?.emailVerification?.enabled && config.emailAndPassword?.emailVerification?.sendOnSignUp) {
     const token = generateSecureToken();
     const tokenHash = hashToken(token);
     const verificationToken = new Token({
@@ -50,9 +50,9 @@ export async function handleRegister(ctx: ValidatedContext<RegisterInput>, confi
     });
     await verificationToken.save();
 
-    // Build verification URL with callback URL (defaults to root)
+    // Build verification URL with callback URL
     const baseUrl = config.baseUrl || 'http://localhost:3000';
-    const callbackUrl = '/';
+    const callbackUrl = config.emailAndPassword.emailVerification.callbackUrl || '/';
     const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}&callbackUrl=${encodeURIComponent(callbackUrl)}`;
 
     // Fire callback for sending verification email
