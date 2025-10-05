@@ -7,6 +7,7 @@ import type { Mongoose } from 'mongoose';
  * Zod schema for BloomAuthConfig with defaults
  */
 export const BloomConfigSchema = z.object({
+  baseUrl: z.string().url().optional(),
   database: z.custom<Mongoose | { uri: string }>().optional(),
   session: z.object({
     expiresIn: z.number().int().positive().default(7 * 24 * 60 * 60 * 1000),
@@ -29,6 +30,10 @@ export const BloomConfigSchema = z.object({
       window: z.number().int().positive().optional(),
     }).optional(),
     passwordReset: z.object({
+      max: z.number().int().positive().optional(),
+      window: z.number().int().positive().optional(),
+    }).optional(),
+    emailVerification: z.object({
       max: z.number().int().positive().optional(),
       window: z.number().int().positive().optional(),
     }).optional(),

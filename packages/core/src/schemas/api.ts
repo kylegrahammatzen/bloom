@@ -67,6 +67,23 @@ export const AuthEventContextSchema = z.object({
 });
 
 /**
+ * Email sending callback context schemas
+ */
+export const SendVerificationEmailContextSchema = z.object({
+  email: z.email(),
+  token: z.string(),
+  userId: z.string(),
+  verificationUrl: z.string(),
+});
+
+export const SendPasswordResetEmailContextSchema = z.object({
+  email: z.email(),
+  token: z.string(),
+  userId: z.string(),
+  resetUrl: z.string(),
+});
+
+/**
  * Inferred TypeScript types from schemas
  * Use these instead of manually maintaining duplicate types
  */
@@ -75,3 +92,5 @@ export type Session = z.infer<typeof SessionSchema>;
 export type GenericRequest = z.infer<typeof GenericRequestSchema>;
 export type GenericResponse = z.infer<typeof GenericResponseSchema>;
 export type AuthEventContext = z.infer<typeof AuthEventContextSchema>;
+export type SendVerificationEmailContext = z.infer<typeof SendVerificationEmailContextSchema>;
+export type SendPasswordResetEmailContext = z.infer<typeof SendPasswordResetEmailContextSchema>;

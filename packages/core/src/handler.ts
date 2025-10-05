@@ -4,7 +4,7 @@ import { handleRegister } from '@/api/routes/register';
 import { handleLogin } from '@/api/routes/login';
 import { handleLogout } from '@/api/routes/logout';
 import { handleGetSession, handleGetAllSessions, handleRevokeSession } from '@/api/routes/session';
-import { handleVerifyEmail } from '@/api/routes/email';
+import { handleVerifyEmail, handleRequestEmailVerification } from '@/api/routes/email';
 import { handleRequestPasswordReset, handleResetPassword } from '@/api/routes/password';
 import { handleDeleteAccount } from '@/api/routes/account';
 
@@ -16,6 +16,7 @@ const routes: Record<string, Record<string, RouteHandler>> = {
     '/login': handleLogin,
     '/logout': handleLogout,
     '/verify-email': handleVerifyEmail,
+    '/request-email-verification': handleRequestEmailVerification,
     '/request-password-reset': handleRequestPasswordReset,
     '/reset-password': handleResetPassword,
     '/sessions/revoke': handleRevokeSession,

@@ -35,6 +35,20 @@ export async function handleRequestPasswordReset(ctx: ValidatedContext<PasswordR
   });
   await resetToken.save();
 
+  // Build reset URL
+  const baseUrl = config.baseUrl || 'http://localhost:3000';
+  const resetUrl = `${baseUrl}/api/auth/reset-password?token=${token}`;
+
+  // Fire callback for user to send email
+  if (config.callbacks?.onSendPasswordResetEmail) {
+    await config.callbacks.onSendPasswordResetEmail({
+      email: user.email,
+      token,
+      userId: user._id.toString(),
+      resetUrl,
+    });
+  }
+
   return json({ message: 'If an account with this email exists, a password reset link has been sent.' });
 }
 

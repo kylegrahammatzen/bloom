@@ -111,6 +111,10 @@ bloomAuth({
       max: 3,
       window: 60 * 60 * 1000,
     },
+    emailVerification: {
+      max: 3,
+      window: 60 * 60 * 1000,
+    },
   },
 });
 ```
@@ -149,10 +153,13 @@ bloomAuth({
 
 ```typescript
 import { createLogger } from '@bloom/core';
+import { Resend } from 'resend';
 
 const logger = createLogger({ level: 'info' });
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 bloomAuth({
+  baseUrl: 'https://yourdomain.com',
   logger,
   callbacks: {
     onSignIn: async ({ user, session, ip }) => {
@@ -172,6 +179,22 @@ bloomAuth({
     },
     onPasswordReset: async ({ userId, email, ip }) => {
       logger.info('Password reset', { email });
+    },
+    onSendVerificationEmail: async ({ email, token, userId, verificationUrl }) => {
+      await resend.emails.send({
+        from: 'noreply@yourdomain.com',
+        to: email,
+        subject: 'Verify your email',
+        html: `<p>Click <a href="${verificationUrl}">here</a> to verify your email.</p>`,
+      });
+    },
+    onSendPasswordResetEmail: async ({ email, token, userId, resetUrl }) => {
+      await resend.emails.send({
+        from: 'noreply@yourdomain.com',
+        to: email,
+        subject: 'Reset your password',
+        html: `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`,
+      });
     },
     onError: async ({ error, endpoint, userId, ip }) => {
       logger.error('Auth error', { endpoint, error, userId, ip });
@@ -193,10 +216,10 @@ bloomAuth({
 - `POST /logout` - Logout user
 - `GET /me` - Get current session
 - `DELETE /account` - Delete account
-- `POST /email/verify` - Verify email
-- `POST /email/request-verification` - Request verification email
-- `POST /password/reset` - Reset password
-- `POST /password/request-reset` - Request password reset
+- `POST /verify-email` - Verify email with token
+- `POST /request-email-verification` - Request email verification link
+- `POST /reset-password` - Reset password with token
+- `POST /request-password-reset` - Request password reset link
 
 Additional routes may be added by [plugins](./src/plugins/README.md).
 

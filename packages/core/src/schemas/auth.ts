@@ -61,6 +61,14 @@ export const PasswordResetConfirmSchema = z.object({
 });
 
 /**
+ * Email verification request schema
+ * Requires email to send verification link
+ */
+export const EmailVerificationRequestSchema = z.object({
+  email: EmailSchema,
+});
+
+/**
  * Email verification schema
  * Requires verification token
  */
@@ -76,4 +84,5 @@ export type RegisterInput = z.infer<typeof RegisterSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
 export type PasswordResetRequestInput = z.infer<typeof PasswordResetRequestSchema>;
 export type PasswordResetConfirmInput = z.infer<typeof PasswordResetConfirmSchema>;
+export type EmailVerificationRequestInput = z.infer<typeof EmailVerificationRequestSchema>;
 export type EmailVerificationInput = z.infer<typeof EmailVerificationSchema>;

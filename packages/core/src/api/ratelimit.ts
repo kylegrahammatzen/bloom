@@ -2,7 +2,7 @@ import type { BloomAuthConfig, BloomHandlerContext } from '@/schemas';
 import { checkRateLimit as checkLimit, trackAttempt } from '@/utils/rateLimit';
 import { APIError, APIErrorCode } from '@/schemas/errors';
 
-type RateLimitEndpoint = 'login' | 'registration' | 'passwordReset';
+type RateLimitEndpoint = 'login' | 'registration' | 'passwordReset' | 'emailVerification';
 
 export async function checkRateLimit(
   endpoint: RateLimitEndpoint,
