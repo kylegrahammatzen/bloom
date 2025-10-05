@@ -27,7 +27,7 @@ See the example apps for complete setup:
 
 ## Documentation
 
-- [Plugin System](#plugin-system) - Extend Bloom with custom functionality
+- [Plugin System](./src/plugins) - Extend Bloom with custom functionality
 - [Configuration](#configuration) - Session, CORS, rate limiting, and logging
 - [Callbacks](#callbacks) - Hook into authentication events
 - [API Routes](#api-routes) - Available HTTP endpoints
