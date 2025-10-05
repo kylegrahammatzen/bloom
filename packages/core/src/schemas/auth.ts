@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isCommonPassword, hasSufficientEntropy } from '@/utils/common-passwords';
 
 /**
  * Email validation schema
@@ -14,6 +15,8 @@ export const EmailSchema = z.email({ error: 'Invalid email address' });
  * - At least one uppercase letter
  * - At least one number
  * - At least one special character
+ * - Not a common password (blacklist check)
+ * - Sufficient entropy (randomness)
  */
 export const PasswordSchema = z
   .string()
@@ -22,7 +25,13 @@ export const PasswordSchema = z
   .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
   .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
   .regex(/[0-9]/, 'Password must contain at least one number')
-  .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Password must contain at least one special character');
+  .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/, 'Password must contain at least one special character')
+  .refine((password) => !isCommonPassword(password), {
+    message: 'This password is too common and appears in breach databases. Please choose a more unique password.',
+  })
+  .refine((password) => hasSufficientEntropy(password), {
+    message: 'Password is not random enough. Try using a longer password with more varied characters.',
+  });
 
 /**
  * Registration schema
