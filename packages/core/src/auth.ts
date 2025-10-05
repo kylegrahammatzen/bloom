@@ -16,6 +16,9 @@ export function bloomAuth(config: Partial<BloomAuthConfig> = {}): BloomAuth {
       const session = await SessionModel.findOne({ session_id: sessionId });
       if (!session) return null;
 
+      session.last_accessed = new Date();
+      await session.save();
+
       const user = await UserModel.findById(session.user_id);
       if (!user) return null;
 
@@ -29,10 +32,11 @@ export function bloomAuth(config: Partial<BloomAuthConfig> = {}): BloomAuth {
         return null;
       }
 
+      session.last_accessed = new Date();
       if (defaultConfig.session?.slidingWindow) {
         session.extendExpiration(defaultConfig.session.expiresIn ? defaultConfig.session.expiresIn / (24 * 60 * 60 * 1000) : 7);
-        await session.save();
       }
+      await session.save();
 
       const user = await UserModel.findById(session.user_id);
       if (!user) return null;
@@ -65,6 +69,9 @@ export function bloomAuth(config: Partial<BloomAuthConfig> = {}): BloomAuth {
           if (!session || session.isExpired()) {
             return null;
           }
+
+          session.last_accessed = new Date();
+          await session.save();
 
           const user = await UserModel.findById(session.user_id);
           if (!user) {
@@ -101,10 +108,11 @@ export function bloomAuth(config: Partial<BloomAuthConfig> = {}): BloomAuth {
             return null;
           }
 
+          session.last_accessed = new Date();
           if (defaultConfig.session?.slidingWindow) {
             session.extendExpiration(defaultConfig.session.expiresIn ? defaultConfig.session.expiresIn / (24 * 60 * 60 * 1000) : 7);
-            await session.save();
           }
+          await session.save();
 
           const user = await UserModel.findById(session.user_id);
           if (!user) {
