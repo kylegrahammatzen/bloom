@@ -8,6 +8,8 @@ bloomServer({
   database: mongoose,
   session: {
     secret: process.env.SESSION_SECRET,
+    expiresIn: 7 * 24 * 60 * 60 * 1000,
+    cookieName: 'bloom.sid',
   },
   secondaryStorage: redisStorage,
   emailAndPassword: {
