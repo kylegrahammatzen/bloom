@@ -1,5 +1,5 @@
 import { bloomAuth, RedisStorage, createLogger, sessions } from '@bloom/core';
-import type { AuthEventContext, SendVerificationEmailContext, SendPasswordResetEmailContext } from '@bloom/core';
+import type { AuthEventContext, SendVerificationContext, PasswordResetContext, EmailVerificationContext } from '@bloom/core';
 import { mongoose } from './db';
 
 const redisStorage = new RedisStorage({
@@ -21,7 +21,10 @@ export const auth = bloomAuth({
   secondaryStorage: redisStorage,
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+  },
+  emailVerification: {
+    enabled: true,
+    sendOnSignUp: false,
   },
   rateLimit: {
     enabled: true,
@@ -42,15 +45,21 @@ export const auth = bloomAuth({
     onAuthEvent: (ctx: AuthEventContext) => {
       logger.info('Auth event', { action: ctx.action, email: ctx.email, userId: ctx.userId });
     },
-    onSendVerificationEmail: async (ctx: SendVerificationEmailContext) => {
-      logger.info('Verification email requested', {
+    onSendVerification: async (ctx: SendVerificationContext) => {
+      logger.info('Sending verification email', {
         email: ctx.email,
         userId: ctx.userId,
         verificationUrl: ctx.verificationUrl,
       });
     },
-    onSendPasswordResetEmail: async (ctx: SendPasswordResetEmailContext) => {
-      logger.info('Password reset email requested', {
+    onEmailVerification: async (ctx: EmailVerificationContext) => {
+      logger.info('Email verified', {
+        userId: ctx.userId,
+        email: ctx.email,
+      });
+    },
+    onPasswordReset: async (ctx: PasswordResetContext) => {
+      logger.info('Sending password reset email', {
         email: ctx.email,
         userId: ctx.userId,
         resetUrl: ctx.resetUrl,
