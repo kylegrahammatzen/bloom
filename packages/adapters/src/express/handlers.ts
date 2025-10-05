@@ -47,6 +47,11 @@ export function toExpressHandler(auth: BloomAuth): Router {
         res.clearCookie(cookieName);
       }
 
+      // Handle redirect if callbackUrl is provided
+      if (result.callbackUrl) {
+        return res.redirect(result.callbackUrl);
+      }
+
       res.status(result.status).json(result.body);
     } catch (error) {
       if (!(error instanceof APIError || error instanceof SyntaxError)) {

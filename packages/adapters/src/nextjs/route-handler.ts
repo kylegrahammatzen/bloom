@@ -104,8 +104,16 @@ export function createAuthHandler(config: NextAuthHandlerConfig) {
       const context = buildContext(request, method, body, session);
 
       const result = await auth.handler(context);
-      const response = createJsonResponse(request, result.body, result.status);
 
+      // Handle redirect if callbackUrl is provided
+      if (result.callbackUrl) {
+        const redirectResponse = NextResponse.redirect(new URL(result.callbackUrl, request.url));
+        applyCors(redirectResponse, request);
+        handleSessionCookie(redirectResponse, result.sessionData, result.clearSession);
+        return redirectResponse;
+      }
+
+      const response = createJsonResponse(request, result.body, result.status);
       handleSessionCookie(response, result.sessionData, result.clearSession);
 
       return response;
