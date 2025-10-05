@@ -20,7 +20,7 @@ pnpm add @bloom/core
 
 ## Documentation
 
-- [Plugins](./src/plugins) - Extend Bloom with custom functionality
+- [Plugins](#plugins) - Extend Bloom with custom functionality
 - [Configuration](#configuration) - Session, CORS, rate limiting, and logging
 - [Callbacks](#callbacks) - Hook into authentication events
 - [API Routes](#api-routes) - Available HTTP endpoints
@@ -33,6 +33,20 @@ See the example apps for complete setup:
 - [Next.js 15](../../apps/next15) - App Router with server components
 - [Express Server](../../apps/express-server) - Standalone authentication server
 - [React Router v7](../../apps/react-router-v7) - Client-side React with Express backend
+
+## Plugins
+
+Extend Bloom with plugins for additional functionality:
+
+```typescript
+import { bloomAuth, sessions } from '@bloom/core';
+
+const auth = bloomAuth({
+  plugins: [sessions()],
+});
+```
+
+See the [plugin documentation](./src/plugins) for available plugins and how to build custom ones.
 
 ## Configuration
 
@@ -179,20 +193,6 @@ bloomAuth({
   },
 });
 ```
-
-## Plugins
-
-Extend Bloom with plugins for additional functionality:
-
-```typescript
-import { bloomAuth, sessions } from '@bloom/core';
-
-const auth = bloomAuth({
-  plugins: [sessions()],
-});
-```
-
-See the [plugin documentation](./src/plugins) for available plugins and how to build custom ones.
 
 ## API Routes
 
