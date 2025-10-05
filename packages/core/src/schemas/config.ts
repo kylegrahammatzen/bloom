@@ -17,11 +17,12 @@ export const BloomConfigSchema = z.object({
   }).optional().default({ expiresIn: 7 * 24 * 60 * 60 * 1000, cookieName: 'bloom.sid' }),
   emailAndPassword: z.object({
     enabled: z.boolean().default(true),
+    emailVerification: z.object({
+      enabled: z.boolean().default(false),
+      sendOnSignUp: z.boolean().default(false),
+      callbackUrl: z.string().default('/'),
+    }).optional(),
   }).optional().default({ enabled: true }),
-  emailVerification: z.object({
-    enabled: z.boolean().default(false),
-    sendOnSignUp: z.boolean().default(false),
-  }).optional().default({ enabled: false, sendOnSignUp: false }),
   rateLimit: z.object({
     enabled: z.boolean().default(true),
     login: z.object({
