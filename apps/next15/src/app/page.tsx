@@ -6,6 +6,7 @@ import { SignUpForm } from '@/components/auth/signup-form';
 import { LogoutButton } from '@/components/auth/logout-button';
 import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog';
 import { AccountSessions } from '@/components/auth/account-sessions';
+import { AccountVerification } from '@/components/auth/account-verification';
 
 export default async function Home() {
   const validated = await getSession();
@@ -19,8 +20,17 @@ export default async function Home() {
 
       {validated ? (
         <div className="space-y-4">
+          {!validated.user.email_verified && (
+            <AccountVerification email={validated.user.email} />
+          )}
+
           <div>
-            <p className="text-sm font-medium mb-2">Logged in as {validated.user.email}</p>
+            <p className="text-sm font-medium mb-2">
+              Logged in as {validated.user.email}
+              {validated.user.email_verified && (
+                <span className="ml-2 text-xs text-green-600">✓ Verified</span>
+              )}
+            </p>
             <div className="flex gap-2">
               <LogoutButton />
               <DeleteAccountDialog />
