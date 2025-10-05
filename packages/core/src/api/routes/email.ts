@@ -3,33 +3,33 @@ import { User as UserModel, Token } from '@/models';
 import { hashToken, generateSecureToken, normalizeEmail } from '@/utils/crypto';
 import { APIError, APIErrorCode } from '@/schemas/errors';
 import { json } from '@/utils/response';
-import { emitCallback } from '@/api/callbacks';
 import { mapUser } from '@/utils/mappers';
 import { checkRateLimit } from '@/api/ratelimit';
 import { validateRequest, composeMiddleware } from '@/validation';
 import { EmailVerificationRequestSchema, type EmailVerificationRequestInput } from '@/schemas/auth';
 
-export async function handleRequestEmailVerification(ctx: ValidatedContext<EmailVerificationRequestInput>, config: BloomAuthConfig): Promise<GenericResponse> {
-  const validate = composeMiddleware(
-    (ctx) => checkRateLimit('emailVerification', ctx, config),
-    validateRequest(EmailVerificationRequestSchema)
-  );
+function appendQueryParam(url: string, key: string, value: string): string {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}${key}=${value}`;
+}
 
-  const error = await validate(ctx);
-  if (error) return error;
-
-  const { email } = ctx.validatedData!;
-  const normalizedEmail = normalizeEmail(email);
-  const user = await UserModel.findOne({ email: normalizedEmail });
-
-  // Return success even if user doesn't exist (security best practice)
-  if (!user) {
-    return json({ message: 'If an account with this email exists, a verification link has been sent.' });
+export async function handleRequestEmailVerification(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
+  // Require authentication
+  if (!ctx.session?.userId) {
+    return new APIError(APIErrorCode.NOT_AUTHENTICATED).toResponse();
   }
 
-  // If already verified, no need to send again
+  const error = await checkRateLimit('emailVerification', ctx, config);
+  if (error) return error;
+
+  const user = await UserModel.findById(ctx.session.userId);
+  if (!user) {
+    return new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
+  }
+
+  // If already verified, return error
   if (user.email_verified) {
-    return json({ message: 'Email is already verified.' });
+    return json({ error: { code: 'EMAIL_ALREADY_VERIFIED', message: 'Email is already verified' } }, { status: 400 });
   }
 
   // Generate verification token
@@ -58,7 +58,7 @@ export async function handleRequestEmailVerification(ctx: ValidatedContext<Email
     });
   }
 
-  return json({ message: 'If an account with this email exists, a verification link has been sent.' });
+  return json({ message: 'Verification email sent! Check your inbox.' });
 }
 
 export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomAuthConfig): Promise<GenericResponse> {
@@ -67,7 +67,7 @@ export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomA
     const error = new APIError(APIErrorCode.INVALID_REQUEST, 'Email verification is not enabled').toResponse();
     const callbackUrl = ctx.request.query?.callbackUrl;
     if (callbackUrl) {
-      return { ...error, callbackUrl: `${callbackUrl}?error=not_enabled` };
+      return { ...error, callbackUrl: appendQueryParam(callbackUrl, 'error', 'not_enabled') };
     }
     return error;
   }
@@ -78,7 +78,7 @@ export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomA
   if (!token) {
     const error = new APIError(APIErrorCode.TOKEN_REQUIRED).toResponse();
     if (callbackUrl) {
-      return { ...error, callbackUrl: `${callbackUrl}?error=token_required` };
+      return { ...error, callbackUrl: appendQueryParam(callbackUrl, 'error', 'token_required') };
     }
     return error;
   }
@@ -92,7 +92,7 @@ export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomA
   if (!verificationToken || !verificationToken.isValid()) {
     const error = new APIError(APIErrorCode.INVALID_TOKEN).toResponse();
     if (callbackUrl) {
-      return { ...error, callbackUrl: `${callbackUrl}?error=invalid_token` };
+      return { ...error, callbackUrl: appendQueryParam(callbackUrl, 'error', 'invalid_token') };
     }
     return error;
   }
@@ -101,7 +101,7 @@ export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomA
   if (!user) {
     const error = new APIError(APIErrorCode.USER_NOT_FOUND).toResponse();
     if (callbackUrl) {
-      return { ...error, callbackUrl: `${callbackUrl}?error=user_not_found` };
+      return { ...error, callbackUrl: appendQueryParam(callbackUrl, 'error', 'user_not_found') };
     }
     return error;
   }
@@ -126,7 +126,7 @@ export async function handleVerifyEmail(ctx: BloomHandlerContext, config: BloomA
 
   // Redirect to callback URL if provided
   if (callbackUrl) {
-    return { ...response, callbackUrl: `${callbackUrl}?verified=true` };
+    return { ...response, callbackUrl: appendQueryParam(callbackUrl, 'verified', 'true') };
   }
 
   return response;
