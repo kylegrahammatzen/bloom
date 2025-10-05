@@ -20,10 +20,10 @@ pnpm add @bloom/client
 ## Quick Start
 
 ```typescript
-import { BloomClient } from '@bloom/client';
+import { createBloomClient } from '@bloom/client';
 
-const client = new BloomClient({
-  baseURL: 'http://localhost:3000',
+const client = createBloomClient({
+  baseUrl: 'http://localhost:3000',
 });
 
 const result = await client.signIn({
@@ -43,8 +43,8 @@ if (result.error) {
 ## Configuration
 
 ```typescript
-const client = new BloomClient({
-  baseURL: 'https://api.example.com',
+const client = createBloomClient({
+  baseUrl: 'https://api.example.com',
 });
 ```
 
@@ -107,6 +107,51 @@ if (result.data) {
 ```typescript
 const result = await client.deleteAccount();
 ```
+
+### Get All Sessions
+
+Get all active sessions for the authenticated user (requires `sessions` plugin):
+
+```typescript
+const result = await client.getSessions();
+
+if (result.data) {
+  console.log('Active sessions:', result.data.sessions);
+
+  result.data.sessions.forEach(session => {
+    console.log(`${session.browser} on ${session.os}`);
+    console.log(`Last active: ${session.lastAccessedAt}`);
+    if (session.isCurrent) {
+      console.log('This is your current session');
+    }
+  });
+}
+```
+
+Response:
+
+```typescript
+{
+  data?: {
+    sessions: Session[];
+  };
+  error?: BloomError;
+}
+```
+
+### Revoke Session
+
+Revoke a specific session (requires `sessions` plugin):
+
+```typescript
+const result = await client.revokeSession('session-id-to-revoke');
+
+if (result.data) {
+  console.log('Session revoked successfully');
+}
+```
+
+**Note:** You cannot revoke your current session using this method. Use `signOut()` instead.
 
 ### Verify Email
 
@@ -176,8 +221,36 @@ import type {
 
 ## Usage with React
 
+For React applications, use the [@bloom/react](../react) package which provides hooks and context:
+
 ```typescript
-import { BloomClient } from '@bloom/client';
+import { useAuth } from '@bloom/react';
+
+function LoginForm() {
+  const { signIn, isLoading, error } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await signIn({ email, password });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {error && <div>{error}</div>}
+      <input value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button type="submit" disabled={isLoading}>Sign In</button>
+    </form>
+  );
+}
+```
+
+Or use the client directly:
+
+```typescript
+import { createBloomClient } from '@bloom/client';
 import { useState } from 'react';
 
 function LoginForm() {
@@ -185,7 +258,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const client = new BloomClient({ baseURL: '/api/auth' });
+  const client = createBloomClient({ baseUrl: '/api/auth' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();

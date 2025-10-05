@@ -171,7 +171,47 @@ bloomAuth({
 });
 ```
 
+## Plugin System
+
+Bloom supports a plugin system for extending authentication functionality. Plugins can add new API methods and routes.
+
+### Using Plugins
+
+```typescript
+import { bloomAuth, sessions } from '@bloom/core';
+
+const auth = bloomAuth({
+  database: mongoose,
+  session: { secret: process.env.SESSION_SECRET },
+  plugins: [
+    sessions(), // Adds session management
+  ],
+});
+```
+
+### Built-in Plugins
+
+#### Sessions Plugin
+
+Provides multi-session management:
+
+```typescript
+import { sessions } from '@bloom/core';
+
+const auth = bloomAuth({
+  plugins: [sessions()],
+});
+
+// Server-side usage
+const allSessions = await auth.api.sessions.getAll({ headers });
+await auth.api.sessions.revoke({ body: { sessionId }, headers });
+```
+
+See the [plugins documentation](./src/plugins) for more details on building custom plugins.
+
 ## API Routes
+
+### Core Routes
 
 - `POST /register` - Register new user
 - `POST /login` - Login user
@@ -182,6 +222,12 @@ bloomAuth({
 - `POST /email/request-verification` - Request verification email
 - `POST /password/reset` - Reset password
 - `POST /password/request-reset` - Request password reset
+
+### Plugin Routes
+
+**Sessions Plugin:**
+- `GET /sessions` - Get all sessions for authenticated user
+- `POST /sessions/revoke` - Revoke a specific session
 
 ## Error Codes
 
