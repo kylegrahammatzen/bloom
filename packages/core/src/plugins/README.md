@@ -1,4 +1,6 @@
-# Bloom Plugins
+<img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Plugins
 
 Plugins extend Bloom's authentication system with additional features and API methods.
 

@@ -1,6 +1,6 @@
-# Bloom
+<img src=".github/banner.png" width="100%" alt="Bloom Banner" />
 
-<div align="center">
+# Bloom
 
 [![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](LICENSE)
 [![MongoDB](https://img.shields.io/badge/MongoDB-8.7-green.svg)](https://www.mongodb.com/)
@@ -8,8 +8,6 @@
 [![React](https://img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20-green.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-
-</div>
 
 Bloom is an open-source framework-agnostic authentication SDK for TypeScript, with framework adapters for Express, Next.js, and more.
 

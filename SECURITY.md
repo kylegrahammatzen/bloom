@@ -1,4 +1,6 @@
-# Security
+<img src=".github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Security
 
 Bloom implements modern security best practices for authentication and session management. This document explains the security mechanisms and design decisions.
 

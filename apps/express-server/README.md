@@ -1,4 +1,6 @@
-# Bloom Express Server Example
+<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Express Server Example
 
 Express server example with Bloom authentication, featuring session-based authentication with Redis storage.
 

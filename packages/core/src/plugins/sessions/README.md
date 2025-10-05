@@ -1,4 +1,6 @@
-# Sessions Plugin
+<img src="../../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Sessions Plugin
 
 Provides multi-session management, allowing users to view and revoke active sessions across devices.
 

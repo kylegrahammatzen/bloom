@@ -1,4 +1,6 @@
-# @bloom/react
+<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - React
 
 React hooks and context provider for Bloom authentication, enabling seamless integration with React applications.
 

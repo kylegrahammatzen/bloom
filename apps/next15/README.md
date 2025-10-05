@@ -1,4 +1,6 @@
-# Bloom Next.js 15 Example
+<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Next.js 15 Example
 
 Next.js 15 App Router example with Bloom authentication, featuring server-side rendering and cookie-based sessions.
 

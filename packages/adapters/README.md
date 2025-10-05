@@ -1,4 +1,6 @@
-# @bloom/adapters
+<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Adapters
 
 Framework adapters for Bloom authentication, providing middleware and handlers for popular web frameworks.
 

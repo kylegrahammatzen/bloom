@@ -1,4 +1,6 @@
-# @bloom/core
+<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Core
 
 Framework-agnostic authentication core for Bloom, providing a complete authentication system with session management, password hashing, and server adapters for Express and Next.js.
 
@@ -245,10 +247,6 @@ enum APIErrorCode {
   INTERNAL_ERROR = 'INTERNAL_ERROR',
 }
 ```
-
-## Next.js Server Utilities
-
-For Next.js specific utilities like getSession() and bloomMiddleware(), see the [@bloom/adapters package](../adapters) documentation.
 
 ## Type Exports
 

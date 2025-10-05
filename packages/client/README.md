@@ -1,4 +1,6 @@
-# @bloom/client
+<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Client
 
 Browser HTTP client for Bloom authentication, providing a simple API for interacting with Bloom auth endpoints.
 

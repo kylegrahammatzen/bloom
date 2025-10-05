@@ -1,4 +1,6 @@
-# Contributing to Bloom
+<img src=".github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - Contributing
 
 ## Code Style
 

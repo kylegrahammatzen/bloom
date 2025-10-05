@@ -1,4 +1,6 @@
-# Bloom React Router v7 Example
+<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom - React Router v7 Example
 
 React Router v7 example with Bloom authentication, featuring client-side routing and session management.
 
