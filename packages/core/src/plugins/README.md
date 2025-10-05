@@ -9,6 +9,7 @@ Plugins extend Bloom's authentication system with additional features and API me
 | Plugin | Description | Documentation |
 |--------|-------------|---------------|
 | [sessions](./sessions) | Multi-session management with device fingerprinting | [README](./sessions/README.md) |
+| [autumn](./autumn) | Pricing & billing integration with Autumn (Stripe infrastructure) | [README](./autumn/README.md) |
 
 ## Creating Custom Plugins
 
