@@ -45,12 +45,19 @@ export class APIError {
 
   toResponse() {
     const config = ERROR_CONFIG[this.code];
+
+    // If there are validation details, use the first error message as the main message
+    let message = config.message;
+    if (this.code === APIErrorCode.INVALID_REQUEST && Array.isArray(this.details) && this.details.length > 0) {
+      message = this.details[0].message || config.message;
+    }
+
     return {
       status: config.status,
       body: {
         error: {
           code: this.code,
-          message: config.message,
+          message: message,
           ...(this.details && { details: this.details })
         }
       }
