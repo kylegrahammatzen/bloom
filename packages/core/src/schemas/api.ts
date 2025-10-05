@@ -54,6 +54,7 @@ export const GenericResponseSchema = z.object({
   body: z.any(),
   sessionData: z.any().optional(),
   clearSession: z.boolean().optional(),
+  callbackUrl: z.string().optional(),
 });
 
 /**
@@ -68,16 +69,28 @@ export const AuthEventContextSchema = z.object({
 });
 
 /**
- * Email sending callback context schemas
+ * Send verification email callback context (fires when verification email needs to be sent)
  */
-export const SendVerificationEmailContextSchema = z.object({
+export const SendVerificationContextSchema = z.object({
   email: z.email(),
   token: z.string(),
   userId: z.string(),
   verificationUrl: z.string(),
 });
 
-export const SendPasswordResetEmailContextSchema = z.object({
+/**
+ * Email verification callback context (fires after successful verification)
+ */
+export const EmailVerificationContextSchema = z.object({
+  userId: z.string(),
+  email: z.email(),
+  ip: z.string().optional(),
+});
+
+/**
+ * Password reset callback context (fires when reset is requested, for sending email)
+ */
+export const PasswordResetContextSchema = z.object({
   email: z.email(),
   token: z.string(),
   userId: z.string(),
@@ -93,5 +106,6 @@ export type Session = z.infer<typeof SessionSchema>;
 export type GenericRequest = z.infer<typeof GenericRequestSchema>;
 export type GenericResponse = z.infer<typeof GenericResponseSchema>;
 export type AuthEventContext = z.infer<typeof AuthEventContextSchema>;
-export type SendVerificationEmailContext = z.infer<typeof SendVerificationEmailContextSchema>;
-export type SendPasswordResetEmailContext = z.infer<typeof SendPasswordResetEmailContextSchema>;
+export type SendVerificationContext = z.infer<typeof SendVerificationContextSchema>;
+export type EmailVerificationContext = z.infer<typeof EmailVerificationContextSchema>;
+export type PasswordResetContext = z.infer<typeof PasswordResetContextSchema>;
