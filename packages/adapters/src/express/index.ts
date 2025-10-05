@@ -1,9 +1,9 @@
 import express, { type Application } from 'express';
 import { bloomAuth } from '@bloom/core';
 import type { BloomServerConfig, BloomServerInstance } from '@bloom/core/schemas/server';
-import { toExpressHandler, requireAuth } from './handlers';
-import { setupHelmet, setupCors, setupCookieParser } from './middleware';
-import { setupHealthRoute, setupErrorHandler } from './routes';
+import { toExpressHandler, requireAuth } from './handlers.js';
+import { setupHelmet, setupCors, setupCookieParser } from './middleware.js';
+import { setupHealthRoute, setupErrorHandler } from './routes.js';
 
 export function bloomServer(config: BloomServerConfig): BloomServerInstance {
   if (!config.session?.secret) {

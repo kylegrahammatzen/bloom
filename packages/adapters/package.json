@@ -1,9 +1,10 @@
 {
   "name": "@bloom/adapters",
   "version": "1.0.0",
+  "type": "module",
   "description": "Framework adapters for Bloom authentication",
   "scripts": {
-    "build": "tsc && tsc-alias",
+    "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -48,9 +49,13 @@
     }
   },
   "exports": {
-    "./*": {
-      "types": "./dist/*/index.d.ts",
-      "default": "./dist/*/index.js"
+    "./express": {
+      "types": "./dist/express/index.d.ts",
+      "default": "./dist/express/index.js"
+    },
+    "./nextjs": {
+      "types": "./dist/nextjs/index.d.ts",
+      "default": "./dist/nextjs/index.js"
     },
     "./nextjs/middleware": {
       "types": "./dist/nextjs/middleware.d.ts",
