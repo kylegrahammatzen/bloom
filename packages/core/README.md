@@ -26,14 +26,6 @@ pnpm add @bloom/core
 - [API Routes](#api-routes) - Available HTTP endpoints
 - [Error Codes](#error-codes) - Structured error handling
 
-## Quick Start
-
-See the example apps for complete setup:
-
-- [Next.js 15](../../apps/next15) - App Router with server components
-- [Express Server](../../apps/express-server) - Standalone authentication server
-- [React Router v7](../../apps/react-router-v7) - Client-side React with Express backend
-
 ## Plugins
 
 Extend Bloom with plugins for additional functionality:
@@ -196,8 +188,6 @@ bloomAuth({
 
 ## API Routes
 
-### Core Routes
-
 - `POST /register` - Register new user
 - `POST /login` - Login user
 - `POST /logout` - Logout user
@@ -208,11 +198,7 @@ bloomAuth({
 - `POST /password/reset` - Reset password
 - `POST /password/request-reset` - Request password reset
 
-### Plugin Routes
-
-**Sessions Plugin:**
-- `GET /sessions` - Get all sessions for authenticated user
-- `POST /sessions/revoke` - Revoke a specific session
+Additional routes may be added by [plugins](./src/plugins).
 
 ## Error Codes
 
