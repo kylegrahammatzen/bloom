@@ -11,7 +11,7 @@ const redisStorage = new RedisStorage({
 const logger = createLogger({ level: 'info', prefix: '[Bloom Auth]' });
 
 export const auth = bloomAuth({
-  baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+  baseUrl: process.env.BASE_URL,
   database: mongoose,
   session: {
     secret: process.env.SESSION_SECRET,
@@ -22,6 +22,17 @@ export const auth = bloomAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+  },
+  rateLimit: {
+    enabled: true,
+    emailVerification: {
+      max: 3,
+      window: 60 * 1000, // 60 seconds
+    },
+    passwordReset: {
+      max: 3,
+      window: 60 * 1000, // 60 seconds
+    },
   },
   logger,
   plugins: [
