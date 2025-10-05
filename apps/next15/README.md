@@ -6,8 +6,12 @@ Next.js 15 App Router example with Bloom authentication, featuring server-side r
 
 - Next.js 15 App Router with server components
 - Server-side session validation with `getSession()`
+- Multi-session management with device fingerprinting
+- Redis secondary storage for session data
 - Cookie-based authentication
-- Middleware-based route protection
+- Middleware for quick cookie checks (doesn't validate sessions)
+- Logger with custom prefix and colors
+- Sessions plugin for managing active sessions
 - Type-safe authentication with TypeScript
 - Tailwind CSS v4 styling
 
@@ -46,6 +50,7 @@ Update `.env` with your values:
 
 ```env
 DATABASE_URL=mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin
+REDIS_URL=redis://localhost:6379
 SESSION_SECRET=your-super-secret-session-key
 ```
 
@@ -63,95 +68,19 @@ pnpm dev
 
 Open http://localhost:3001
 
-## Usage
+## Architecture Notes
 
-Server Component:
+**Middleware (`middleware.ts`):**
+- Only performs quick cookie existence checks
+- Does NOT validate sessions or make database calls
+- Redirects to login if no session cookie is found
+- Keeps middleware fast and lightweight
 
-```typescript
-import { getSession } from '@bloom/adapters/nextjs';
-
-export default async function Page() {
-  const session = await getSession();
-
-  if (!session) {
-    return <div>Please sign in</div>;
-  }
-
-  return <div>Welcome (userId: {session.userId})</div>;
-}
-```
-
-Middleware:
-
-```typescript
-import { bloomMiddleware } from '@bloom/adapters/nextjs';
-
-export default bloomMiddleware({
-  protectedRoutes: ['/dashboard'],
-});
-
-export const config = {
-  matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
-  ],
-};
-```
-
-API Route Handler:
-
-```typescript
-import { createAuthHandler } from '@bloom/adapters/nextjs';
-import { bloomAuth } from '@bloom/core';
-import type { AuthEventContext } from '@bloom/core';
-import { connectDB } from '@/lib/db';
-
-const auth = bloomAuth({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
-  session: {
-    secret: process.env.SESSION_SECRET,
-    expiresIn: 7 * 24 * 60 * 60 * 1000,
-  },
-  emailAndPassword: {
-    requireEmailVerification: false,
-  },
-  callbacks: {
-    onAuthEvent: (ctx: AuthEventContext) => {
-      console.log(`[${ctx.action}] ${ctx.email || ctx.userId}`);
-    },
-  },
-});
-
-const handler = createAuthHandler({ auth, connectDB });
-
-export const GET = handler.GET;
-export const POST = handler.POST;
-export const DELETE = handler.DELETE;
-```
-
-Client Components:
-
-```typescript
-'use client';
-
-import { useAuth } from '@bloom/react';
-import { useRouter } from 'next/navigation';
-
-export const LoginForm = () => {
-  const router = useRouter();
-  const { signIn, refetch } = useAuth();
-
-  const handleSubmit = async (data) => {
-    const res = await signIn(data);
-    await refetch();
-    router.refresh();
-  };
-
-  return <form onSubmit={handleSubmit}>...</form>;
-};
-```
+**Page Validation (`getSession()`):**
+- Server components use `getSession()` to fully validate sessions
+- Checks session expiration and validity against the database
+- Updates `last_accessed` timestamp on each validation
+- This is where actual session validation happens
 
 ## License
 
