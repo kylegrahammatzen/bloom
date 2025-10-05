@@ -20,6 +20,9 @@ importers:
 
   apps/express-server:
     dependencies:
+      '@bloom/adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@bloom/core':
         specifier: workspace:*
         version: link:../../packages/core
