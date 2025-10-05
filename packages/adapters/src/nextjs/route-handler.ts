@@ -30,12 +30,14 @@ function toAPIError(error: unknown): APIError {
 
 function buildContext(request: NextRequest, method: string, body: any, session: any): BloomHandlerContext {
   const pathname = request.nextUrl.pathname;
+  const query = Object.fromEntries(request.nextUrl.searchParams.entries());
   return {
     request: {
       method,
       path: pathname.replace(API_AUTH_PREFIX, ''),
       url: pathname,
       body,
+      query: Object.keys(query).length > 0 ? query : undefined,
       headers: Object.fromEntries(request.headers.entries()),
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       userAgent: request.headers.get('user-agent') || undefined,

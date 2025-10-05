@@ -29,6 +29,7 @@ export function toExpressHandler(auth: BloomAuth): Router {
           path: req.path,
           url: req.url,
           body: req.body,
+          query: Object.keys(req.query).length > 0 ? req.query as Record<string, any> : undefined,
           headers: req.headers as Record<string, string | string[] | undefined>,
           ip,
           userAgent,
