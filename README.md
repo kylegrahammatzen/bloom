@@ -20,6 +20,22 @@ Bloom is an open-source framework-agnostic authentication SDK for TypeScript, wi
 - Cookie-based session management with Argon2id password hashing
 - Email verification and password reset flows
 - Server-side rendering support with Next.js adapter
+- Dictionary attack protection with common password blacklist
+- IP-based rate limiting for authentication endpoints
+- Multi-session management with device tracking
+
+## Security
+
+Bloom implements modern security best practices:
+
+- **Argon2id password hashing** - Memory-hard algorithm resistant to GPU/ASIC attacks
+- **Unique salt per password** - 256-bit cryptographically secure salts prevent rainbow table attacks
+- **Dictionary attack prevention** - Common password blacklist and entropy validation
+- **Cookie-based sessions** - Server-side sessions with instant revocation capability
+- **Rate limiting** - IP-based throttling with automatic account locking
+- **Constant-time comparison** - Prevents timing attacks on password verification
+
+See [SECURITY.md](SECURITY.md) for detailed security documentation.
 
 ## Example Apps
 
