@@ -5,15 +5,11 @@ Next.js 15 App Router example with Bloom authentication, featuring server-side r
 ## Features
 
 - Next.js 15 App Router with server components
-- Server-side session validation with `getSession()`
 - Multi-session management with device fingerprinting
-- Redis secondary storage for session data
+- Redis secondary storage (optional)
+- Sessions plugin with view/revoke functionality
 - Cookie-based authentication
-- Middleware for quick cookie checks (doesn't validate sessions)
-- Logger with custom prefix and colors
-- Sessions plugin for managing active sessions
-- Type-safe authentication with TypeScript
-- Tailwind CSS v4 styling
+- Custom logger with prefix and colors
 
 ## Package Structure
 
