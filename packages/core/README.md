@@ -38,7 +38,7 @@ const auth = bloomAuth({
 });
 ```
 
-See the [plugin documentation](./src/plugins) for available plugins and how to build custom ones.
+See the [plugin documentation](./src/plugins/README.md) for available plugins and how to build custom ones.
 
 ## Configuration
 
@@ -198,7 +198,7 @@ bloomAuth({
 - `POST /password/reset` - Reset password
 - `POST /password/request-reset` - Request password reset
 
-Additional routes may be added by [plugins](./src/plugins).
+Additional routes may be added by [plugins](./src/plugins/README.md).
 
 ## Error Codes
 
