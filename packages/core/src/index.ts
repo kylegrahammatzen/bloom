@@ -6,6 +6,6 @@ export { MemoryStorage } from './storage/memory';
 export { createLogger } from './utils/logger';
 export { sessions } from './plugins/sessions';
 export { autumn } from './plugins/autumn';
-export type { AutumnCheckResponse, AutumnTrackResponse, AutumnCheckoutResponse, AutumnAttachResponse, AutumnCancelResponse, AutumnBillingPortalResponse, AutumnEntityResponse, AutumnQueryResponse, AutumnCustomerResponse } from './plugins/autumn';
+export type { AutumnEntity, AutumnCheckResponse, AutumnTrackResponse, AutumnCheckoutResponse, AutumnAttachResponse, AutumnCancelResponse, AutumnBillingPortalResponse, AutumnEntityResponse, AutumnQueryResponse, AutumnCustomerResponse } from './plugins/autumn';
 export * from './utils/crypto';
 export * from './utils/cookies';

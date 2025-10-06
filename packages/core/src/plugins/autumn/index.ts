@@ -20,6 +20,15 @@ export type AutumnConfig = {
 }
 
 /**
+ * Autumn API request types
+ */
+export type AutumnEntity = {
+  id: string;
+  feature_id: string;
+  name: string;
+}
+
+/**
  * Autumn API response types
  */
 export type AutumnCheckResponse = {
@@ -69,18 +78,42 @@ export type AutumnQueryResponse = {
 }
 
 export type AutumnCustomerResponse = {
+  autumn_id: string;
+  created_at: number;
+  env: string;
   id: string;
-  plan?: string;
-  usage?: Record<string, {
-    used: number;
-    limit?: number;
-    remaining?: number;
+  name?: string;
+  email?: string;
+  fingerprint?: string;
+  stripe_id?: string;
+  products: Array<{
+    id: string;
+    name: string | null;
+    group: string | null;
+    status: 'active' | 'past_due' | 'trialing' | 'scheduled';
+    started_at: number;
+    canceled_at: number | null;
+    current_period_start: number | null;
+    current_period_end: number | null;
   }>;
-  subscription?: {
-    status: string;
-    current_period_start?: string;
-    current_period_end?: string;
-  };
+  features: Array<{
+    feature_id: string;
+    unlimited: boolean;
+    interval: 'month' | 'year' | null;
+    balance: number | null;
+    usage: number | null;
+    included_usage: number | null;
+    next_reset_at: number | null;
+  }>;
+  invoices?: Array<{
+    product_ids: string[];
+    stripe_id: string;
+    status: 'paid' | 'unpaid' | 'void';
+    total: number;
+    currency: string;
+    created_at: number;
+    hosted_invoice_url: string;
+  }>;
 }
 
 /**
@@ -214,7 +247,7 @@ export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
          */
         checkout: async (params: ApiMethodParams): Promise<AutumnCheckoutResponse> => {
           const userId = getUserId(params);
-          const { productId, successUrl, cancelUrl } = params.body || {};
+          const { productId, successUrl } = params.body || {};
 
           if (!productId) {
             throw new APIError(APIErrorCode.INVALID_INPUT, 'productId is required');
@@ -226,7 +259,6 @@ export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
           };
 
           if (successUrl) payload.success_url = successUrl;
-          if (cancelUrl) payload.cancel_url = cancelUrl;
 
           return autumnRequest<AutumnCheckoutResponse>('/checkout', 'POST', payload);
         },
@@ -308,34 +340,29 @@ export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
           const userId = getUserId(params);
           const { returnUrl } = params.body || {};
 
-          const payload: any = {
-            customer_id: userId,
-          };
+          const payload: any = {};
 
           if (returnUrl) payload.return_url = returnUrl;
 
-          return autumnRequest<AutumnBillingPortalResponse>('/billing-portal', 'POST', payload);
+          return autumnRequest<AutumnBillingPortalResponse>(`/customers/${userId}/billing_portal`, 'POST', payload);
         },
 
         /**
          * Create entity (seats, workspaces, etc.)
+         * Can create single or multiple entities
          */
         createEntity: async (params: ApiMethodParams): Promise<AutumnEntityResponse> => {
           const userId = getUserId(params);
-          const { entityFeatureId, data } = params.body || {};
+          const { entities } = params.body || {};
 
-          if (!entityFeatureId) {
-            throw new APIError(APIErrorCode.INVALID_INPUT, 'entityFeatureId is required');
+          if (!entities) {
+            throw new APIError(APIErrorCode.INVALID_INPUT, 'entities array is required');
           }
 
-          const payload: any = {
-            customer_id: userId,
-            entity_feature_id: entityFeatureId,
-          };
+          // API expects array of { id, feature_id, name }
+          const payload = Array.isArray(entities) ? entities : [entities];
 
-          if (data) payload.data = data;
-
-          return autumnRequest<AutumnEntityResponse>('/entity', 'POST', payload);
+          return autumnRequest<AutumnEntityResponse>(`/customers/${userId}/entities`, 'POST', payload);
         },
 
         /**
@@ -349,7 +376,7 @@ export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
             throw new APIError(APIErrorCode.INVALID_INPUT, 'entityId is required');
           }
 
-          return autumnRequest<AutumnEntityResponse>(`/entity/${entityId}?customer_id=${userId}`, 'GET');
+          return autumnRequest<AutumnEntityResponse>(`/customers/${userId}/entities/${entityId}`, 'GET');
         },
 
         /**

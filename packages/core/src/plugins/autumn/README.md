@@ -317,7 +317,7 @@ return { redirectUrl: url };
 
 ### createEntity
 
-Create an entity (seats, workspaces, etc.) for the authenticated user.
+Create one or more entities (seats, workspaces, etc.) for the authenticated user.
 
 ```typescript
 auth.api.autumn.createEntity(params: ApiMethodParams): Promise<AutumnEntityResponse>
@@ -325,36 +325,58 @@ auth.api.autumn.createEntity(params: ApiMethodParams): Promise<AutumnEntityRespo
 
 Parameters:
 
-- `entityFeatureId` (string, required): Feature ID for the entity type
-- `data` (object, optional): Additional metadata for the entity
+- `entities` (array or object, required): Single entity or array of entities to create. Each entity must have:
+  - `id` (string): Your unique identifier for the entity
+  - `feature_id` (string): The feature ID associated with this entity type
+  - `name` (string): A name or identifier for the entity
 
 Returns:
 
 ```typescript
 {
   id: string;
-  feature_id: string;
+  name: string;
   customer_id: string;
-  data?: Record<string, any>;
+  feature_id: string;
+  // additional fields from API
 }
 ```
 
-Example:
+Example (single entity):
 
 ```typescript
 const entity = await auth.api.autumn.createEntity({
   headers: request.headers,
   body: {
-    entityFeatureId: 'seats',
-    data: {
+    entities: {
+      id: 'seat_456',
+      feature_id: 'seats',
       name: 'John Doe',
-      email: 'john@example.com',
-      role: 'admin',
     },
   },
 });
+```
 
-console.log(entity.id);
+Example (multiple entities):
+
+```typescript
+const entities = await auth.api.autumn.createEntity({
+  headers: request.headers,
+  body: {
+    entities: [
+      {
+        id: 'seat_456',
+        feature_id: 'seats',
+        name: 'John Doe',
+      },
+      {
+        id: 'seat_789',
+        feature_id: 'seats',
+        name: 'Jane Smith',
+      },
+    ],
+  },
+});
 ```
 
 ### getEntity
