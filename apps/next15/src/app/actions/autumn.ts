@@ -111,6 +111,24 @@ export async function cancelSubscription(productId?: string) {
 }
 
 /**
+ * Server action to reactivate a canceled subscription
+ */
+export async function reactivateSubscription(productId: string, successUrl: string) {
+  const cookie = await getCookieHeader();
+
+  const result = await auth.api.autumn?.attach({
+    headers: { cookie },
+    body: { productId, successUrl },
+  });
+
+  if (result?.url) {
+    return result.url;
+  }
+
+  return successUrl;
+}
+
+/**
  * Server action to create entity (seat, workspace, etc.)
  */
 export async function createEntity(entities: AutumnEntity[] | AutumnEntity) {

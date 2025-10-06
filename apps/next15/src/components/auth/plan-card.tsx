@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { upgradeProduct, cancelSubscription } from '@/app/actions/autumn';
+import { upgradeProduct, cancelSubscription, reactivateSubscription } from '@/app/actions/autumn';
 import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 
 type PlanCardProps = {
   id: string;
@@ -28,6 +29,7 @@ type PlanCardProps = {
 
 export const PlanCard = (props: PlanCardProps) => {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const isUpgrade = props.price > props.currentPrice;
   const isDowngrade = props.price < props.currentPrice;
 
@@ -40,14 +42,18 @@ export const PlanCard = (props: PlanCardProps) => {
   const handleChangePlan = () => {
     startTransition(async () => {
       try {
-        // If downgrading to free, cancel current subscription
-        if (props.price === 0) {
+        if (props.status === 'canceled') {
+          // Reactivate canceled subscription
+          const url = await reactivateSubscription(props.id, props.successUrl);
+          router.push(url);
+        } else if (props.price === 0) {
+          // Downgrading to free, cancel current subscription
           await cancelSubscription(props.currentProductId);
-          window.location.href = props.successUrl;
+          router.push(props.successUrl);
         } else {
           // Otherwise use checkout for upgrade/change
           const url = await upgradeProduct(props.id, props.successUrl);
-          window.location.href = url;
+          router.push(url);
         }
       } catch (error) {
         console.error('Failed to change plan:', error);
@@ -86,22 +92,24 @@ export const PlanCard = (props: PlanCardProps) => {
           </ul>
         </div>
       </CardContent>
-      {props.status !== 'current' && (
-        <CardFooter>
-          <Button
-            variant={
-              props.status === 'scheduled' ? 'secondary' :
-              isDowngrade ? 'outline' : 'default'
-            }
-            size="sm"
-            className="w-full"
-            onClick={handleChangePlan}
-            disabled={isPending || props.status === 'scheduled'}
-          >
-            {isPending ? 'Loading...' : props.status === 'scheduled' ? 'Scheduled' : getButtonText()}
-          </Button>
-        </CardFooter>
-      )}
+      <CardFooter>
+        <Button
+          variant={
+            props.status === 'current' ? 'secondary' :
+            props.status === 'scheduled' ? 'secondary' :
+            isDowngrade ? 'outline' : 'default'
+          }
+          size="sm"
+          className="w-full"
+          onClick={handleChangePlan}
+          disabled={isPending || props.status === 'scheduled' || props.status === 'current'}
+        >
+          {isPending ? 'Loading...' :
+           props.status === 'current' ? 'Current Plan' :
+           props.status === 'scheduled' ? 'Scheduled' :
+           getButtonText()}
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

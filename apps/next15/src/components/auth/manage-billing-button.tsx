@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { getBillingPortalUrl } from '@/app/actions/autumn';
 import { useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 
 type ManageBillingButtonProps = {
   returnUrl: string;
@@ -10,12 +11,13 @@ type ManageBillingButtonProps = {
 
 export const ManageBillingButton = (props: ManageBillingButtonProps) => {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleClick = () => {
     startTransition(async () => {
       try {
         const url = await getBillingPortalUrl(props.returnUrl);
-        window.location.href = url;
+        router.push(url);
       } catch (error) {
         console.error('Failed to open billing portal:', error);
       }
