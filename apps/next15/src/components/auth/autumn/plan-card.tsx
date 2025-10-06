@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DowngradeDialog } from './downgrade-dialog';
 import { upgradeProduct, cancelSubscription, reactivateSubscription } from '@/app/actions/autumn';
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
@@ -93,22 +94,30 @@ export const PlanCard = (props: PlanCardProps) => {
         </div>
       </CardContent>
       <CardFooter>
-        <Button
-          variant={
-            props.status === 'current' ? 'secondary' :
-            props.status === 'scheduled' ? 'secondary' :
-            isDowngrade ? 'outline' : 'default'
-          }
-          size="sm"
-          className="w-full"
-          onClick={handleChangePlan}
-          disabled={isPending || props.status === 'scheduled' || props.status === 'current'}
-        >
-          {isPending ? 'Loading...' :
-           props.status === 'current' ? 'Current Plan' :
-           props.status === 'scheduled' ? 'Scheduled' :
-           getButtonText()}
-        </Button>
+        {props.status === 'available' && isDowngrade ? (
+          <DowngradeDialog
+            planName={props.name}
+            onConfirm={handleChangePlan}
+            isPending={isPending}
+          />
+        ) : (
+          <Button
+            variant={
+              props.status === 'current' ? 'secondary' :
+              props.status === 'scheduled' ? 'secondary' :
+              'default'
+            }
+            size="sm"
+            className="w-full"
+            onClick={handleChangePlan}
+            disabled={isPending || props.status === 'scheduled' || props.status === 'current'}
+          >
+            {isPending ? 'Loading...' :
+             props.status === 'current' ? 'Current Plan' :
+             props.status === 'scheduled' ? 'Scheduled' :
+             getButtonText()}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
