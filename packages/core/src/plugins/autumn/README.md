@@ -1,136 +1,53 @@
 <img src="../../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Autumn Plugin
+# Bloom - Autumn Plugin
 
-Pricing and billing integration with [Autumn](https://useautumn.com/) - an open-source infrastructure layer over Stripe for subscriptions, usage metering, and feature gating.
+Provides pricing and billing integration with [Autumn](https://useautumn.com/) - an open-source infrastructure layer over Stripe.
 
-## Installation
+## Features
 
-Built into `@bloom/core` - no additional packages needed.
+- Feature gating and access control
+- Usage metering and tracking
+- Stripe checkout and billing portal
+- Subscription management (upgrade, downgrade, cancel)
+- Customer data and analytics
 
 ## Setup
 
-Add your API key to `.env`:
+Add your Autumn API key to `.env`:
 
 ```bash
 AUTUMN_SECRET_KEY=am_sk_1234567890
 ```
 
-Add the plugin:
+Add the plugin to your auth configuration:
 
 ```typescript
-import { bloomAuth } from '@bloom/core';
-import { autumn } from '@bloom/core/plugins/autumn';
+import { bloomAuth, autumn } from '@bloom/core';
 
 const auth = bloomAuth({
-  plugins: [autumn()],
+  database: mongoose,
+  plugins: [
+    autumn(), // Reads AUTUMN_SECRET_KEY from env
+  ],
 });
 ```
 
-## Available Methods
+Or with custom configuration:
 
-| Category | Method | Description |
-|----------|--------|-------------|
-| **Access Control** | `check()` | Check if user has access to feature/product |
-| | `track()` | Record feature usage for metering |
-| **Subscriptions** | `checkout()` | Create Stripe checkout session |
-| | `attach()` | Attach product (upgrade/downgrade) |
-| | `cancel()` | Cancel subscription |
-| **Customer** | `getCustomer()` | Get subscription and usage data |
-| | `getBillingPortal()` | Get Stripe billing portal URL |
-| **Entities** | `createEntity()` | Create entities (seats, workspaces) |
-| | `getEntity()` | Get entity information |
-| **Analytics** | `query()` | Query usage data |
-
-For full API reference, see [Autumn API Documentation](https://docs.useautumn.com/api-reference/).
-
-### Access Control
-
-**check** - Check feature/product access:
 ```typescript
-const { data } = await auth.api.autumn.check({
-  headers: { cookie },
-  body: { featureId: 'messages' },
-});
-// Returns: { data: { allowed: boolean, remaining?: number, limit?: number } }
-```
-
-**track** - Track feature usage:
-```typescript
-await auth.api.autumn.track({
-  headers: { cookie },
-  body: { featureId: 'ai_tokens', value: 150 },
+const auth = bloomAuth({
+  database: mongoose,
+  plugins: [
+    autumn({
+      apiKey: 'am_sk_1234567890',  // Optional: override env variable
+      apiUrl: 'https://api.useautumn.com/v1',  // Optional: for self-hosted
+    }),
+  ],
 });
 ```
 
-### Subscriptions
-
-**checkout** - Create Stripe checkout session:
-```typescript
-const { url } = await auth.api.autumn.checkout({
-  headers: { cookie },
-  body: { productId: 'pro', successUrl: '/success' },
-});
-```
-
-**attach** - Attach product (upgrade/downgrade):
-```typescript
-const result = await auth.api.autumn.attach({
-  headers: { cookie },
-  body: { productId: 'pro' },
-});
-```
-
-**cancel** - Cancel subscription:
-```typescript
-await auth.api.autumn.cancel({
-  headers: { cookie },
-  body: { productId: 'pro' },
-});
-```
-
-### Customer
-
-**getCustomer** - Get subscription and usage:
-```typescript
-const customer = await auth.api.autumn.getCustomer({
-  headers: { cookie },
-});
-```
-
-**getBillingPortal** - Get billing portal URL:
-```typescript
-const { url } = await auth.api.autumn.getBillingPortal({
-  headers: { cookie },
-  body: { returnUrl: '/settings' },
-});
-```
-
-### Entities
-
-**createEntity** - Create entities (seats, workspaces):
-```typescript
-await auth.api.autumn.createEntity({
-  headers: { cookie },
-  body: {
-    entities: { id: 'seat_1', feature_id: 'seats', name: 'John' }
-  },
-});
-```
-
-### Analytics
-
-**query** - Query usage data:
-```typescript
-const { data } = await auth.api.autumn.query({
-  headers: { cookie },
-  body: { featureId: 'messages', startDate: '2024-01-01' },
-});
-```
-
-## Usage Example
-
-Feature gating with usage tracking:
+## Usage
 
 ```typescript
 'use server';
@@ -150,7 +67,7 @@ export async function sendMessage(text: string) {
     throw new Error('Message limit reached');
   }
 
-  // Perform action...
+  // Perform action
   await saveMessage(text);
 
   // Track usage
@@ -162,3 +79,64 @@ export async function sendMessage(text: string) {
   return { success: true };
 }
 ```
+
+## API Methods
+
+### `auth.api.autumn.check(params)`
+Check if user has access to a feature or product.
+
+- **Params:** `{ featureId?: string, productId?: string }`
+- **Returns:** `{ data: { allowed: boolean, remaining?: number, limit?: number } }`
+
+### `auth.api.autumn.track(params)`
+Record feature usage for metering.
+
+- **Params:** `{ featureId: string, value?: number }`
+- **Returns:** `{ success: boolean }`
+
+### `auth.api.autumn.checkout(params)`
+Create a Stripe checkout session.
+
+- **Params:** `{ productId: string, successUrl?: string }`
+- **Returns:** `{ url: string }`
+
+### `auth.api.autumn.attach(params)`
+Attach product to customer (upgrade/downgrade without checkout).
+
+- **Params:** `{ productId: string, successUrl?: string }`
+- **Returns:** `{ success: boolean, url?: string }`
+
+### `auth.api.autumn.cancel(params)`
+Cancel a subscription.
+
+- **Params:** `{ productId?: string }`
+- **Returns:** `{ success: boolean }`
+
+### `auth.api.autumn.getCustomer(params)`
+Get customer subscription and usage data.
+
+- **Returns:** `{ products: [...], features: {...}, invoices: [...] }`
+
+### `auth.api.autumn.getBillingPortal(params)`
+Get Stripe billing portal URL.
+
+- **Params:** `{ returnUrl?: string }`
+- **Returns:** `{ url: string }`
+
+### `auth.api.autumn.createEntity(params)`
+Create entities like seats or workspaces.
+
+- **Params:** `{ entities: { id: string, feature_id: string, name: string } }`
+- **Returns:** Entity data
+
+### `auth.api.autumn.query(params)`
+Query usage data.
+
+- **Params:** `{ featureId?: string, startDate?: string, endDate?: string }`
+- **Returns:** Usage data array
+
+For detailed API reference, see [Autumn API Documentation](https://docs.useautumn.com/api-reference/).
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0.
