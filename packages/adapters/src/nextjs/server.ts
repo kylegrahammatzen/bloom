@@ -5,6 +5,14 @@ import { createLogger } from '@bloom/core';
 
 const logger = createLogger();
 
+/**
+ * Get cookie header string for server-side requests
+ */
+export async function getCookieHeader(): Promise<string> {
+  const cookieStore = await cookies();
+  return cookieStore.toString();
+}
+
 export type ValidatedSession = {
   user: User;
   session: Session;
