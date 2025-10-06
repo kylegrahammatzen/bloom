@@ -1,8 +1,8 @@
 import { auth } from '@/lib/auth';
 import { getCookieHeader } from '@bloom/adapters/nextjs/server';
 import type { AutumnCustomerResponse } from '@bloom/core';
-import { products, features } from '@/../../autumn.config';
-import type { Product } from '@/../../autumn.config';
+import { products, features } from '../../../../autumn.config';
+import type { Product } from '../../../../autumn.config';
 import { PlanCard } from './plan-card';
 import { ManageBillingButton } from './manage-billing-button';
 

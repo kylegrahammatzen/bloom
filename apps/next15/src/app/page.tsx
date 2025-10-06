@@ -7,7 +7,7 @@ import { LogoutButton } from '@/components/auth/logout-button';
 import { DeleteAccountDialog } from '@/components/auth/delete-account-dialog';
 import { AccountSessions } from '@/components/auth/account-sessions';
 import { AccountVerification } from '@/components/auth/account-verification';
-import { AccountSubscription } from '@/components/auth/account-subscription';
+import { AccountSubscription } from '@/components/auth/autumn/account-subscription';
 
 export default async function Home() {
   const validated = await getSession();
