@@ -1,24 +1,51 @@
+// Define types
+export type Feature = {
+  id: string;
+  name: string;
+  type: 'single_use' | 'boolean' | 'entity';
+};
+
+export type FeatureItem = {
+  feature_id: string;
+  included_usage?: number;
+  interval?: 'month' | 'year';
+};
+
+export type PriceItem = {
+  price: number;
+  interval: 'month' | 'year';
+};
+
+export type ProductItem = FeatureItem | PriceItem;
+
+export type Product = {
+  id: string;
+  name: string;
+  is_default?: boolean;
+  items: ProductItem[];
+};
+
 // Define features
-export const messages = {
+export const messages: Feature = {
   id: 'messages',
   name: 'Messages',
   type: 'single_use',
 };
 
-export const aiTokens = {
+export const aiTokens: Feature = {
   id: 'ai_tokens',
   name: 'AI Tokens',
   type: 'single_use',
 };
 
-export const advancedAnalytics = {
+export const advancedAnalytics: Feature = {
   id: 'advanced_analytics',
   name: 'Advanced Analytics',
   type: 'boolean',
 };
 
 // Define products
-export const free = {
+export const free: Product = {
   id: 'free',
   name: 'Free',
   is_default: true,
@@ -38,7 +65,7 @@ export const free = {
   ],
 };
 
-export const pro = {
+export const pro: Product = {
   id: 'pro',
   name: 'Pro',
   items: [
