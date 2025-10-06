@@ -1,34 +1,29 @@
 'use server';
 
 import { auth } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import { getCookieHeader } from '@bloom/adapters/nextjs/server';
+import type { AutumnEntity } from '@bloom/core';
 
 /**
  * Server action to send a message with feature gating and usage tracking
  */
 export async function sendMessage(message: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
+  const cookie = await getCookieHeader();
 
-  // Check if user has access to messages feature
-  const { data } = await auth.api.autumn?.check({
-    headers: { cookie: cookieHeader },
+  const result = await auth.api.autumn?.check({
+    headers: { cookie },
     body: { featureId: 'messages' },
-  }) || { data: { allowed: false } };
+  });
 
-  if (!data.allowed) {
+  if (!result?.data.allowed) {
     throw new Error('Message limit reached. Please upgrade to continue.');
   }
 
   // Send the message (simulated)
   console.log('Sending message:', message);
 
-  // Track usage
   await auth.api.autumn?.track({
-    headers: { cookie: cookieHeader },
+    headers: { cookie },
     body: { featureId: 'messages', value: 1 },
   });
 
@@ -39,32 +34,26 @@ export async function sendMessage(message: string) {
  * Server action to use AI tokens with feature gating and usage tracking
  */
 export async function useAITokens(tokenCount: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
+  const cookie = await getCookieHeader();
 
-  // Check if user has enough AI tokens
-  const { data } = await auth.api.autumn?.check({
-    headers: { cookie: cookieHeader },
+  const result = await auth.api.autumn?.check({
+    headers: { cookie },
     body: { featureId: 'ai_tokens' },
-  }) || { data: { allowed: false } };
+  });
 
-  if (!data.allowed) {
+  if (!result?.data.allowed) {
     throw new Error('AI token limit reached. Please upgrade to continue.');
   }
 
-  if (data.remaining !== undefined && data.remaining < tokenCount) {
-    throw new Error(`Insufficient tokens. Required: ${tokenCount}, Available: ${data.remaining}`);
+  if (result.data.remaining !== undefined && result.data.remaining < tokenCount) {
+    throw new Error(`Insufficient tokens. Required: ${tokenCount}, Available: ${result.data.remaining}`);
   }
 
   // Use the AI tokens (simulated)
   console.log('Using AI tokens:', tokenCount);
 
-  // Track usage
   await auth.api.autumn?.track({
-    headers: { cookie: cookieHeader },
+    headers: { cookie },
     body: { featureId: 'ai_tokens', value: tokenCount },
   });
 
@@ -72,86 +61,49 @@ export async function useAITokens(tokenCount: number) {
 }
 
 /**
- * Server action to create a checkout session for upgrading
+ * Server action to upgrade/purchase product (creates Stripe checkout)
  */
-export async function upgradeToProPlan() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
+export async function upgradeProduct(productId: string, successUrl: string) {
+  const cookie = await getCookieHeader();
 
   const result = await auth.api.autumn?.checkout({
-    headers: { cookie: cookieHeader },
-    body: {
-      productId: 'pro',
-      successUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/dashboard?upgraded=true`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/pricing`,
-    },
+    headers: { cookie },
+    body: { productId, successUrl },
   });
 
   if (!result?.url) {
     throw new Error('Failed to create checkout session');
   }
 
-  return { checkoutUrl: result.url };
+  return result.url;
 }
 
 /**
- * Server action to get customer data
+ * Server action to get billing portal URL
  */
-export async function getCustomerData() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
+export async function getBillingPortalUrl(returnUrl: string) {
+  const cookie = await getCookieHeader();
 
-  const customer = await auth.api.autumn?.getCustomer({
-    headers: { cookie: cookieHeader },
+  const result = await auth.api.autumn?.getBillingPortal({
+    headers: { cookie },
+    body: { returnUrl },
   });
 
-  return customer;
-}
-
-/**
- * Server action to attach product (upgrade/downgrade)
- */
-export async function attachProduct(productId: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
-
-  const result = await auth.api.autumn?.attach({
-    headers: { cookie: cookieHeader },
-    body: {
-      productId,
-      successUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/dashboard?upgraded=true`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/pricing`,
-    },
-  });
-
-  if (!result) {
-    throw new Error('Failed to attach product');
+  if (!result?.url) {
+    throw new Error('Failed to get billing portal URL');
   }
 
-  return result;
+  return result.url;
 }
 
 /**
  * Server action to cancel subscription
  */
 export async function cancelSubscription(productId?: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
+  const cookie = await getCookieHeader();
 
   await auth.api.autumn?.cancel({
-    headers: { cookie: cookieHeader },
+    headers: { cookie },
     body: { productId },
   });
 
@@ -159,68 +111,36 @@ export async function cancelSubscription(productId?: string) {
 }
 
 /**
- * Server action to get billing portal URL
- */
-export async function getBillingPortalUrl() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
-
-  const result = await auth.api.autumn?.getBillingPortal({
-    headers: { cookie: cookieHeader },
-    body: {
-      returnUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/settings/billing`,
-    },
-  });
-
-  if (!result?.url) {
-    throw new Error('Failed to get billing portal URL');
-  }
-
-  return { url: result.url };
-}
-
-/**
  * Server action to create entity (seat, workspace, etc.)
  */
-export async function createEntity(entityFeatureId: string, data?: Record<string, any>) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
+export async function createEntity(entities: AutumnEntity[] | AutumnEntity) {
+  const cookie = await getCookieHeader();
 
-  const entity = await auth.api.autumn?.createEntity({
-    headers: { cookie: cookieHeader },
-    body: {
-      entityFeatureId,
-      data,
-    },
+  return await auth.api.autumn?.createEntity({
+    headers: { cookie },
+    body: { entities },
   });
-
-  return entity;
 }
 
 /**
  * Server action to query usage data
  */
 export async function queryUsage(featureId?: string, startDate?: string, endDate?: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(c => `${c.name}=${c.value}`)
-    .join('; ');
+  const cookie = await getCookieHeader();
 
-  const result = await auth.api.autumn?.query({
-    headers: { cookie: cookieHeader },
-    body: {
-      featureId,
-      startDate,
-      endDate,
-    },
+  return await auth.api.autumn?.query({
+    headers: { cookie },
+    body: { featureId, startDate, endDate },
   });
+}
 
-  return result;
+/**
+ * Server action to get customer data
+ */
+export async function getCustomerData() {
+  const cookie = await getCookieHeader();
+
+  return await auth.api.autumn?.getCustomer({
+    headers: { cookie },
+  });
 }
