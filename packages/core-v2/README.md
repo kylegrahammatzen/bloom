@@ -29,7 +29,12 @@ const auth = bloomAuth();
 
 ## Database Adapters
 
-Connect to any database with framework-agnostic adapters like [Drizzle](./src/adapters/drizzle/README.md).
+Connect to any database with framework-agnostic adapters:
+
+- [Drizzle](./src/adapters/drizzle/README.md) - Type-safe ORM for SQLite, PostgreSQL, MySQL
+- [Kysely](./src/adapters/kysely/README.md) - SQL query builder with type safety
+- [Prisma](./src/adapters/prisma/README.md) - Modern ORM with schema migrations
+- [MongoDB](./src/adapters/mongodb/README.md) - NoSQL document database
 
 ```typescript
 import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle';
