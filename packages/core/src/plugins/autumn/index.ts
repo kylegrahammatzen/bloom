@@ -274,23 +274,25 @@ export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
           } catch (error: any) {
             // If customer doesn't exist (401/404), create them first
             if (error.message?.includes('401') || error.message?.includes('404')) {
-              console.log('[Autumn] Customer not found, creating...');
+              console.log(`[Autumn] Customer ${userId} not found, creating...`);
 
               try {
-                // Create the customer
-                await autumnRequest('/customers', 'POST', {
+                // Create the customer - POST /customers returns the full customer object
+                const newCustomer = await autumnRequest<AutumnCustomerResponse>('/customers', 'POST', {
                   id: userId,
                 });
-                console.log('[Autumn] Customer created successfully');
+                console.log(`[Autumn] Customer ${userId} created successfully`);
 
-                // Fetch the newly created customer
-                return await autumnRequest<AutumnCustomerResponse>(`/customers/${userId}`, 'GET');
+                // Return the customer object directly from POST response
+                return newCustomer;
               } catch (createError: any) {
-                console.error('[Autumn] Failed to create customer:', createError.message);
-                throw createError;
+                console.error(`[Autumn] Failed to create customer ${userId}:`, createError.message);
+                throw new Error(`Failed to create Autumn customer: ${createError.message}`);
               }
             }
 
+            // Re-throw other errors (not 401/404)
+            console.error(`[Autumn] Failed to get customer ${userId}:`, error.message);
             throw error;
           }
         },
