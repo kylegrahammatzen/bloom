@@ -1,11 +1,23 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { DowngradeDialog } from './downgrade-dialog';
-import { upgradeProduct, cancelSubscription, reactivateSubscription } from '@/app/actions/autumn';
-import { useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { DowngradeDialog } from "./downgrade-dialog";
+import {
+  upgradeProduct,
+  cancelSubscription,
+  reactivateSubscription,
+  trackUsage,
+} from "@/app/actions/autumn";
+import { useTransition, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Minus } from "lucide-react";
 
 type PlanCardProps = {
   id: string;
@@ -16,34 +28,39 @@ type PlanCardProps = {
     limit: number | string;
     id: string;
   }>;
-  status: 'current' | 'scheduled' | 'canceled' | 'available';
+  status: "current" | "scheduled" | "canceled" | "available";
   canceledAt?: number | null;
   currentPrice: number;
   currentProductId: string;
-  usage?: Record<string, {
-    used: number;
-    limit?: number;
-    remaining?: number;
-  }>;
+  usage?: Record<
+    string,
+    {
+      used: number;
+      limit?: number;
+      remaining?: number;
+    }
+  >;
   successUrl: string;
-}
+};
 
 export const PlanCard = (props: PlanCardProps) => {
   const [isPending, startTransition] = useTransition();
+  const [adjustingFeature, setAdjustingFeature] = useState<string | null>(null);
   const router = useRouter();
   const isUpgrade = props.price > props.currentPrice;
   const isDowngrade = props.price < props.currentPrice;
 
   const getButtonText = () => {
-    if (props.status === 'canceled') return 'Reactivate';
-    if (props.status === 'scheduled') return isUpgrade ? 'Upgrade' : 'Downgrade';
-    return isUpgrade ? 'Upgrade' : 'Downgrade';
+    if (props.status === "canceled") return "Reactivate";
+    if (props.status === "scheduled")
+      return isUpgrade ? "Upgrade" : "Downgrade";
+    return isUpgrade ? "Upgrade" : "Downgrade";
   };
 
   const handleChangePlan = () => {
     startTransition(async () => {
       try {
-        if (props.status === 'canceled') {
+        if (props.status === "canceled") {
           // Reactivate canceled subscription
           const url = await reactivateSubscription(props.id, props.successUrl);
           router.push(url);
@@ -57,7 +74,21 @@ export const PlanCard = (props: PlanCardProps) => {
           router.push(url);
         }
       } catch (error) {
-        console.error('Failed to change plan:', error);
+        console.error("Failed to change plan:", error);
+      }
+    });
+  };
+
+  const handleAdjustUsage = (featureId: string, delta: number) => {
+    setAdjustingFeature(featureId);
+    startTransition(async () => {
+      try {
+        await trackUsage(featureId, delta);
+        router.refresh();
+      } catch (error) {
+        console.error("Failed to adjust usage:", error);
+      } finally {
+        setAdjustingFeature(null);
       }
     });
   };
@@ -66,26 +97,59 @@ export const PlanCard = (props: PlanCardProps) => {
     <Card className="flex flex-col max-w-sm">
       <CardHeader>
         <CardTitle>{props.name}</CardTitle>
-        <div className="text-2xl font-bold">
-          ${props.price}/mo
-        </div>
+        <div className="text-2xl font-bold">${props.price}/mo</div>
       </CardHeader>
       <CardContent className="flex-1">
         <div className="space-y-3">
           <div className="text-sm font-medium">Features</div>
           <ul className="space-y-2">
             {props.features.map((feature) => {
-              const isActive = props.status === 'current' || props.status === 'canceled';
+              const isActive =
+                props.status === "current" || props.status === "canceled";
               const usage = isActive ? props.usage?.[feature.id] : null;
               const showUsage = usage !== undefined && usage !== null;
 
               return (
                 <li key={feature.id} className="text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{feature.name}</span>
-                    <span className="font-mono text-xs">
-                      {showUsage ? `${usage.used} / ${feature.limit}` : feature.limit}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">
+                      {feature.name}
                     </span>
+                    <div className="flex items-center gap-1">
+                      {showUsage && props.status === "current" ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleAdjustUsage(feature.id, -1)}
+                            disabled={
+                              usage.used === 0 || adjustingFeature === feature.id
+                            }
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="font-mono text-xs min-w-[60px] text-center">
+                            {usage.used} / {feature.limit}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleAdjustUsage(feature.id, 1)}
+                            disabled={adjustingFeature === feature.id}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="font-mono text-xs">
+                          {showUsage
+                            ? `${usage.used} / ${feature.limit}`
+                            : feature.limit}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </li>
               );
@@ -94,7 +158,7 @@ export const PlanCard = (props: PlanCardProps) => {
         </div>
       </CardContent>
       <CardFooter>
-        {props.status === 'available' && isDowngrade ? (
+        {props.status === "available" && isDowngrade ? (
           <DowngradeDialog
             planName={props.name}
             onConfirm={handleChangePlan}
@@ -103,19 +167,28 @@ export const PlanCard = (props: PlanCardProps) => {
         ) : (
           <Button
             variant={
-              props.status === 'current' ? 'secondary' :
-              props.status === 'scheduled' ? 'secondary' :
-              'default'
+              props.status === "current"
+                ? "secondary"
+                : props.status === "scheduled"
+                  ? "secondary"
+                  : "default"
             }
             size="sm"
             className="w-full"
             onClick={handleChangePlan}
-            disabled={isPending || props.status === 'scheduled' || props.status === 'current'}
+            disabled={
+              isPending ||
+              props.status === "scheduled" ||
+              props.status === "current"
+            }
           >
-            {isPending ? 'Loading...' :
-             props.status === 'current' ? 'Current Plan' :
-             props.status === 'scheduled' ? 'Scheduled' :
-             getButtonText()}
+            {isPending
+              ? "Loading..."
+              : props.status === "current"
+                ? "Current Plan"
+                : props.status === "scheduled"
+                  ? "Scheduled"
+                  : getButtonText()}
           </Button>
         )}
       </CardFooter>

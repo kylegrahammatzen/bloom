@@ -1,60 +1,32 @@
-'use server';
+"use server";
 
-import { auth } from '@/lib/auth';
-import { getCookieHeader } from '@bloom/adapters/nextjs/server';
-import type { AutumnEntity } from '@bloom/core';
+import { auth } from "@/lib/auth";
+import { getCookieHeader } from "@bloom/adapters/nextjs/server";
+import type { AutumnEntity } from "@bloom/core";
 
 /**
- * Server action to send a message with feature gating and usage tracking
+ * Server action to check feature access
  */
-export async function sendMessage(message: string) {
+export async function checkFeature(featureId: string) {
   const cookie = await getCookieHeader();
 
   const result = await auth.api.autumn?.check({
     headers: { cookie },
-    body: { featureId: 'messages' },
+    body: { featureId },
   });
 
-  if (!result?.data.allowed) {
-    throw new Error('Message limit reached. Please upgrade to continue.');
-  }
-
-  // Send the message (simulated)
-  console.log('Sending message:', message);
-
-  await auth.api.autumn?.track({
-    headers: { cookie },
-    body: { featureId: 'messages', value: 1 },
-  });
-
-  return { success: true };
+  return result;
 }
 
 /**
- * Server action to use AI tokens with feature gating and usage tracking
+ * Server action to track usage for a feature
  */
-export async function useAITokens(tokenCount: number) {
+export async function trackUsage(featureId: string, value: number) {
   const cookie = await getCookieHeader();
-
-  const result = await auth.api.autumn?.check({
-    headers: { cookie },
-    body: { featureId: 'ai_tokens' },
-  });
-
-  if (!result?.data.allowed) {
-    throw new Error('AI token limit reached. Please upgrade to continue.');
-  }
-
-  if (result.data.remaining !== undefined && result.data.remaining < tokenCount) {
-    throw new Error(`Insufficient tokens. Required: ${tokenCount}, Available: ${result.data.remaining}`);
-  }
-
-  // Use the AI tokens (simulated)
-  console.log('Using AI tokens:', tokenCount);
 
   await auth.api.autumn?.track({
     headers: { cookie },
-    body: { featureId: 'ai_tokens', value: tokenCount },
+    body: { featureId, value },
   });
 
   return { success: true };
@@ -72,7 +44,7 @@ export async function upgradeProduct(productId: string, successUrl: string) {
   });
 
   if (!result?.url) {
-    throw new Error('Failed to create checkout session');
+    throw new Error("Failed to create checkout session");
   }
 
   return result.url;
@@ -90,7 +62,7 @@ export async function getBillingPortalUrl(returnUrl: string) {
   });
 
   if (!result?.url) {
-    throw new Error('Failed to get billing portal URL');
+    throw new Error("Failed to get billing portal URL");
   }
 
   return result.url;
@@ -113,7 +85,10 @@ export async function cancelSubscription(productId?: string) {
 /**
  * Server action to reactivate a canceled subscription
  */
-export async function reactivateSubscription(productId: string, successUrl: string) {
+export async function reactivateSubscription(
+  productId: string,
+  successUrl: string,
+) {
   const cookie = await getCookieHeader();
 
   const result = await auth.api.autumn?.attach({
@@ -143,7 +118,11 @@ export async function createEntity(entities: AutumnEntity[] | AutumnEntity) {
 /**
  * Server action to query usage data
  */
-export async function queryUsage(featureId?: string, startDate?: string, endDate?: string) {
+export async function queryUsage(
+  featureId?: string,
+  startDate?: string,
+  endDate?: string,
+) {
   const cookie = await getCookieHeader();
 
   return await auth.api.autumn?.query({
@@ -160,5 +139,17 @@ export async function getCustomerData() {
 
   return await auth.api.autumn?.getCustomer({
     headers: { cookie },
+  });
+}
+
+/**
+ * Server action to get entity information
+ */
+export async function getEntity(entityId: string) {
+  const cookie = await getCookieHeader();
+
+  return await auth.api.autumn?.getEntity({
+    headers: { cookie },
+    body: { entityId },
   });
 }
