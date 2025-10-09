@@ -1,19 +1,21 @@
-# Headers Utilities
+<img src="../../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
+
+# Bloom Core V2 - Headers
 
 Framework-agnostic header utilities for Bloom Core v2.
 
 ## Overview
 
-The headers utilities provide a unified API for working with HTTP headers across different frameworks without manual cookie parsing or header extraction.
+Work with HTTP headers across frameworks without manual cookie parsing or header extraction.
 
 ## Frameworks
 
-| Framework | Type | Jump to Section |
-|-----------|------|-----------------|
-| Next.js 15+ | ReadonlyHeaders | [Examples](#nextjs-15) |
-| Express / Fastify | IncomingHttpHeaders | [Examples](#express--fastify) |
-| Nuxt 4 / H3 / Elysia | Plain Object | [Examples](#nuxt-4--h3--elysia) |
-| SvelteKit 2 / Hono / Astro | Web API Headers | [Examples](#sveltekit-2--hono--astro) |
+| Framework | Type |
+|-----------|------|
+| [Next.js 15+](#nextjs-15) | ReadonlyHeaders |
+| [Express / Fastify](#express--fastify) | IncomingHttpHeaders |
+| [Nuxt 4 / H3 / Elysia](#nuxt-4--h3--elysia) | Plain Object |
+| [SvelteKit 2 / Hono / Astro](#sveltekit-2--hono--astro) | Web API Headers |
 
 ---
 
@@ -365,3 +367,7 @@ getHeader(headers, 'Content-Type') === getHeader(headers, 'content-type') // tru
 - `getAllCookies()` is more efficient than multiple `getCookie()` calls when you need multiple cookies
 - `getHeader()` checks lowercase first (more common), falls back to original casing
 - All cookie values are URL-decoded with fallback to raw value if decoding fails
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0.
