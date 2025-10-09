@@ -1,47 +1,41 @@
-export { bloomAuth } from './auth'
-export type { BloomAuthConfig } from './auth'
+export { bloomAuth } from '@/auth'
+export type { BloomAuthConfig } from '@/auth'
 
-// Export types from schemas (Zod-inferred)
 export type {
   User,
   Session,
   SessionCookieData,
   ApiMethodParams,
-} from './schemas'
+} from '@/schemas'
 
-// Export Zod schemas for runtime validation
 export {
   UserSchema,
   SessionSchema,
   SessionCookieDataSchema,
   ApiMethodParamsSchema,
-} from './schemas'
+} from '@/schemas'
 
-// Export remaining types
 export type {
   BloomAuth,
   BloomAuthApi,
-} from './types'
+} from '@/types'
 
-// Export header utilities and types
-export type { RequestHeaders } from './utils/headers'
+export type { RequestHeaders } from '@/utils/headers'
 export {
   extractHeaders,
   getHeader,
   getCookie,
   getAllCookies,
-} from './utils/headers'
+} from '@/utils/headers'
 
-// Export cookie utilities
-export type { CookieOptions } from './utils/cookies'
+export type { CookieOptions } from '@/utils/cookies'
 export {
   parseSessionCookie,
   serializeSessionCookie,
   createSessionCookie,
   clearSessionCookie,
-} from './utils/cookies'
+} from '@/utils/cookies'
 
-// Export crypto utilities
 export {
   hashPassword,
   verifyPassword,
@@ -51,8 +45,11 @@ export {
   normalizeEmail,
   isValidEmail,
   checkPasswordStrength,
-} from './utils/crypto'
+} from '@/utils/crypto'
 
-// Export storage adapter types and implementations
-export type { StorageAdapter } from './storage/adapter'
-export { InMemoryStorageAdapter } from './storage/in-memory'
+export type { DatabaseAdapter } from '@/storage/adapter'
+
+export type { Storage } from '@/schemas/storage'
+export { memoryStorage } from '@/storage/memory'
+export { redisStorage } from '@/storage/redis'
+export type { RedisClient, RedisStorageOptions } from '@/storage/redis'

@@ -27,9 +27,35 @@ import { bloomAuth } from '@bloom/core-v2';
 const auth = bloomAuth();
 ```
 
+## Database Adapters
+
+Connect to any database with framework-agnostic adapters like [Drizzle](./src/adapters/drizzle/README.md).
+
+```typescript
+import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+
+export const auth = bloomAuth({
+  adapter: drizzleAdapter(db, { schema: { users, sessions } }),
+});
+```
+
+## Storage
+
+High-speed storage for rate limiting and caching with [Redis or Memory](./src/storage/README.md).
+
+```typescript
+import { redisStorage, memoryStorage } from '@bloom/core-v2';
+
+export const auth = bloomAuth({
+  adapter: drizzleAdapter(db, { schema: { users, sessions } }),
+  storage: redisStorage(redis, { keyPrefix: 'bloom:' }),
+});
+```
+
 ## Headers
 
-Work with headers and cookies across frameworks—see [headers.md](./src/utils/headers.md) for examples.
+Work with [headers and cookies](./src/utils/headers/README.md) across frameworks without manual parsing.
 
 ```typescript
 import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2';

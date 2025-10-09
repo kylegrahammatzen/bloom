@@ -1,19 +1,18 @@
 import type { BloomAuth, ApiMethodParams, User, Session } from './types'
-import type { StorageAdapter } from './storage/adapter'
+import type { DatabaseAdapter } from './storage/adapter'
 import { getCookie } from './utils/headers'
 import { parseSessionCookie } from './utils/cookies'
 import { ApiMethodParamsSchema } from './schemas'
-import { InMemoryStorageAdapter } from './storage/in-memory'
 
 /**
  * Configuration options for BloomAuth
  */
 export type BloomAuthConfig = {
   /**
-   * Storage adapter for persisting users and sessions
-   * Defaults to in-memory storage (not suitable for production)
+   * Database adapter for persisting users and sessions
+   * Required - use drizzleAdapter, kyselyAdapter, prismaAdapter, or mongodbAdapter
    */
-  storage?: StorageAdapter
+  adapter: DatabaseAdapter
 
   /**
    * Session cookie name
@@ -29,17 +28,13 @@ export type BloomAuthConfig = {
  * Includes runtime validation using Zod v4
  *
  * @example
- * // With default in-memory storage
- * const auth = bloomAuth()
- *
- * @example
- * // With custom storage adapter
+ * // With Drizzle adapter
  * const auth = bloomAuth({
- *   storage: new PostgresAdapter(pool)
+ *   adapter: drizzleAdapter(db, { provider: 'pg' })
  * })
  */
-export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
-  const storage = config.storage ?? new InMemoryStorageAdapter()
+export function bloomAuth(config: BloomAuthConfig): BloomAuth {
+  const { adapter } = config
   const cookieName = config.cookieName ?? 'bloom.sid'
 
   return {
@@ -66,8 +61,8 @@ export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
           return null
         }
 
-        // Load session from storage
-        const session = await storage.session.findById(sessionData.sessionId)
+        // Load session from adapter
+        const session = await adapter.session.findById(sessionData.sessionId)
         if (!session) {
           return null
         }
@@ -77,14 +72,14 @@ export function bloomAuth(config: BloomAuthConfig = {}): BloomAuth {
           return null
         }
 
-        // Load user from storage
-        const user = await storage.user.findById(session.userId)
+        // Load user from adapter
+        const user = await adapter.user.findById(session.userId)
         if (!user) {
           return null
         }
 
         // Update last accessed time
-        await storage.session.updateLastAccessed(session.id)
+        await adapter.session.updateLastAccessed(session.id)
 
         return { user, session }
       }
