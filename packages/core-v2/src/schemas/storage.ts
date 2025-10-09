@@ -82,3 +82,29 @@ export const CreateSessionDataSchema = z.object({
 export type CreateUserData = z.infer<typeof CreateUserDataSchema>
 export type UpdateUserData = z.infer<typeof UpdateUserDataSchema>
 export type CreateSessionData = z.infer<typeof CreateSessionDataSchema>
+
+/**
+ * Storage interface for caching (Redis, Memory, etc.)
+ * Used for rate limiting, session caching, and temporary data
+ */
+export type Storage = {
+  /**
+   * Get value by key
+   * @returns Value or null if not found or expired
+   */
+  get: (key: string) => Promise<string | null>
+
+  /**
+   * Set value with optional TTL (time to live in seconds)
+   * @param key - Storage key
+   * @param value - Value to store (string)
+   * @param ttl - Optional TTL in seconds
+   */
+  set: (key: string, value: string, ttl?: number) => Promise<void>
+
+  /**
+   * Delete value by key
+   * @param key - Storage key
+   */
+  delete: (key: string) => Promise<void>
+}
