@@ -4,6 +4,25 @@
   "description": "Core authentication library for Bloom - framework-agnostic",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "license": "AGPL-3.0",
+  "author": "Kyle Graham Matzen <kgrahammatzen@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kylegrahammatzen/bloom.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/kylegrahammatzen/bloom#readme",
+  "bugs": {
+    "url": "https://github.com/kylegrahammatzen/bloom/issues"
+  },
+  "keywords": [
+    "auth",
+    "session",
+    "typescript"
+  ],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc && tsc-alias",
     "test": "vitest run",
