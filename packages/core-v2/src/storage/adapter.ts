@@ -1,7 +1,7 @@
 import type { User, Session } from '@/types'
 import type { CreateUserData, UpdateUserData, CreateSessionData } from '@/schemas'
 
-export interface StorageAdapter {
+export type DatabaseAdapter = {
   // User operations
   user: {
     /**
