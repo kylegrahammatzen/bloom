@@ -31,14 +31,18 @@
   },
   "devDependencies": {
     "@sveltejs/kit": "2.46.2",
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.18.8",
     "@vitest/ui": "^2.1.9",
     "astro": "5.14.1",
+    "better-sqlite3": "^11.8.1",
+    "drizzle-orm": "^0.38.3",
     "elysia": "^1.4.9",
     "fastify": "^5.6.1",
     "h3": "^1.13.0",
     "hono": "4.9.10",
     "next": "15.5.4",
+    "redis": "^4.7.0",
     "typescript": "^5.7.3",
     "vitest": "^2.1.9"
   }
