@@ -15,7 +15,9 @@
     "test": "turbo test",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f"
+    "docker:logs": "docker-compose logs -f",
+    "publish:check": "pnpm -r --filter './packages/*' publish --dry-run --no-git-checks",
+    "publish:packages": "pnpm -r --filter './packages/*' publish --access public --no-git-checks"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
