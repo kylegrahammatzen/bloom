@@ -9,7 +9,7 @@ export class EventEmitter {
 
   /**
    * Register an event listener
-   * Supports wildcard patterns: 'user.*', '*.created', '*'
+   * Supports wildcard patterns: 'user:*', '*:created', '*'
    */
   on(event: string, handler: EventHandler): void {
     if (!this.listeners.has(event)) {
@@ -83,13 +83,13 @@ export class EventEmitter {
 
   /**
    * Check if an event matches a wildcard pattern
-   * Supports: 'user.*', '*.created', '*'
+   * Supports: 'user:*', '*:created', '*'
    */
   private matchesPattern(event: string, pattern: string): boolean {
     if (pattern === '*') return true
 
-    const eventParts = event.split('.')
-    const patternParts = pattern.split('.')
+    const eventParts = event.split(':')
+    const patternParts = pattern.split(':')
 
     if (eventParts.length !== patternParts.length) return false
 

@@ -42,9 +42,9 @@ describe('Event System', () => {
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('test.event', handler)
+      auth.on('test:event', handler)
 
-      await auth.emit('test.event', { data: 'test' })
+      await auth.emit('test:event', { data: 'test' })
 
       expect(handler).toHaveBeenCalledWith({ data: 'test' })
       expect(handler).toHaveBeenCalledTimes(1)
@@ -58,11 +58,11 @@ describe('Event System', () => {
       const handler2 = vi.fn()
       const handler3 = vi.fn()
 
-      auth.on('test.event', handler1)
-      auth.on('test.event', handler2)
-      auth.on('test.event', handler3)
+      auth.on('test:event', handler1)
+      auth.on('test:event', handler2)
+      auth.on('test:event', handler3)
 
-      await auth.emit('test.event', { data: 'test' })
+      await auth.emit('test:event', { data: 'test' })
 
       expect(handler1).toHaveBeenCalledTimes(1)
       expect(handler2).toHaveBeenCalledTimes(1)
@@ -74,14 +74,14 @@ describe('Event System', () => {
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('test.event', handler)
+      auth.on('test:event', handler)
 
-      await auth.emit('test.event', { data: 'test' })
+      await auth.emit('test:event', { data: 'test' })
       expect(handler).toHaveBeenCalledTimes(1)
 
-      auth.off('test.event', handler)
+      auth.off('test:event', handler)
 
-      await auth.emit('test.event', { data: 'test' })
+      await auth.emit('test:event', { data: 'test' })
       expect(handler).toHaveBeenCalledTimes(1) // Still 1, not called again
     })
 
@@ -108,10 +108,10 @@ describe('Event System', () => {
       const handler1 = vi.fn()
       const handler2 = vi.fn()
 
-      auth.on('test.event', handler1)
-      auth.on('test.event', handler2)
+      auth.on('test:event', handler1)
+      auth.on('test:event', handler2)
 
-      const listeners = auth.events.listeners('test.event')
+      const listeners = auth.events.listeners('test:event')
 
       expect(listeners).toHaveLength(2)
       expect(listeners).toContain(handler1)
@@ -120,16 +120,16 @@ describe('Event System', () => {
   })
 
   describe('Wildcard Patterns', () => {
-    it('should match wildcard patterns (user.*)', async () => {
+    it('should match wildcard patterns (user:*)', async () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('user.*', handler)
+      auth.on('user:*', handler)
 
-      await auth.emit('user.created', { data: 'test1' })
-      await auth.emit('user.updated', { data: 'test2' })
-      await auth.emit('user.deleted', { data: 'test3' })
+      await auth.emit('user:created', { data: 'test1' })
+      await auth.emit('user:updated', { data: 'test2' })
+      await auth.emit('user:deleted', { data: 'test3' })
 
       expect(handler).toHaveBeenCalledTimes(3)
       expect(handler).toHaveBeenNthCalledWith(1, { data: 'test1' })
@@ -137,16 +137,16 @@ describe('Event System', () => {
       expect(handler).toHaveBeenNthCalledWith(3, { data: 'test3' })
     })
 
-    it('should match wildcard patterns (*.created)', async () => {
+    it('should match wildcard patterns (*:created)', async () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('*.created', handler)
+      auth.on('*:created', handler)
 
-      await auth.emit('user.created', { data: 'test1' })
-      await auth.emit('session.created', { data: 'test2' })
-      await auth.emit('post.created', { data: 'test3' })
+      await auth.emit('user:created', { data: 'test1' })
+      await auth.emit('session:created', { data: 'test2' })
+      await auth.emit('post:created', { data: 'test3' })
 
       expect(handler).toHaveBeenCalledTimes(3)
     })
@@ -159,7 +159,7 @@ describe('Event System', () => {
       auth.on('*', handler)
 
       await auth.emit('anything', { data: 'test1' })
-      await auth.emit('something.else', { data: 'test2' })
+      await auth.emit('something:else', { data: 'test2' })
 
       expect(handler).toHaveBeenCalledTimes(2)
     })
@@ -171,10 +171,10 @@ describe('Event System', () => {
       const exactHandler = vi.fn()
       const wildcardHandler = vi.fn()
 
-      auth.on('user.created', exactHandler)
-      auth.on('user.*', wildcardHandler)
+      auth.on('user:created', exactHandler)
+      auth.on('user:*', wildcardHandler)
 
-      await auth.emit('user.created', { data: 'test' })
+      await auth.emit('user:created', { data: 'test' })
 
       expect(exactHandler).toHaveBeenCalledTimes(1)
       expect(wildcardHandler).toHaveBeenCalledTimes(1)
@@ -188,17 +188,17 @@ describe('Event System', () => {
 
       const results: string[] = []
 
-      auth.on('test.event', async (data) => {
+      auth.on('test:event', async (data) => {
         await new Promise((resolve) => setTimeout(resolve, 10))
         results.push(`handler1: ${data.value}`)
       })
 
-      auth.on('test.event', async (data) => {
+      auth.on('test:event', async (data) => {
         await new Promise((resolve) => setTimeout(resolve, 5))
         results.push(`handler2: ${data.value}`)
       })
 
-      await auth.emit('test.event', { value: 'test' })
+      await auth.emit('test:event', { value: 'test' })
 
       expect(results).toHaveLength(2)
       expect(results).toContain('handler1: test')
@@ -214,11 +214,11 @@ describe('Event System', () => {
       })
       const normalHandler = vi.fn()
 
-      auth.on('test.event', errorHandler)
-      auth.on('test.event', normalHandler)
+      auth.on('test:event', errorHandler)
+      auth.on('test:event', normalHandler)
 
       // Should not throw
-      await expect(auth.emit('test.event', { data: 'test' })).resolves.toBeUndefined()
+      await expect(auth.emit('test:event', { data: 'test' })).resolves.toBeUndefined()
 
       expect(errorHandler).toHaveBeenCalledTimes(1)
       expect(normalHandler).toHaveBeenCalledTimes(1)
@@ -253,23 +253,23 @@ describe('Event System', () => {
       const auth = bloomAuth({
         adapter,
         events: {
-          'user.*': handler,
+          'user:*': handler,
         },
       })
 
-      await auth.emit('user.created', { data: 'test' })
+      await auth.emit('user:created', { data: 'test' })
 
       expect(handler).toHaveBeenCalledWith({ data: 'test' })
     })
   })
 
   describe('Session Events', () => {
-    it('should emit session.loading event', async () => {
+    it('should emit session:loading event', async () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('session.loading', handler)
+      auth.on('session:loading', handler)
 
       await auth.api.getSession({
         headers: {
@@ -285,12 +285,12 @@ describe('Event System', () => {
       )
     })
 
-    it('should emit session.found event', async () => {
+    it('should emit session:found event', async () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('session.found', handler)
+      auth.on('session:found', handler)
 
       await auth.api.getSession({
         headers: {
@@ -307,12 +307,12 @@ describe('Event System', () => {
       )
     })
 
-    it('should emit session.accessed event', async () => {
+    it('should emit session:accessed event', async () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('session.accessed', handler)
+      auth.on('session:accessed', handler)
 
       await auth.api.getSession({
         headers: {
@@ -329,12 +329,12 @@ describe('Event System', () => {
       )
     })
 
-    it('should emit session.notfound event with reason', async () => {
+    it('should emit session:notfound event with reason', async () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('session.notfound', handler)
+      auth.on('session:notfound', handler)
 
       // No cookie
       await auth.api.getSession({ headers: {} })
@@ -342,12 +342,12 @@ describe('Event System', () => {
       expect(handler).toHaveBeenCalledWith({ reason: 'no_cookie' })
     })
 
-    it('should emit session.* wildcard for all session events', async () => {
+    it('should emit session:* wildcard for all session events', async () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('session.*', handler)
+      auth.on('session:*', handler)
 
       await auth.api.getSession({
         headers: {
@@ -367,19 +367,19 @@ describe('Event System', () => {
 
       const results: number[] = []
 
-      auth.on('test.event', async () => {
+      auth.on('test:event', async () => {
         results.push(1)
       })
 
-      auth.on('test.event', async () => {
+      auth.on('test:event', async () => {
         results.push(2)
       })
 
-      auth.on('test.event', async () => {
+      auth.on('test:event', async () => {
         results.push(3)
       })
 
-      await auth.emit('test.event')
+      await auth.emit('test:event')
 
       expect(results).toEqual([1, 2, 3])
     })
@@ -391,11 +391,11 @@ describe('Event System', () => {
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
-      auth.on('test.event', handler)
+      auth.on('test:event', handler)
 
-      await auth.emit('test.event', { count: 1 })
-      await auth.emit('test.event', { count: 2 })
-      await auth.emit('test.event', { count: 3 })
+      await auth.emit('test:event', { count: 1 })
+      await auth.emit('test:event', { count: 2 })
+      await auth.emit('test:event', { count: 3 })
 
       expect(handler).toHaveBeenCalledTimes(3)
       expect(handler).toHaveBeenNthCalledWith(1, { count: 1 })
