@@ -1,11 +1,13 @@
 import type { Router } from '@/handler/router'
 import type { Context } from '@/handler/context'
 import type { EventEmitter } from '@/events/emitter'
+import type { RateLimiter } from '@/rateLimit/limiter'
 import { buildContext } from '@/handler/context'
 
 export type HandlerConfig = {
   router: Router
   emitter: EventEmitter
+  rateLimiter?: RateLimiter
   basePath?: string
 }
 
@@ -14,7 +16,7 @@ export type HandlerConfig = {
  * Takes Web Standard Request, returns Web Standard Response
  */
 export function createHandler(config: HandlerConfig) {
-  const { router, emitter, basePath = '/auth' } = config
+  const { router, emitter, rateLimiter, basePath = '/auth' } = config
 
   return async (request: Request): Promise<Response> => {
     const url = new URL(request.url)
@@ -31,6 +33,45 @@ export function createHandler(config: HandlerConfig) {
 
     // Build base context
     const baseContext = await buildContext(request)
+
+    // Build context for rate limiting (before route matching)
+    const rateLimitContext: Context = {
+      ...baseContext,
+      path,
+      params: {},
+      user: null,
+      session: null,
+    }
+
+    // Check rate limit
+    if (rateLimiter) {
+      const rateLimitResult = await rateLimiter.check(rateLimitContext)
+
+      if (!rateLimitResult.allowed) {
+        await emitter.emit('ratelimit:exceeded', {
+          path: fullPath,
+          method,
+          limit: rateLimitResult.limit,
+          retryAfter: rateLimitResult.retryAfter,
+        })
+
+        return new Response(
+          JSON.stringify({
+            error: 'Too Many Requests',
+            message: `Rate limit exceeded. Retry after ${rateLimitResult.retryAfter} seconds.`,
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-RateLimit-Limit': String(rateLimitResult.limit),
+              'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+              'X-Retry-After': String(rateLimitResult.retryAfter),
+            },
+          }
+        )
+      }
+    }
 
     // Match route
     const match = router.match(path, method)
