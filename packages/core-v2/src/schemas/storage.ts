@@ -21,6 +21,11 @@ export const CreateUserDataSchema = z.object({
     title: 'Email Verified',
     description: 'Whether the email has been verified',
   }),
+  name: z.string().optional().meta({
+    id: 'create_user_name',
+    title: 'Name',
+    description: 'Optional display name',
+  }),
 })
 
 export const UpdateUserDataSchema = z.object({
