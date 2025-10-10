@@ -4,6 +4,8 @@ import { getCookie } from './utils/headers'
 import { parseSessionCookie } from './utils/cookies'
 import { ApiMethodParamsSchema } from './schemas'
 import { EventEmitter } from './events/emitter'
+import { Router } from './handler/router'
+import { createHandler } from './handler/handler'
 
 /**
  * Configuration options for BloomAuth
@@ -11,7 +13,6 @@ import { EventEmitter } from './events/emitter'
 export type BloomAuthConfig = {
   /**
    * Database adapter for persisting users and sessions
-   * Required - use drizzleAdapter, kyselyAdapter, prismaAdapter, or mongodbAdapter
    */
   adapter: DatabaseAdapter
 
@@ -61,8 +62,15 @@ export type BloomAuthConfig = {
  */
 export function bloomAuth(config: BloomAuthConfig): BloomAuth {
   const { adapter } = config
+
+  /** Session cookie name used for storing session data */
   const cookieName = config.cookieName ?? 'bloom.sid'
+
+  /** Event emitter for lifecycle hooks and plugin communication */
   const emitter = new EventEmitter()
+
+  /** Router for registering and matching HTTP routes */
+  const router = new Router()
 
   // Register events from config
   if (config.events) {
@@ -71,7 +79,73 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     }
   }
 
+  /**
+   * Universal HTTP handler (Web Standard Request → Response)
+   * Handles all auth routes including core endpoints and plugin routes
+   */
+  const handler = createHandler({
+    router,
+    emitter,
+    basePath: '/auth',
+  })
+
+  // Register core routes
+  router.register({
+    path: '/session',
+    method: 'GET',
+    handler: async (ctx) => {
+      // Call the existing getSession API method
+      const result = await getSessionFromContext(ctx)
+
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    },
+  })
+
+  // Helper to get session from context (extracted from getSession logic)
+  async function getSessionFromContext(ctx: any) {
+    const cookieValue = ctx.headers.get('cookie')
+      ? getCookie({ cookie: ctx.headers.get('cookie') }, cookieName)
+      : null
+
+    if (!cookieValue) {
+      return null
+    }
+
+    const sessionData = parseSessionCookie(cookieValue)
+    if (!sessionData) {
+      return null
+    }
+
+    const session = await adapter.session.findById(sessionData.sessionId)
+    if (!session || session.userId !== sessionData.userId) {
+      return null
+    }
+
+    const user = await adapter.user.findById(session.userId)
+    if (!user) {
+      return null
+    }
+
+    await adapter.session.updateLastAccessed(session.id)
+    return { user, session }
+  }
+
+  /**
+   * BloomAuth instance
+   *
+   * Provides:
+   * - handler: Universal HTTP handler for all auth routes
+   * - router: Register custom routes and plugins
+   * - api: Direct API methods for server-side usage
+   * - on/emit/off: Event system for lifecycle hooks
+   */
   const auth: BloomAuth = {
+    handler,
+    router,
+
     api: {
       async getSession(params: ApiMethodParams): Promise<{ user: User; session: Session } | null> {
         // Emit: session lookup started

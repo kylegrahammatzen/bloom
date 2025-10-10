@@ -1,6 +1,7 @@
 import type { RequestHeaders } from '@/utils/headers'
 import type { User, Session, SessionCookieData, ApiMethodParams } from '@/schemas'
 import type { EventHandler } from '@/events/emitter'
+import type { Router } from '@/handler/router'
 
 /**
  * Re-export Zod-inferred types from schemas
@@ -33,8 +34,19 @@ export type BloomAuth = {
   api: BloomAuthApi
 
   /**
+   * Universal HTTP handler (Web Standard Request into Response)
+   * This is the core handler that processes all auth requests
+   */
+  handler: (request: Request) => Promise<Response>
+
+  /**
+   * Router for registering and matching routes
+   */
+  router: Router
+
+  /**
    * Register an event listener
-   * Supports wildcard patterns: 'user.*', '*.created', '*'
+   * Supports wildcard patterns: 'user:*', '*:created', '*'
    */
   on: (event: string, handler: EventHandler) => void
 
