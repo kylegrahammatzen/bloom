@@ -8,10 +8,11 @@ Framework-agnostic authentication core for Bloom with native support for Next.js
 
 - Framework-agnostic headers abstraction
 - Native support for Next.js, Express, Nuxt, SvelteKit, Elysia, Hono, Fastify, Astro
+- Event-driven architecture with wildcard pattern support
 - Zod v4 runtime validation with metadata
 - Type-safe API with inferred types
 - Zero manual cookie extraction required
-- 72+ tests across 8 frameworks
+- 94+ tests across event system, storage, and 8 frameworks
 
 ## Installation
 
@@ -56,6 +57,35 @@ export const auth = bloomAuth({
   adapter: drizzleAdapter(db, { schema: { users, sessions } }),
   storage: redisStorage(redis, { keyPrefix: 'bloom:' }),
 });
+```
+
+## Events
+
+Dynamic [event system](./src/events/README.md) for lifecycle hooks and plugin communication.
+
+```typescript
+export const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  events: {
+    'user:created': async (user) => {
+      await sendWelcomeEmail(user.email);
+    },
+    'session:found': async ({ user, session }) => {
+      console.log('User logged in:', user.email);
+    },
+    'user:*': async (data) => {
+      // Listen to all user events
+      await logUserActivity(data);
+    },
+  },
+});
+
+// Runtime registration
+auth.on('payment:completed', async (data) => {
+  await sendReceipt(data.email);
+});
+
+await auth.emit('payment:completed', { email: 'user@example.com' });
 ```
 
 ## Headers
