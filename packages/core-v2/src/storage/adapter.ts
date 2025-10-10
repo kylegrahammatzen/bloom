@@ -79,4 +79,33 @@ export type DatabaseAdapter = {
      */
     deleteExpired(): Promise<number>
   }
+
+  // Rate limiting operations (optional - used as fallback when no storage provided)
+  rateLimit?: {
+    /**
+     * Increment rate limit counter for a key
+     * Returns current count and whether request is allowed
+     * @param key - Rate limit key (e.g., "ip:192.168.1.1:/sign-in/email")
+     * @param window - Time window in seconds
+     * @param max - Maximum requests in window
+     * @returns Object with allowed status, current count, and retry info
+     */
+    increment(
+      key: string,
+      window: number,
+      max: number
+    ): Promise<{
+      allowed: boolean
+      count: number
+      retryAfter?: number
+      limit: number
+      remaining: number
+    }>
+
+    /**
+     * Clean up expired rate limit records
+     * @returns Number of records deleted
+     */
+    cleanup(): Promise<number>
+  }
 }
