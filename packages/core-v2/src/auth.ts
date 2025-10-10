@@ -1,11 +1,14 @@
 import type { BloomAuth, ApiMethodParams, User, Session, EventHandler } from './types'
 import type { DatabaseAdapter } from './storage/adapter'
+import type { Storage, RateLimitConfig } from './schemas'
 import { getCookie } from './utils/headers'
 import { parseSessionCookie } from './utils/cookies'
-import { ApiMethodParamsSchema } from './schemas'
+import { ApiMethodParamsSchema, RateLimitConfigSchema } from './schemas'
 import { EventEmitter } from './events/emitter'
 import { Router } from './handler/router'
 import { createHandler } from './handler/handler'
+import { RateLimiter } from './rateLimit/limiter'
+import { handleRegister, handleLogin, handleLogout, type EmailPasswordConfig, type SessionConfig } from './api'
 
 /**
  * Configuration options for BloomAuth
@@ -21,6 +24,56 @@ export type BloomAuthConfig = {
    * @default 'bloom.sid'
    */
   cookieName?: string
+
+  /**
+   * Storage for rate limiting, session caching, and temporary data
+   * When provided, rate limiting uses storage; otherwise falls back to database
+   * @example
+   * storage: redisStorage(redis)
+   * storage: memoryStorage()
+   */
+  storage?: Storage
+
+  /**
+   * Rate limiting configuration
+   * Auto-enabled in production, disabled in development
+   * @example
+   * rateLimit: {
+   *   enabled: true,
+   *   window: 60,
+   *   max: 100,
+   *   rules: {
+   *     '/sign-in/email': { window: 10, max: 3 }
+   *   }
+   * }
+   */
+  rateLimit?: RateLimitConfig
+
+  /**
+   * Session configuration
+   * @example
+   * session: {
+   *   expiresIn: 7 * 24 * 60 * 60,  // 7 days in seconds
+   *   updateAge: 24 * 60 * 60,      // Update every 24 hours
+   *   cookieCache: {
+   *     enabled: true,
+   *     maxAge: 5 * 60,             // 5 minutes
+   *   },
+   * }
+   */
+  session?: SessionConfig
+
+  /**
+   * Email/password authentication configuration
+   * @example
+   * emailPassword: {
+   *   enabled: true,
+   *   minPasswordLength: 8,
+   *   maxPasswordLength: 128,
+   *   requireEmailVerification: false,
+   * }
+   */
+  emailPassword?: EmailPasswordConfig
 
   /**
    * Event listeners to register on initialization
@@ -61,7 +114,7 @@ export type BloomAuthConfig = {
  * })
  */
 export function bloomAuth(config: BloomAuthConfig): BloomAuth {
-  const { adapter } = config
+  const { adapter, storage, rateLimit } = config
 
   /** Session cookie name used for storing session data */
   const cookieName = config.cookieName ?? 'bloom.sid'
@@ -79,6 +132,18 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     }
   }
 
+  // Create rate limiter if config provided
+  let rateLimiter: RateLimiter | undefined
+  if (rateLimit) {
+    // Validate rate limit config
+    const validatedConfig = RateLimitConfigSchema.parse(rateLimit)
+    rateLimiter = new RateLimiter({
+      config: validatedConfig,
+      storage,
+      adapter,
+    })
+  }
+
   /**
    * Universal HTTP handler (Web Standard Request → Response)
    * Handles all auth routes including core endpoints and plugin routes
@@ -86,6 +151,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
   const handler = createHandler({
     router,
     emitter,
+    rateLimiter,
     basePath: '/auth',
   })
 
@@ -94,13 +160,35 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     path: '/session',
     method: 'GET',
     handler: async (ctx) => {
-      // Call the existing getSession API method
       const result = await getSessionFromContext(ctx)
-
       return new Response(JSON.stringify(result), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
+    },
+  })
+
+  router.register({
+    path: '/register',
+    method: 'POST',
+    handler: async (ctx) => {
+      return await handleRegister(ctx, adapter, emitter, config.emailPassword, config.session, cookieName)
+    },
+  })
+
+  router.register({
+    path: '/login',
+    method: 'POST',
+    handler: async (ctx) => {
+      return await handleLogin(ctx, adapter, emitter, config.emailPassword, config.session, cookieName)
+    },
+  })
+
+  router.register({
+    path: '/logout',
+    method: 'POST',
+    handler: async (ctx) => {
+      return await handleLogout(ctx, adapter, emitter, cookieName)
     },
   })
 

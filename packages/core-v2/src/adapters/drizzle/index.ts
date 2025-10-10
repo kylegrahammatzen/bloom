@@ -19,6 +19,7 @@ export type DrizzleAdapterOptions = {
   schema: {
     users: DrizzleTable
     sessions: DrizzleTable
+    rateLimits?: DrizzleTable
   }
 }
 
@@ -44,7 +45,7 @@ export function drizzleAdapter(
   db: DrizzleDatabase,
   options: DrizzleAdapterOptions
 ): DatabaseAdapter {
-  const { users, sessions } = options.schema
+  const { users, sessions, rateLimits } = options.schema
 
   return {
     user: {
@@ -103,7 +104,7 @@ export function drizzleAdapter(
           password_hash: data.password_hash,
           password_salt: data.password_salt,
           email_verified: data.email_verified ?? false,
-          name: null,
+          name: data.name ?? null,
           image: null,
           created_at: now,
           updated_at: now,
@@ -116,7 +117,7 @@ export function drizzleAdapter(
           id: dbUser.id,
           email: dbUser.email,
           email_verified: dbUser.email_verified,
-          name: undefined,
+          name: dbUser.name ?? undefined,
           image: undefined,
           created_at: dbUser.created_at,
           updated_at: dbUser.updated_at,
@@ -259,5 +260,92 @@ export function drizzleAdapter(
         return result.rowsAffected
       },
     },
+
+    // Rate limiting operations (optional)
+    rateLimit: rateLimits ? {
+      async increment(key: string, window: number, max: number) {
+        const now = Date.now()
+        const windowMs = window * 1000
+
+        // Try to find existing record
+        const existing = await db
+          .select()
+          .from(rateLimits)
+          .where(eq(rateLimits.key, key))
+          .limit(1)
+
+        if (existing[0]) {
+          const row = existing[0]
+          const lastRequest = Number(row.last_request)
+
+          // Check if window has expired
+          if (now - lastRequest >= windowMs) {
+            // Reset window
+            await db
+              .update(rateLimits)
+              .set({
+                count: 1,
+                last_request: BigInt(now),
+                expires_at: new Date(now + windowMs),
+              })
+              .where(eq(rateLimits.id, row.id))
+
+            return {
+              allowed: true,
+              count: 1,
+              limit: max,
+              remaining: max - 1,
+            }
+          }
+
+          // Increment count
+          const newCount = row.count + 1
+          await db
+            .update(rateLimits)
+            .set({
+              count: newCount,
+              last_request: BigInt(now),
+            })
+            .where(eq(rateLimits.id, row.id))
+
+          const allowed = newCount <= max
+          const remaining = Math.max(0, max - newCount)
+          const retryAfter = allowed ? undefined : Math.ceil((windowMs - (now - lastRequest)) / 1000)
+
+          return {
+            allowed,
+            count: newCount,
+            limit: max,
+            remaining,
+            retryAfter,
+          }
+        }
+
+        // Create new record
+        const id = generateSessionId()
+        await db.insert(rateLimits).values({
+          id,
+          key,
+          count: 1,
+          last_request: BigInt(now),
+          expires_at: new Date(now + windowMs),
+        })
+
+        return {
+          allowed: true,
+          count: 1,
+          limit: max,
+          remaining: max - 1,
+        }
+      },
+
+      async cleanup(): Promise<number> {
+        const result = await db
+          .delete(rateLimits)
+          .where(lt(rateLimits.expires_at, new Date()))
+
+        return result.rowsAffected
+      },
+    } : undefined,
   }
 }
