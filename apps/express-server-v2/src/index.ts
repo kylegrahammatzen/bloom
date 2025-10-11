@@ -3,7 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import { toExpressHandler } from '@bloom/adapters-v2/express'
-import { auth } from './lib/auth'
+import { auth } from '@/lib/auth'
 
 const app = express()
 const PORT = process.env.PORT || 5002
