@@ -1,5 +1,5 @@
 import type { BloomPlugin, BloomAuth, ApiMethodParams } from '@/types'
-import type { Storage } from '@/schemas'
+import type { Storage, Logger } from '@/schemas'
 import type {
   AutumnConfig,
   AutumnCheckResponse,
@@ -41,7 +41,7 @@ export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
   return {
     id: 'autumn',
 
-    api: (auth: BloomAuth, storage?: Storage) => {
+    api: (auth: BloomAuth, storage?: Storage, logger?: Logger) => {
       const cacheTTL = config.customerCacheTTL ?? 300
 
       const getCustomerId = async (params: ApiMethodParams): Promise<string> => {
@@ -110,7 +110,7 @@ export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
             errorMessage = errorText || response.statusText
           }
 
-          console.error(`[Autumn API] ${method} ${url} failed:`, {
+          logger?.error(`Autumn API ${method} ${url} failed:`, {
             status: response.status,
             statusText: response.statusText,
             error: errorMessage,

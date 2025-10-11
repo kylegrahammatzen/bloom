@@ -1,6 +1,7 @@
 import type { Router } from '@/handler/router'
 import type { Context } from '@/handler/context'
 import type { RateLimiter } from '@/rateLimit/limiter'
+import type { Logger } from '@/schemas'
 import { buildContext } from '@/handler/context'
 
 type HookHandler = (ctx: Context) => Promise<void | Response>
@@ -10,6 +11,7 @@ export type HandlerConfig = {
   hooks: Map<string, HookHandler>
   rateLimiter?: RateLimiter
   basePath?: string
+  logger?: Logger
 }
 
 /**
@@ -17,7 +19,7 @@ export type HandlerConfig = {
  * Takes Web Standard Request, returns Web Standard Response
  */
 export function createHandler(config: HandlerConfig) {
-  const { router, hooks, rateLimiter, basePath = '/auth' } = config
+  const { router, hooks, rateLimiter, basePath = '/auth', logger } = config
 
   return async (request: Request): Promise<Response> => {
     const url = new URL(request.url)
@@ -88,7 +90,10 @@ export function createHandler(config: HandlerConfig) {
     try {
       return await match.handler(ctx)
     } catch (error) {
-      console.error(`Handler error for ${method} ${fullPath}:`, error)
+      logger?.error(`Handler error for ${method} ${fullPath}:`, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
       return Response.json(
         {
           error: 'Internal Server Error',

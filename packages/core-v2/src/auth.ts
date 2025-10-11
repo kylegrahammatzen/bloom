@@ -227,6 +227,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       config: validatedConfig,
       storage: config.storage,
       adapter: config.adapter,
+      logger,
     })
 
     if (config.storage) {
@@ -245,6 +246,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     hooks,
     rateLimiter,
     basePath: '/auth',
+    logger,
   })
 
   // Register core routes
@@ -431,7 +433,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
   if (config.plugins) {
     for (const plugin of config.plugins) {
       if (plugin.api) {
-        const methods = plugin.api(auth, config.storage)
+        const methods = plugin.api(auth, config.storage, logger)
         auth.api[plugin.id] = methods
       }
     }

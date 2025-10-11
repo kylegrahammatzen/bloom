@@ -1,4 +1,4 @@
-import type { Storage, RateLimitConfig } from '@/schemas'
+import type { Storage, RateLimitConfig, Logger } from '@/schemas'
 import type { DatabaseAdapter } from '@/storage/adapter'
 import type { Context } from '@/handler/context'
 
@@ -13,6 +13,7 @@ export type RateLimiterConfig = {
   config: RateLimitConfig
   storage?: Storage
   adapter: DatabaseAdapter
+  logger?: Logger
 }
 
 /**
@@ -22,17 +23,19 @@ export class RateLimiter {
   private config: RateLimitConfig
   private storage?: Storage
   private adapter: DatabaseAdapter
+  private logger?: Logger
   private memoryStore: Map<string, { count: number; resetAt: number }> = new Map()
 
-  constructor({ config, storage, adapter }: RateLimiterConfig) {
+  constructor({ config, storage, adapter, logger }: RateLimiterConfig) {
     this.config = config
     this.storage = storage
     this.adapter = adapter
+    this.logger = logger
 
     // Warn if using memory in production without storage or database
     if (!storage && !adapter.rateLimit && process.env.NODE_ENV === 'production') {
-      console.warn(
-        '[Bloom] Rate limiting using in-memory storage in production. ' +
+      logger?.warn(
+        'Rate limiting using in-memory storage in production. ' +
         'Consider providing storage (Redis/Memory) or implementing adapter.rateLimit methods.'
       )
     }
@@ -189,7 +192,9 @@ export class RateLimiter {
 
       return { allowed, limit: max, remaining, retryAfter }
     } catch (error) {
-      console.error('[Bloom] Rate limit storage error:', error)
+      this.logger?.error('Rate limit storage error:', {
+        error: error instanceof Error ? error.message : String(error),
+      })
       // Allow request on error
       return { allowed: true, limit: max, remaining: max }
     }

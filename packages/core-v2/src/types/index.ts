@@ -61,9 +61,9 @@ export type BloomPlugin = {
 
   /**
    * API methods to register at auth.api[id]
-   * Receives auth instance and optional storage
+   * Receives auth instance, optional storage, and optional logger
    */
-  api?: (auth: BloomAuth, storage?: Storage) => Record<string, (...args: any[]) => any>
+  api?: (auth: BloomAuth, storage?: Storage, logger?: import('@/schemas').Logger) => Record<string, (...args: any[]) => any>
 }
 
 /**
