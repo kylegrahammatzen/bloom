@@ -1,4 +1,14 @@
-<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+<p align="center">
+  <img width="600" src="../../.github/banner.png" alt="Bloom Banner">
+</p>
+<br/>
+<p align="center">
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20-green.svg" alt="Node.js"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-blue.svg" alt="TypeScript"></a>
+  <a href="https://zod.dev/"><img src="https://img.shields.io/badge/Zod-4-blue.svg" alt="Zod"></a>
+  <img src="https://img.shields.io/badge/Tests-133%20passing-brightgreen.svg" alt="Tests">
+</p>
+<br/>
 
 # Bloom - Core V2
 
@@ -8,11 +18,11 @@ Framework-agnostic authentication core for Bloom with native support for Next.js
 
 - Framework-agnostic headers abstraction
 - Native support for Next.js, Express, Nuxt, SvelteKit, Elysia, Hono, Fastify, Astro
-- Event-driven architecture with wildcard pattern support
+- Path-based hooks for before/after auth operations
 - Zod v4 runtime validation with metadata
 - Type-safe API with inferred types
 - Zero manual cookie extraction required
-- 94+ tests across event system, storage, and 8 frameworks
+- 133 tests across storage, adapters, and 8 frameworks
 
 ## Installation
 
@@ -23,9 +33,12 @@ pnpm add @bloom/core-v2
 ## Quick Start
 
 ```typescript
-import { bloomAuth } from '@bloom/core-v2';
+import { bloomAuth } from '@bloom/core-v2'
+import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
 
-const auth = bloomAuth();
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db, { schema: { users, sessions } })
+})
 ```
 
 ## Database Adapters
@@ -38,12 +51,12 @@ Connect to any database with framework-agnostic adapters:
 - [MongoDB](./src/adapters/mongodb/README.md) - NoSQL document database
 
 ```typescript
-import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
 
 export const auth = bloomAuth({
-  adapter: drizzleAdapter(db, { schema: { users, sessions } }),
-});
+  adapter: drizzleAdapter(db, { schema: { users, sessions } })
+})
 ```
 
 ## Storage
@@ -51,41 +64,34 @@ export const auth = bloomAuth({
 High-speed storage for rate limiting and caching with [Redis or Memory](./src/storage/README.md).
 
 ```typescript
-import { redisStorage, memoryStorage } from '@bloom/core-v2';
+import { redisStorage, memoryStorage } from '@bloom/core-v2'
 
 export const auth = bloomAuth({
   adapter: drizzleAdapter(db, { schema: { users, sessions } }),
-  storage: redisStorage(redis, { keyPrefix: 'bloom:' }),
-});
+  storage: redisStorage(redis, { keyPrefix: 'bloom:' })
+})
 ```
 
-## Events
+## Hooks
 
-Dynamic [event system](./src/events/README.md) for lifecycle hooks and plugin communication.
+Path-based hooks for before/after auth operations:
 
 ```typescript
-export const auth = bloomAuth({
+const auth = bloomAuth({
   adapter: drizzleAdapter(db),
-  events: {
-    'user:created': async (user) => {
-      await sendWelcomeEmail(user.email);
+  hooks: {
+    '/register': {
+      after: async (ctx) => {
+        await sendWelcomeEmail(ctx.user.email)
+      }
     },
-    'session:found': async ({ user, session }) => {
-      console.log('User logged in:', user.email);
-    },
-    'user:*': async (data) => {
-      // Listen to all user events
-      await logUserActivity(data);
-    },
-  },
-});
-
-// Runtime registration
-auth.on('payment:completed', async (data) => {
-  await sendReceipt(data.email);
-});
-
-await auth.emit('payment:completed', { email: 'user@example.com' });
+    '/login': {
+      before: async (ctx) => {
+        await logLoginAttempt(ctx.body.email)
+      }
+    }
+  }
+})
 ```
 
 ## Headers
@@ -93,12 +99,12 @@ await auth.emit('payment:completed', { email: 'user@example.com' });
 Work with [headers and cookies](./src/utils/headers/README.md) across frameworks without manual parsing.
 
 ```typescript
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2';
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
 
-const userAgent = getHeader(await headers(), 'user-agent');
-const sessionId = getCookie(await headers(), 'bloom.sid');
-const cookies = getAllCookies(await headers());
-const allHeaders = extractHeaders(await headers());
+const userAgent = getHeader(await headers(), 'user-agent')
+const sessionId = getCookie(await headers(), 'bloom.sid')
+const cookies = getAllCookies(await headers())
+const allHeaders = extractHeaders(await headers())
 ```
 
 ## API
@@ -110,11 +116,11 @@ Get the current user session from framework headers:
 ```typescript
 const session = await auth.api.getSession({
   headers: await headers()
-});
+})
 
 if (session) {
-  console.log(session.user.email);
-  console.log(session.session.id);
+  console.log(session.user.email)
+  console.log(session.session.id)
 }
 ```
 
