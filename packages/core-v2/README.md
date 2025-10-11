@@ -19,9 +19,8 @@ Framework-agnostic authentication core for Bloom with native support for Next.js
 - Framework-agnostic headers abstraction
 - Native support for Next.js, Express, Nuxt, SvelteKit, Elysia, Hono, Fastify, Astro
 - Path-based hooks for before/after auth operations
-- Zod v4 runtime validation with metadata
+- Zod v4 runtime validation
 - Type-safe API with inferred types
-- Zero manual cookie extraction required
 - 133 tests across storage, adapters, and 8 frameworks
 
 ## Installation
