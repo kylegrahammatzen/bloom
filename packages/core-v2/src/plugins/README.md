@@ -93,9 +93,8 @@ import { redisStorage } from '@bloom/core-v2/storage/redis'
 
 const auth = bloomAuth({
   adapter: drizzleAdapter(db),
-  storage: redisStorage(redis), // Passed to plugins for caching
+  storage: redisStorage(redis), // Passed to all plugins for caching
   plugins: [
-    autumn({ apiKey: 'am_sk_...' }),
     myPlugin({ /* config */ }),
   ],
 })
