@@ -1,71 +1,53 @@
 import type { Context } from '@/handler/context'
 import type { DatabaseAdapter } from '@/storage/adapter'
-import type { EventEmitter } from '@/events/emitter'
 import { LoginRequestSchema } from '@/schemas/api'
 import { verifyPassword, generateSessionId, normalizeEmail } from '@/utils/crypto'
 import { createSessionCookie } from '@/utils/cookies'
-import type { EmailPasswordConfig, SessionConfig } from './register'
+import { DEFAULT_SESSION_EXPIRY } from '@/constants'
+import type { SessionConfig } from './register'
 
-/**
- * Handle user login via email/password
- */
-export async function handleLogin(
-  ctx: Context,
-  adapter: DatabaseAdapter,
-  emitter: EventEmitter,
-  emailPasswordConfig: EmailPasswordConfig = {},
-  sessionConfig: SessionConfig = {},
-  cookieName: string = 'bloom.sid'
-): Promise<Response> {
-  // Check if email/password auth is disabled
-  if (emailPasswordConfig.enabled === false) {
-    return new Response(
-      JSON.stringify({ error: 'Email/password login is disabled' }),
-      { status: 403, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
+export type LoginParams = {
+  ctx: Context
+  adapter: DatabaseAdapter
+  sessionConfig: SessionConfig
+  cookieName: string
+}
 
-  // Parse and validate request body
-  const validation = LoginRequestSchema.safeParse(ctx.body)
+export async function login(params: LoginParams): Promise<Response> {
+  const validation = LoginRequestSchema.safeParse(params.ctx.body)
   if (!validation.success) {
-    return new Response(
-      JSON.stringify({
+    return Response.json(
+      {
         error: 'Invalid request',
         issues: validation.error.issues.map((issue) => ({
           path: issue.path.join('.'),
           message: issue.message,
         })),
-      }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
+      },
+      { status: 400 }
     )
   }
 
   const { email, password } = validation.data
 
-  // Normalize email
+  await params.ctx.hooks.before?.()
+
   const normalizedEmail = normalizeEmail(email)
 
-  // Emit: login attempt starting
-  await emitter.emit('user:login:before', { email: normalizedEmail })
-
-  // Find user by email
-  const user = await adapter.user.findByEmail(normalizedEmail)
+  const user = await params.adapter.user.findByEmail(normalizedEmail)
   if (!user) {
-    await emitter.emit('user:login:failed', { email: normalizedEmail, reason: 'user_not_found' })
-    return new Response(
-      JSON.stringify({ error: 'Invalid email or password' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    return Response.json(
+      { error: 'Invalid email or password' },
+      { status: 401 }
     )
   }
 
-  // Verify password (assuming password_hash and password_salt exist on user)
   const userWithPassword = user as typeof user & { password_hash: string; password_salt: string }
 
   if (!userWithPassword.password_hash || !userWithPassword.password_salt) {
-    await emitter.emit('user:login:failed', { email: normalizedEmail, reason: 'no_password' })
-    return new Response(
-      JSON.stringify({ error: 'Invalid email or password' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    return Response.json(
+      { error: 'Invalid email or password' },
+      { status: 401 }
     )
   }
 
@@ -76,41 +58,31 @@ export async function handleLogin(
   )
 
   if (!isValid) {
-    await emitter.emit('user:login:failed', { email: normalizedEmail, reason: 'invalid_password' })
-    return new Response(
-      JSON.stringify({ error: 'Invalid email or password' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    return Response.json(
+      { error: 'Invalid email or password' },
+      { status: 401 }
     )
   }
 
-  // Emit: login successful
-  await emitter.emit('user:login:success', { user })
-
-  // Create session
   const sessionId = generateSessionId()
-  const expiresIn = sessionConfig.expiresIn ?? 7 * 24 * 60 * 60 // 7 days default
+  const expiresIn = params.sessionConfig.expiresIn ?? DEFAULT_SESSION_EXPIRY
   const expiresAt = new Date(Date.now() + expiresIn * 1000)
 
-  const session = await adapter.session.create({
+  const session = await params.adapter.session.create({
     id: sessionId,
     userId: user.id,
     expiresAt,
   })
 
-  // Emit: session created
-  await emitter.emit('session:created', { session, user })
-
-  // Create session cookie
   const setCookie = createSessionCookie(
     { userId: user.id, sessionId: session.id },
-    { cookieName, maxAge: expiresIn }
+    { cookieName: params.cookieName, maxAge: expiresIn }
   )
 
-  // Emit: login complete
-  await emitter.emit('user:login:complete', { user, session })
+  await params.ctx.hooks.after?.()
 
-  return new Response(
-    JSON.stringify({
+  return Response.json(
+    {
       user: {
         id: user.id,
         email: user.email,
@@ -121,11 +93,10 @@ export async function handleLogin(
         id: session.id,
         expiresAt: session.expiresAt,
       },
-    }),
+    },
     {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
         'Set-Cookie': setCookie,
       },
     }
