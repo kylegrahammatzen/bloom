@@ -1,6 +1,7 @@
 {
   "name": "@bloom/core-v2",
   "version": "2.0.0-alpha.1",
+  "type": "module",
   "description": "Bloom Core v2 - Framework-agnostic authentication with Zod v4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,7 +43,7 @@
     "zod"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json --resolve-full-paths",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
@@ -69,6 +70,7 @@
     "mongodb": "6.12.0",
     "next": "15.5.4",
     "redis": "^4.7.0",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.7.3",
     "vitest": "^2.1.9"
   }
