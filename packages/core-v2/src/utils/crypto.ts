@@ -2,18 +2,6 @@ import * as argon2 from 'argon2'
 import { randomBytes, createHash, timingSafeEqual } from 'crypto'
 
 /**
- * Argon2id configuration for password hashing
- * Recommended settings for security and performance balance
- */
-const ARGON2_CONFIG = {
-  type: argon2.argon2id,
-  memoryCost: 19 * 1024, // 19 MB
-  timeCost: 2,
-  parallelism: 1,
-  hashLength: 32,
-}
-
-/**
  * Hash a password using Argon2id with secure random salt
  *
  * @param password - Plaintext password to hash
@@ -27,7 +15,10 @@ export async function hashPassword(password: string): Promise<{ hash: string; sa
   try {
     const salt = randomBytes(32)
     const hash = await argon2.hash(password, {
-      ...ARGON2_CONFIG,
+      type: argon2.argon2id,
+      memoryCost: 19456, // 19 MB
+      timeCost: 2,
+      parallelism: 1,
       salt,
     })
 
@@ -36,7 +27,7 @@ export async function hashPassword(password: string): Promise<{ hash: string; sa
       salt: salt.toString('base64'),
     }
   } catch (error) {
-    throw new Error('Failed to hash password')
+    throw new Error(`Failed to hash password: ${error instanceof Error ? error.message : String(error)}`)
   }
 }
 
@@ -59,7 +50,10 @@ export async function verifyPassword(
   try {
     const saltBuffer = Buffer.from(salt, 'base64')
     const newHash = await argon2.hash(password, {
-      ...ARGON2_CONFIG,
+      type: argon2.argon2id,
+      memoryCost: 19456, // 19 MB
+      timeCost: 2,
+      parallelism: 1,
       salt: saltBuffer,
     })
 
