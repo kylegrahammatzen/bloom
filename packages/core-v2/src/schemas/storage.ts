@@ -49,6 +49,26 @@ export const UpdateUserDataSchema = z.object({
     title: 'Email Verified',
     description: 'Whether the email has been verified',
   }),
+  email_verification_token: z.string().optional().meta({
+    id: 'update_user_email_verification_token',
+    title: 'Email Verification Token',
+    description: 'Token for verifying email address',
+  }),
+  email_verification_expires: z.date().optional().meta({
+    id: 'update_user_email_verification_expires',
+    title: 'Email Verification Expiry',
+    description: 'Expiry time for email verification token',
+  }),
+  password_reset_token: z.string().optional().meta({
+    id: 'update_user_password_reset_token',
+    title: 'Password Reset Token',
+    description: 'Token for resetting password',
+  }),
+  password_reset_expires: z.date().optional().meta({
+    id: 'update_user_password_reset_expires',
+    title: 'Password Reset Expiry',
+    description: 'Expiry time for password reset token',
+  }),
 })
 
 export const CreateSessionDataSchema = z.object({
