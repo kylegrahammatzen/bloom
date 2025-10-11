@@ -5,7 +5,9 @@ import { createMockAdapter } from '@/utils/mockAdapter'
 describe('Event System', () => {
   describe('Basic Functionality', () => {
     it('should register and emit events', async () => {
+      /** Mock database adapter for testing */
       const adapter = createMockAdapter()
+      /** BloomAuth instance with mock adapter */
       const auth = bloomAuth({ adapter })
 
       const handler = vi.fn()
