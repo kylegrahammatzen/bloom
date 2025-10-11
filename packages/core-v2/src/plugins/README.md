@@ -44,9 +44,22 @@ export const myPlugin = (config: MyConfig): BloomPlugin => {
     },
 
     // API methods (automatically assigned to auth.api[id])
-    api: (auth) => ({
+    // Receives auth instance and optional storage
+    api: (auth, storage) => ({
       doSomething: async (params) => {
-        // Custom API method
+        // Custom API method with optional caching
+        if (storage) {
+          const cached = await storage.get('key')
+          if (cached) return JSON.parse(cached)
+        }
+
+        const data = await fetchData()
+
+        if (storage) {
+          await storage.set('key', JSON.stringify(data), 300)
+        }
+
+        return data
       },
     }),
   }
@@ -71,6 +84,26 @@ const auth = bloomAuth({
 })
 ```
 
+### With Storage (Optional)
+
+Plugins can leverage storage for caching and temporary data:
+
+```typescript
+import { redisStorage } from '@bloom/core-v2/storage/redis'
+
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  storage: redisStorage(redis), // Passed to plugins for caching
+  plugins: [
+    autumn({ apiKey: 'am_sk_...' }),
+    myPlugin({ /* config */ }),
+  ],
+})
+```
+
+**Without storage:** Plugins work normally but cannot cache data
+**With storage:** Plugins can cache data using `storage.get()` and `storage.set()`
+
 ## Plugin Context
 
 Plugin route handlers receive a `Context` object with:
@@ -87,10 +120,10 @@ type Context = {
 
 ## Plugin API Methods
 
-Plugin API methods are automatically assigned to `auth.api[plugin.id]`. Helper functions inside the api closure are private:
+Plugin API methods are automatically assigned to `auth.api[plugin.id]`. The `api` function receives the auth instance and optional storage:
 
 ```typescript
-api: (auth) => {
+api: (auth, storage) => {
   // Private helper (not exposed to users)
   const getUser = async (params: ApiMethodParams) => {
     const session = await auth.api.getSession(params)
@@ -102,8 +135,20 @@ api: (auth) => {
   return {
     myMethod: async (params: ApiMethodParams) => {
       const user = await getUser(params)
-      // Your logic here
-      return { success: true }
+
+      // Use storage if available
+      if (storage) {
+        const cacheKey = `user:${user.id}:data`
+        const cached = await storage.get(cacheKey)
+        if (cached) return JSON.parse(cached)
+
+        const data = await fetchData(user.id)
+        await storage.set(cacheKey, JSON.stringify(data), 300)
+        return data
+      }
+
+      // Without storage, fetch every time
+      return await fetchData(user.id)
     },
   }
 }
