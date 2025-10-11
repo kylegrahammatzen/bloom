@@ -2,7 +2,7 @@
 
 # Bloom Core V2 - Handler
 
-Universal HTTP handler using Web Standard Request/Response. Framework-agnostic foundation for all auth requests.
+HTTP handler using Web Standard Request/Response. Framework-agnostic foundation for all auth requests.
 
 ## Components
 

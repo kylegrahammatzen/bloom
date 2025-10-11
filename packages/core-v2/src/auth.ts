@@ -119,23 +119,19 @@ export type BloomAuthConfig = {
 /**
  * Create a BloomAuth instance
  *
- * This is the main entry point for Bloom Core v2
- * Includes runtime validation using Zod v4
- *
  * @example
- * // With Drizzle adapter
  * const auth = bloomAuth({
  *   adapter: drizzleAdapter(db, { provider: 'pg' }),
- *   events: {
- *     'session:found': async ({ user, session }) => {
- *       console.log('User session loaded:', user.email)
+ *   hooks: {
+ *     '/register': {
+ *       after: async (ctx) => {
+ *         await sendWelcomeEmail(ctx.user.email)
+ *       }
  *     }
  *   }
  * })
  */
 export function bloomAuth(config: BloomAuthConfig): BloomAuth {
-  const { adapter, storage, rateLimit } = config
-
   /** Session cookie name used for storing session data */
   const cookieName = config.cookieName ?? 'bloom.sid'
 
@@ -164,18 +160,18 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
 
   // Create rate limiter if config provided
   let rateLimiter: RateLimiter | undefined
-  if (rateLimit) {
+  if (config.rateLimit) {
     // Validate rate limit config
-    const validatedConfig = RateLimitConfigSchema.parse(rateLimit)
+    const validatedConfig = RateLimitConfigSchema.parse(config.rateLimit)
     rateLimiter = new RateLimiter({
       config: validatedConfig,
-      storage,
-      adapter,
+      storage: config.storage,
+      adapter: config.adapter,
     })
   }
 
   /**
-   * Universal HTTP handler (Web Standard Request → Response)
+   * HTTP handler (Web Standard Request → Response)
    * Handles all auth routes including core endpoints and plugin routes
    */
   const handler = createHandler({
@@ -204,7 +200,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       handler: async (ctx) => {
         return await register({
           ctx,
-          adapter,
+          adapter: config.adapter,
           emailPasswordConfig: config.emailPassword ?? {},
           sessionConfig: config.session ?? {},
           cookieName,
@@ -218,7 +214,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       handler: async (ctx) => {
         return await login({
           ctx,
-          adapter,
+          adapter: config.adapter,
           sessionConfig: config.session ?? {},
           cookieName,
         })
@@ -232,7 +228,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     handler: async (ctx) => {
       return await logout({
         ctx,
-        adapter,
+        adapter: config.adapter,
         cookieName,
       })
     },
@@ -244,7 +240,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     handler: async (ctx) => {
       return await getSessions({
         ctx,
-        adapter,
+        adapter: config.adapter,
         cookieName,
       })
     },
@@ -256,7 +252,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     handler: async (ctx) => {
       return await deleteSession({
         ctx,
-        adapter,
+        adapter: config.adapter,
         cookieName,
       })
     },
@@ -268,7 +264,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     handler: async (ctx) => {
       return await deleteAllSessions({
         ctx,
-        adapter,
+        adapter: config.adapter,
         cookieName,
       })
     },
@@ -282,7 +278,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       handler: async (ctx) => {
         return await sendVerificationEmail({
           ctx,
-          adapter,
+          adapter: config.adapter,
         })
       },
     })
@@ -293,7 +289,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       handler: async (ctx) => {
         return await verifyEmail({
           ctx,
-          adapter,
+          adapter: config.adapter,
         })
       },
     })
@@ -304,7 +300,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       handler: async (ctx) => {
         return await requestPasswordReset({
           ctx,
-          adapter,
+          adapter: config.adapter,
         })
       },
     })
@@ -315,7 +311,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       handler: async (ctx) => {
         return await resetPassword({
           ctx,
-          adapter,
+          adapter: config.adapter,
           emailPasswordConfig: config.emailPassword ?? {},
         })
       },
@@ -337,17 +333,17 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       return null
     }
 
-    const session = await adapter.session.findById(sessionData.sessionId)
+    const session = await config.adapter.session.findById(sessionData.sessionId)
     if (!session || session.userId !== sessionData.userId) {
       return null
     }
 
-    const user = await adapter.user.findById(session.userId)
+    const user = await config.adapter.user.findById(session.userId)
     if (!user) {
       return null
     }
 
-    await adapter.session.updateLastAccessed(session.id)
+    await config.adapter.session.updateLastAccessed(session.id)
     return { user, session }
   }
 
@@ -355,7 +351,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
    * BloomAuth instance
    *
    * Provides:
-   * - handler: Universal HTTP handler for all auth routes
+   * - handler: HTTP handler for all auth routes
    * - router: Register custom routes and plugins
    * - api: Direct API methods for server-side usage
    * - on/emit/off: Event system for lifecycle hooks
@@ -366,13 +362,9 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
 
     api: {
       async getSession(params: ApiMethodParams): Promise<{ user: User; session: Session } | null> {
-        // Emit: session lookup started
-        await emitter.emit('session:loading', { params })
-
         // Validate input params at runtime
         const validatedParams = ApiMethodParamsSchema.safeParse(params)
         if (!validatedParams.success) {
-          await emitter.emit('session:notfound', { reason: 'invalid_params' })
           return null
         }
 
@@ -382,45 +374,34 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
           : null
 
         if (!cookieValue) {
-          await emitter.emit('session:notfound', { reason: 'no_cookie' })
           return null
         }
 
         // Parse and validate session cookie JSON
         const sessionData = parseSessionCookie(cookieValue)
         if (!sessionData) {
-          await emitter.emit('session:notfound', { reason: 'invalid_cookie' })
           return null
         }
 
         // Load session from adapter
-        const session = await adapter.session.findById(sessionData.sessionId)
+        const session = await config.adapter.session.findById(sessionData.sessionId)
         if (!session) {
-          await emitter.emit('session:notfound', { reason: 'session_not_found' })
           return null
         }
 
         // Verify session belongs to the user in the cookie
         if (session.userId !== sessionData.userId) {
-          await emitter.emit('session:notfound', { reason: 'user_mismatch' })
           return null
         }
 
         // Load user from adapter
-        const user = await adapter.user.findById(session.userId)
+        const user = await config.adapter.user.findById(session.userId)
         if (!user) {
-          await emitter.emit('session:notfound', { reason: 'user_not_found' })
           return null
         }
 
-        // Emit: session found
-        await emitter.emit('session:found', { user, session })
-
         // Update last accessed time
-        await adapter.session.updateLastAccessed(session.id)
-
-        // Emit: session accessed
-        await emitter.emit('session:accessed', { user, session })
+        await config.adapter.session.updateLastAccessed(session.id)
 
         return { user, session }
       }
