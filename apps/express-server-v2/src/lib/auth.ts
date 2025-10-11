@@ -1,6 +1,6 @@
 import { bloomAuth } from '@bloom/core-v2'
 import { mongodbAdapter } from '@bloom/core-v2/adapters/mongodb'
-import { client } from './db.js'
+import { client } from './db'
 
 export const auth = bloomAuth({
   adapter: mongodbAdapter(client, {
