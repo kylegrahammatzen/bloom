@@ -1,104 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { bloomAuth } from '@/auth'
+import { createMockAdapter } from '@/utils/mockAdapter'
 import type { DatabaseAdapter } from '@/storage/adapter'
-import type { User, Session } from '@/types'
-
-function createMockAdapter(): DatabaseAdapter {
-  const users: Map<string, User & { password_hash: string; password_salt: string }> = new Map()
-  const sessions: Map<string, Session> = new Map()
-
-  return {
-    user: {
-      async findById(id: string) {
-        const user = Array.from(users.values()).find((u) => u.id === id)
-        return user ? { ...user } : null
-      },
-      async findByEmail(email: string) {
-        const user = Array.from(users.values()).find((u) => u.email === email.toLowerCase())
-        return user ? { ...user } : null
-      },
-      async create(data) {
-        const id = `user_${Date.now()}`
-        const user = {
-          id,
-          email: data.email,
-          email_verified: data.email_verified ?? false,
-          name: data.name,
-          image: undefined,
-          created_at: new Date(),
-          updated_at: new Date(),
-          last_login: undefined,
-          password_hash: data.password_hash,
-          password_salt: data.password_salt,
-        }
-        users.set(id, user)
-        return user
-      },
-      async update(id: string, data) {
-        const user = users.get(id)
-        if (!user) return null
-
-        const updated = {
-          ...user,
-          ...data,
-          updated_at: new Date(),
-        }
-        users.set(id, updated)
-        return updated
-      },
-      async delete(id: string) {
-        return users.delete(id)
-      },
-    },
-    session: {
-      async findById(id: string) {
-        const session = sessions.get(id)
-        if (!session || session.expiresAt < new Date()) {
-          return null
-        }
-        return session
-      },
-      async findByUserId(userId: string) {
-        return Array.from(sessions.values()).filter(
-          (s) => s.userId === userId && s.expiresAt > new Date()
-        )
-      },
-      async create(data) {
-        const session: Session = {
-          id: data.id,
-          userId: data.userId,
-          expiresAt: data.expiresAt,
-          createdAt: new Date(),
-          lastAccessedAt: new Date(),
-        }
-        sessions.set(data.id, session)
-        return session
-      },
-      async updateLastAccessed(id: string) {
-        const session = sessions.get(id)
-        if (!session) return null
-
-        session.lastAccessedAt = new Date()
-        sessions.set(id, session)
-        return session
-      },
-      async delete(id: string) {
-        return sessions.delete(id)
-      },
-      async deleteByUserId(userId: string) {
-        const userSessions = Array.from(sessions.entries()).filter(([_, s]) => s.userId === userId)
-        userSessions.forEach(([id]) => sessions.delete(id))
-        return userSessions.length
-      },
-      async deleteExpired() {
-        const now = new Date()
-        const expired = Array.from(sessions.entries()).filter(([_, s]) => s.expiresAt < now)
-        expired.forEach(([id]) => sessions.delete(id))
-        return expired.length
-      },
-    },
-  }
-}
 
 describe('Auth API Routes', () => {
   let auth: ReturnType<typeof bloomAuth>
@@ -109,7 +12,6 @@ describe('Auth API Routes', () => {
     auth = bloomAuth({
       adapter,
       emailPassword: {
-        enabled: true,
         minPasswordLength: 8,
         maxPasswordLength: 128,
       },
