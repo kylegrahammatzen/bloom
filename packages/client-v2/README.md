@@ -190,11 +190,9 @@ await client.myFeature.myMethod({ foo: 'bar' })
 ### Custom Headers
 
 ```typescript
-const client = createClient({
-  config: {
-    headers: {
-      'X-Custom-Header': 'value',
-    },
+const client = bloomClient({
+  headers: {
+    'X-Custom-Header': 'value',
   },
 })
 ```
@@ -202,15 +200,13 @@ const client = createClient({
 ### Error Handling
 
 ```typescript
-const client = createClient({
-  config: {
-    onError: (error) => {
-      console.error('Bloom error:', error.message)
-      // Show toast notification, etc.
-    },
-    onSuccess: (data) => {
-      console.log('Success:', data)
-    },
+const client = bloomClient({
+  onError: (error) => {
+    console.error('Bloom error:', error.message)
+    // Show toast notification, etc.
+  },
+  onSuccess: (data) => {
+    console.log('Success:', data)
   },
 })
 ```
@@ -234,7 +230,28 @@ type BloomError = {
 
 ## TypeScript
 
-Full type safety with TypeScript:
+### Available Type Exports
+
+```typescript
+import type {
+  // Client types
+  BloomClient,
+  BloomResponse,
+  BloomError,
+  ClientConfig,
+  ClientPlugin,
+
+  // Auth types
+  AuthMethods,
+  User,
+  Session,
+
+  // Plugin types
+  AutumnMethods,
+} from '@bloom/client-v2'
+```
+
+### Usage Example
 
 ```typescript
 import type { User, Session, BloomResponse } from '@bloom/client-v2'
@@ -250,11 +267,34 @@ if (data) {
 
 ## Framework Integration
 
-This is a framework-agnostic client. For framework-specific hooks and utilities:
+This client works with **any JavaScript framework** (React, Vue, Svelte, Solid, vanilla JS). No framework-specific wrappers needed - just import and use!
 
-- React: Use `@bloom/react-v2`
-- Vue: Use `@bloom/vue-v2` (coming soon)
-- Svelte: Use `@bloom/svelte-v2` (coming soon)
+```typescript
+// React
+function LoginForm() {
+  const [email, setEmail] = useState('')
+  const login = async () => {
+    const { data, error } = await client.auth.login({ email, password })
+    if (error) console.error(error.message)
+  }
+  // ...
+}
+
+// Vue
+const email = ref('')
+const login = async () => {
+  const { data, error } = await client.auth.login({
+    email: email.value,
+    password
+  })
+}
+
+// Svelte
+let email = ''
+async function login() {
+  const { data, error } = await client.auth.login({ email, password })
+}
+```
 
 ## License
 

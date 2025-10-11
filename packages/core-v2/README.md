@@ -120,6 +120,40 @@ const cookies = getAllCookies(await headers())
 const allHeaders = extractHeaders(await headers())
 ```
 
+## TypeScript
+
+### Available Type Exports
+
+```typescript
+import type {
+  // Core types
+  BloomAuth,
+  BloomAuthConfig,
+  BloomPlugin,
+  PluginRoute,
+  PluginHooks,
+  BloomAuthApi,
+
+  // Schema types
+  User,
+  Session,
+  SessionCookieData,
+  ApiMethodParams,
+
+  // Adapter types
+  DatabaseAdapter,
+
+  // Storage types
+  Storage,
+
+  // Utility types
+  RequestHeaders,
+  CookieOptions,
+} from '@bloom/core-v2'
+```
+
+All types are fully documented with JSDoc comments for IntelliSense support.
+
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0.

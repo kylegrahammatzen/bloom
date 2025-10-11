@@ -133,6 +133,18 @@ export async function DELETE({ request }: { request: Request }) {
 }
 ```
 
+## TypeScript
+
+This package exports only adapter functions, not types. For TypeScript types, import from `@bloom/core-v2`:
+
+```typescript
+import type { BloomAuth, User, Session } from '@bloom/core-v2'
+import { toNextJsHandler } from '@bloom/adapters-v2/next'
+
+const auth: BloomAuth = bloomAuth({ /* ... */ })
+export const { GET, POST } = toNextJsHandler({ auth })
+```
+
 ## License
 
 GNU Affero General Public License v3.0
