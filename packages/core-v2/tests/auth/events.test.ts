@@ -1,39 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { bloomAuth } from '@/auth'
-import type { DatabaseAdapter } from '@/storage/adapter'
-import type { User, Session } from '@/types'
-
-// Mock adapter for testing
-const createMockAdapter = (): DatabaseAdapter => ({
-  user: {
-    findById: vi.fn(async (id: string): Promise<User | null> => ({
-      id,
-      email: 'test@example.com',
-      email_verified: true,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })),
-    findByEmail: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  },
-  session: {
-    findById: vi.fn(async (id: string): Promise<Session | null> => ({
-      id,
-      userId: 'user123',
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60),
-      createdAt: new Date(),
-      lastAccessedAt: new Date(),
-    })),
-    findByUserId: vi.fn(),
-    create: vi.fn(),
-    updateLastAccessed: vi.fn(),
-    delete: vi.fn(),
-    deleteByUserId: vi.fn(),
-    deleteExpired: vi.fn(),
-  },
-})
+import { createMockAdapter } from '@/utils/mockAdapter'
 
 describe('Event System', () => {
   describe('Basic Functionality', () => {
@@ -225,41 +192,52 @@ describe('Event System', () => {
     })
   })
 
-  describe('Events from Config', () => {
-    it('should register events from config', async () => {
+  describe('Hooks from Config', () => {
+    it('should register hooks from config', async () => {
+      const adapter = createMockAdapter()
+      const beforeHandler = vi.fn()
+      const afterHandler = vi.fn()
+
+      const auth = bloomAuth({
+        adapter,
+        hooks: {
+          '/register': {
+            before: beforeHandler,
+            after: afterHandler,
+          },
+        },
+      })
+
+      // Hooks are registered as path-based events internally
+      await auth.emit('/register:before', {})
+      await auth.emit('/register:after', {})
+
+      expect(beforeHandler).toHaveBeenCalledTimes(1)
+      expect(afterHandler).toHaveBeenCalledTimes(1)
+    })
+
+    it('should register multiple path hooks from config', async () => {
       const adapter = createMockAdapter()
       const handler1 = vi.fn()
       const handler2 = vi.fn()
 
       const auth = bloomAuth({
         adapter,
-        events: {
-          'event1': handler1,
-          'event2': handler2,
+        hooks: {
+          '/register': {
+            after: handler1,
+          },
+          '/login': {
+            after: handler2,
+          },
         },
       })
 
-      await auth.emit('event1', { data: 'test1' })
-      await auth.emit('event2', { data: 'test2' })
+      await auth.emit('/register:after', {})
+      await auth.emit('/login:after', {})
 
-      expect(handler1).toHaveBeenCalledWith({ data: 'test1' })
-      expect(handler2).toHaveBeenCalledWith({ data: 'test2' })
-    })
-
-    it('should register wildcard events from config', async () => {
-      const adapter = createMockAdapter()
-      const handler = vi.fn()
-
-      const auth = bloomAuth({
-        adapter,
-        events: {
-          'user:*': handler,
-        },
-      })
-
-      await auth.emit('user:created', { data: 'test' })
-
-      expect(handler).toHaveBeenCalledWith({ data: 'test' })
+      expect(handler1).toHaveBeenCalledTimes(1)
+      expect(handler2).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -289,20 +267,33 @@ describe('Event System', () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
+      // Create user and session first
+      const user = await adapter.user.create({
+        email: 'test@example.com',
+        password_hash: 'hash',
+        password_salt: 'salt',
+        email_verified: true,
+      })
+      const session = await adapter.session.create({
+        id: 'sess123',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+      })
+
       const handler = vi.fn()
       auth.on('session:found', handler)
 
       await auth.api.getSession({
         headers: {
-          cookie: 'bloom.sid={"sessionId":"sess123","userId":"user123"}',
+          cookie: `bloom.sid={"sessionId":"${session.id}","userId":"${user.id}"}`,
         },
       })
 
       expect(handler).toHaveBeenCalledTimes(1)
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
-          user: expect.objectContaining({ id: 'user123' }),
-          session: expect.objectContaining({ id: 'sess123' }),
+          user: expect.objectContaining({ id: user.id }),
+          session: expect.objectContaining({ id: session.id }),
         })
       )
     })
@@ -311,12 +302,25 @@ describe('Event System', () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
+      // Create user and session first
+      const user = await adapter.user.create({
+        email: 'test@example.com',
+        password_hash: 'hash',
+        password_salt: 'salt',
+        email_verified: true,
+      })
+      const session = await adapter.session.create({
+        id: 'sess123',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+      })
+
       const handler = vi.fn()
       auth.on('session:accessed', handler)
 
       await auth.api.getSession({
         headers: {
-          cookie: 'bloom.sid={"sessionId":"sess123","userId":"user123"}',
+          cookie: `bloom.sid={"sessionId":"${session.id}","userId":"${user.id}"}`,
         },
       })
 
@@ -346,12 +350,25 @@ describe('Event System', () => {
       const adapter = createMockAdapter()
       const auth = bloomAuth({ adapter })
 
+      // Create user and session first
+      const user = await adapter.user.create({
+        email: 'test@example.com',
+        password_hash: 'hash',
+        password_salt: 'salt',
+        email_verified: true,
+      })
+      const session = await adapter.session.create({
+        id: 'sess123',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+      })
+
       const handler = vi.fn()
       auth.on('session:*', handler)
 
       await auth.api.getSession({
         headers: {
-          cookie: 'bloom.sid={"sessionId":"sess123","userId":"user123"}',
+          cookie: `bloom.sid={"sessionId":"${session.id}","userId":"${user.id}"}`,
         },
       })
 

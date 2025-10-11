@@ -3,30 +3,8 @@ import { Router } from '@/handler/router'
 import { createHandler } from '@/handler/handler'
 import { EventEmitter } from '@/events/emitter'
 import { bloomAuth } from '@/auth'
-import type { DatabaseAdapter } from '@/storage/adapter'
 import type { Context } from '@/handler/context'
-
-// Mock adapter
-function createMockAdapter(): DatabaseAdapter {
-  return {
-    user: {
-      findById: vi.fn(),
-      findByEmail: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    session: {
-      findById: vi.fn(),
-      findByUserId: vi.fn(),
-      create: vi.fn(),
-      updateLastAccessed: vi.fn(),
-      delete: vi.fn(),
-      deleteByUserId: vi.fn(),
-      deleteExpired: vi.fn(),
-    },
-  }
-}
+import { createMockAdapter } from '@/utils/mockAdapter'
 
 describe('Router', () => {
   let router: Router
@@ -123,7 +101,7 @@ describe('Handler', () => {
   beforeEach(() => {
     router = new Router()
     emitter = new EventEmitter()
-    handler = createHandler({ router, emitter, basePath: '/auth' })
+    handler = createHandler({ router, emitter, hookedPaths: new Set(), basePath: '/auth' })
   })
 
   it('should handle valid requests and return response', async () => {
@@ -240,26 +218,31 @@ describe('Handler', () => {
     expect(capturedParams).toEqual({ id: 'abc123' })
   })
 
-  it('should emit events during request lifecycle', async () => {
+  it('should execute hooks when registered for a path', async () => {
     const events: string[] = []
 
-    emitter.on('request:start', () => {
-      events.push('start')
-    })
-    emitter.on('endpoint:before', () => {
+    // Register hooks for the /test path
+    const hookedPaths = new Set(['/test:before', '/test:after'])
+
+    emitter.on('/test:before', () => {
       events.push('before')
     })
-    emitter.on('endpoint:after', () => {
+    emitter.on('/test:after', () => {
       events.push('after')
     })
-    emitter.on('request:end', () => {
-      events.push('end')
-    })
+
+    handler = createHandler({ router, emitter, hookedPaths, basePath: '/auth' })
 
     router.register({
       path: '/test',
       method: 'GET',
-      handler: async () => new Response('OK'),
+      handler: async (ctx) => {
+        // Handler manually calls hooks
+        await ctx.hooks.before?.()
+        events.push('handler')
+        await ctx.hooks.after?.()
+        return new Response('OK')
+      },
     })
 
     const request = new Request('http://localhost:3000/auth/test', {
@@ -268,7 +251,7 @@ describe('Handler', () => {
 
     await handler(request)
 
-    expect(events).toEqual(['start', 'before', 'after', 'end'])
+    expect(events).toEqual(['before', 'handler', 'after'])
   })
 
   it('should handle handler errors and return 500', async () => {

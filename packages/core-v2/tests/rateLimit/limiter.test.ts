@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { RateLimiter } from '@/rateLimit/limiter'
 import { memoryStorage } from '@/storage/memory'
 import type { Storage, RateLimitConfig } from '@/schemas'
-import type { DatabaseAdapter } from '@/storage/adapter'
 import type { Context } from '@/handler/context'
+import { createMockAdapter } from '@/utils/mockAdapter'
 
 function createMockContext(path: string, ip?: string): Context {
   const headers = new Headers()
@@ -21,27 +21,7 @@ function createMockContext(path: string, ip?: string): Context {
     params: {},
     user: null,
     session: null,
-  }
-}
-
-function createMockAdapter(): DatabaseAdapter {
-  return {
-    user: {
-      findById: vi.fn(),
-      findByEmail: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    session: {
-      findById: vi.fn(),
-      findByUserId: vi.fn(),
-      create: vi.fn(),
-      updateLastAccessed: vi.fn(),
-      delete: vi.fn(),
-      deleteByUserId: vi.fn(),
-      deleteExpired: vi.fn(),
-    },
+    hooks: {},
   }
 }
 
@@ -375,6 +355,7 @@ describe('Rate Limiter', () => {
         params: {},
         user: null,
         session: null,
+        hooks: {},
       }
 
       // Should use cf-connecting-ip (first in order)
@@ -410,6 +391,7 @@ describe('Rate Limiter', () => {
         params: {},
         user: null,
         session: null,
+        hooks: {},
       }
 
       // Should use first IP
