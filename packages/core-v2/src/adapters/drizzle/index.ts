@@ -94,6 +94,60 @@ export function drizzleAdapter(
         }
       },
 
+      async findByEmailVerificationToken(token: string): Promise<User | null> {
+        const result = await db
+          .select()
+          .from(users)
+          .where(
+            and(
+              eq(users.email_verification_token, token),
+              gt(users.email_verification_expires, new Date())
+            )
+          )
+          .limit(1)
+
+        if (!result[0]) return null
+
+        const row = result[0]
+        return {
+          id: row.id,
+          email: row.email,
+          email_verified: row.email_verified,
+          name: row.name ?? undefined,
+          image: row.image ?? undefined,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          last_login: row.last_login ?? undefined,
+        }
+      },
+
+      async findByPasswordResetToken(token: string): Promise<User | null> {
+        const result = await db
+          .select()
+          .from(users)
+          .where(
+            and(
+              eq(users.password_reset_token, token),
+              gt(users.password_reset_expires, new Date())
+            )
+          )
+          .limit(1)
+
+        if (!result[0]) return null
+
+        const row = result[0]
+        return {
+          id: row.id,
+          email: row.email,
+          email_verified: row.email_verified,
+          name: row.name ?? undefined,
+          image: row.image ?? undefined,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          last_login: row.last_login ?? undefined,
+        }
+      },
+
       async create(data: CreateUserData): Promise<User> {
         const id = generateSessionId()
         const now = new Date()
