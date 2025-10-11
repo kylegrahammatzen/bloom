@@ -1,13 +1,20 @@
-<img src=".github/banner.png" width="100%" alt="Bloom Banner" />
+<p align="center">
+  <a href="https://kylegm.com/" target="_blank" rel="noopener noreferrer">
+    <img width="600" src=".github/banner.png" alt="Bloom Banner">
+  </a>
+</p>
+<br/>
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL-red.svg" alt="License: AGPL"></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20-green.svg" alt="Node.js"></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.9-blue.svg" alt="TypeScript"></a>
+  <a href="https://www.mongodb.com/"><img src="https://img.shields.io/badge/MongoDB-8.7-green.svg" alt="MongoDB"></a>
+  <a href="https://reactjs.org/"><img src="https://img.shields.io/badge/React-19-blue.svg" alt="React"></a>
+  <a href="https://expressjs.com/"><img src="https://img.shields.io/badge/Express.js-4.21-green.svg" alt="Express.js"></a>
+</p>
+<br/>
 
 # Bloom
-
-[![License: AGPL](https://img.shields.io/badge/License-AGPL-red.svg)](LICENSE)
-[![MongoDB](https://img.shields.io/badge/MongoDB-8.7-green.svg)](https://www.mongodb.com/)
-[![Express.js](https://img.shields.io/badge/Express.js-4.21-green.svg)](https://expressjs.com/)
-[![React](https://img.shields.io/badge/React-19-blue.svg)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-20-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
 Bloom is an open-source framework-agnostic authentication SDK for TypeScript, with framework adapters for Express, Next.js, and more.
 
