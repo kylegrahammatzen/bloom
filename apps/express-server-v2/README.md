@@ -47,22 +47,6 @@ db.sessions.find()         # View all sessions
 db.dropDatabase()          # Drop entire database
 ```
 
-## API Endpoints
-
-All endpoints are available under `/auth`:
-
-- `POST /auth/register` - Register new user
-- `POST /auth/login` - Login user
-- `POST /auth/logout` - Logout user
-- `GET /auth/session` - Get current session
-- `GET /auth/sessions` - Get all user sessions
-- `DELETE /auth/sessions/:id` - Delete specific session
-- `DELETE /auth/sessions` - Delete all sessions
-- `POST /auth/send-verification-email` - Send verification email
-- `POST /auth/verify-email` - Verify email with token
-- `POST /auth/request-password-reset` - Request password reset
-- `POST /auth/reset-password` - Reset password with token
-
 ## License
 
 GNU Affero General Public License v3.0
