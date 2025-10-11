@@ -84,8 +84,7 @@ Request > Parse Body > Route Match > Execute Handler > Response
 ```typescript
 const handler = createHandler({
   router,
-  emitter,
-  hookedPaths,
+  hooks,  // Map<string, HookHandler>
   basePath: '/auth'
 })
 

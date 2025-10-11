@@ -1,13 +1,13 @@
 import type { Router } from '@/handler/router'
 import type { Context } from '@/handler/context'
-import type { EventEmitter } from '@/events/emitter'
 import type { RateLimiter } from '@/rateLimit/limiter'
 import { buildContext } from '@/handler/context'
 
+type HookHandler = (ctx: Context) => Promise<void | Response>
+
 export type HandlerConfig = {
   router: Router
-  emitter: EventEmitter
-  hookedPaths: Set<string>
+  hooks: Map<string, HookHandler>
   rateLimiter?: RateLimiter
   basePath?: string
 }
@@ -17,7 +17,7 @@ export type HandlerConfig = {
  * Takes Web Standard Request, returns Web Standard Response
  */
 export function createHandler(config: HandlerConfig) {
-  const { router, emitter, hookedPaths, rateLimiter, basePath = '/auth' } = config
+  const { router, hooks, rateLimiter, basePath = '/auth' } = config
 
   return async (request: Request): Promise<Response> => {
     const url = new URL(request.url)
@@ -70,11 +70,17 @@ export function createHandler(config: HandlerConfig) {
       user: null,
       session: null,
       hooks: {
-        before: hookedPaths.has(`${path}:before`)
-          ? async () => await emitter.emit(`${path}:before`, ctx)
+        before: hooks.has(`${path}:before`)
+          ? async () => {
+              const handler = hooks.get(`${path}:before`)
+              if (handler) await handler(ctx)
+            }
           : undefined,
-        after: hookedPaths.has(`${path}:after`)
-          ? async () => await emitter.emit(`${path}:after`, ctx)
+        after: hooks.has(`${path}:after`)
+          ? async () => {
+              const handler = hooks.get(`${path}:after`)
+              if (handler) await handler(ctx)
+            }
           : undefined,
       },
     }
