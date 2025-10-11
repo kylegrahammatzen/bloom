@@ -43,8 +43,6 @@ const auth = bloomAuth({
 
 ## Database Adapters
 
-Connect to any database with framework-agnostic adapters:
-
 - [Drizzle](./src/adapters/drizzle/README.md) - Type-safe ORM for SQLite, PostgreSQL, MySQL
 - [Kysely](./src/adapters/kysely/README.md) - SQL query builder with type safety
 - [Prisma](./src/adapters/prisma/README.md) - Modern ORM with schema migrations
@@ -61,7 +59,7 @@ export const auth = bloomAuth({
 
 ## Storage
 
-High-speed storage for rate limiting and caching with [Redis or Memory](./src/storage/README.md).
+Rate limiting and caching with [Redis or Memory](./src/storage/README.md).
 
 ```typescript
 import { redisStorage, memoryStorage } from '@bloom/core-v2'
