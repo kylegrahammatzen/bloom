@@ -319,6 +319,25 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.8)(@vitest/ui@3.2.4)(happy-dom@19.0.2)(jiti@2.6.1)(lightningcss@1.30.1)
 
+  packages/adapters-v2:
+    dependencies:
+      '@bloom/core-v2':
+        specifier: workspace:*
+        version: link:../core-v2
+    devDependencies:
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.23
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+      next:
+        specifier: ^15.5.4
+        version: 15.5.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   packages/client:
     devDependencies:
       tsc-alias:
@@ -327,6 +346,15 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.8)(@vitest/ui@3.2.4)(happy-dom@19.0.2)(jiti@2.6.1)(lightningcss@1.30.1)
+
+  packages/client-v2:
+    devDependencies:
+      '@bloom/core-v2':
+        specifier: workspace:*
+        version: link:../core-v2
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
   packages/core:
     dependencies:
