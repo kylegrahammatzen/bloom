@@ -23,6 +23,8 @@ export type {
   PluginHooks,
 } from '@/types'
 
+export type { Context } from '@/handler/context'
+
 export type { RequestHeaders } from '@/utils/headers'
 export {
   extractHeaders,

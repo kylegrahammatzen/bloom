@@ -1,4 +1,4 @@
-import { bloomAuth } from '@bloom/core-v2'
+import { bloomAuth, type Context } from '@bloom/core-v2'
 import { mongodbAdapter } from '@bloom/core-v2/adapters/mongodb'
 import { db } from './db'
 
@@ -29,12 +29,12 @@ export const auth = bloomAuth({
   },
   hooks: {
     '/register': {
-      after: async (ctx) => {
+      after: async (ctx: Context) => {
         console.log('[Hook] User registered:', { email: ctx.user?.email, id: ctx.user?.id })
       },
     },
     '/login': {
-      after: async (ctx) => {
+      after: async (ctx: Context) => {
         console.log('[Hook] User logged in:', { email: ctx.user?.email, id: ctx.user?.id })
       },
     },
