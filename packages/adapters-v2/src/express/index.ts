@@ -50,7 +50,7 @@ export function toExpressHandler(props: { auth: BloomAuth }) {
       res.status(response.status)
 
       // Set headers
-      response.headers.forEach((value, key) => {
+      response.headers.forEach((value: string, key: string) => {
         res.setHeader(key, value)
       })
 
