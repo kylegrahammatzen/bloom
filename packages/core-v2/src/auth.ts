@@ -1,10 +1,10 @@
-import type { BloomAuth, ApiMethodParams, User, Session, EventHandler } from '@/types'
+import type { BloomAuth, ApiMethodParams, User, Session } from '@/types'
 import type { DatabaseAdapter } from '@/storage/adapter'
 import type { Storage, RateLimitConfig } from '@/schemas'
+import type { Context } from '@/handler/context'
 import { getCookie } from '@/utils/headers'
 import { parseSessionCookie } from '@/utils/cookies'
 import { ApiMethodParamsSchema, RateLimitConfigSchema } from '@/schemas'
-import { EventEmitter } from '@/events/emitter'
 import { Router } from '@/handler/router'
 import { createHandler } from '@/handler/handler'
 import { RateLimiter } from '@/rateLimit/limiter'
@@ -106,8 +106,8 @@ export type BloomAuthConfig = {
    * }
    */
   hooks?: Record<string, {
-    before?: (ctx: import('./handler/context').Context) => Promise<void | Response>
-    after?: (ctx: import('./handler/context').Context) => Promise<void | Response>
+    before?: (ctx: Context) => Promise<void | Response>
+    after?: (ctx: Context) => Promise<void | Response>
   }>
 
   /**
@@ -136,25 +136,21 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
   /** Session cookie name used for storing session data */
   const cookieName = config.cookieName ?? 'bloom.sid'
 
-  /** Event emitter for lifecycle hooks and plugin communication */
-  const emitter = new EventEmitter()
-
   /** Router for registering and matching HTTP routes */
   const router = new Router()
 
-  /** Set of paths that have hooks registered (for O(1) lookup) */
-  const hookedPaths = new Set<string>()
+  /** Map storing hooks (path:before/path:after -> handler function) */
+  type HookHandler = (ctx: Context) => Promise<void | Response>
+  const hooks = new Map<string, HookHandler>()
 
   // Register hooks from config
   if (config.hooks) {
     for (const [path, handlers] of Object.entries(config.hooks)) {
       if (handlers.before) {
-        emitter.on(`${path}:before`, handlers.before)
-        hookedPaths.add(`${path}:before`)
+        hooks.set(`${path}:before`, handlers.before)
       }
       if (handlers.after) {
-        emitter.on(`${path}:after`, handlers.after)
-        hookedPaths.add(`${path}:after`)
+        hooks.set(`${path}:after`, handlers.after)
       }
     }
   }
@@ -177,8 +173,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
    */
   const handler = createHandler({
     router,
-    emitter,
-    hookedPaths,
+    hooks,
     rateLimiter,
     basePath: '/auth',
   })
@@ -349,7 +344,6 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
    * - handler: HTTP handler for all auth routes
    * - router: Register custom routes and plugins
    * - api: Direct API methods for server-side usage
-   * - on/emit/off: Event system for lifecycle hooks
    */
   const auth: BloomAuth = {
     handler,
@@ -363,15 +357,6 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
           cookieName,
         })
       }
-    },
-
-    // Event methods
-    on: (event: string, handler: EventHandler) => emitter.on(event, handler),
-    emit: (event: string, data?: any) => emitter.emit(event, data),
-    off: (event: string, handler: EventHandler) => emitter.off(event, handler),
-    events: {
-      list: () => emitter.list(),
-      listeners: (event: string) => emitter.getListeners(event),
     }
   }
 

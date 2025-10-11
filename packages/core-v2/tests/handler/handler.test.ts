@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Router } from '@/handler/router'
 import { createHandler } from '@/handler/handler'
-import { EventEmitter } from '@/events/emitter'
 import { bloomAuth } from '@/auth'
 import type { Context } from '@/handler/context'
 import { createMockAdapter } from '@/utils/mockAdapter'
+
+type HookHandler = (ctx: Context) => Promise<void | Response>
 
 describe('Router', () => {
   let router: Router
@@ -95,13 +96,13 @@ describe('Router', () => {
 
 describe('Handler', () => {
   let router: Router
-  let emitter: EventEmitter
+  let hooks: Map<string, HookHandler>
   let handler: (request: Request) => Promise<Response>
 
   beforeEach(() => {
     router = new Router()
-    emitter = new EventEmitter()
-    handler = createHandler({ router, emitter, hookedPaths: new Set(), basePath: '/auth' })
+    hooks = new Map()
+    handler = createHandler({ router, hooks, basePath: '/auth' })
   })
 
   it('should handle valid requests and return response', async () => {
@@ -222,16 +223,14 @@ describe('Handler', () => {
     const events: string[] = []
 
     // Register hooks for the /test path
-    const hookedPaths = new Set(['/test:before', '/test:after'])
-
-    emitter.on('/test:before', () => {
+    hooks.set('/test:before', async () => {
       events.push('before')
     })
-    emitter.on('/test:after', () => {
+    hooks.set('/test:after', async () => {
       events.push('after')
     })
 
-    handler = createHandler({ router, emitter, hookedPaths, basePath: '/auth' })
+    handler = createHandler({ router, hooks, basePath: '/auth' })
 
     router.register({
       path: '/test',
