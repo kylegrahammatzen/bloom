@@ -5,16 +5,6 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "AGPL-3.0",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./client": {
-      "types": "./dist/client/index.d.ts",
-      "default": "./dist/client/index.js"
-    }
-  },
   "author": "Kyle Graham Matzen <kylegrahammatzen@gmail.com>",
   "repository": {
     "type": "git",

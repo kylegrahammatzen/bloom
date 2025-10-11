@@ -1,4 +1,4 @@
-import type { User, Session, BloomPlugin } from '@/types'
+import type { User, Session, BloomPlugin } from '@bloom/core-v2'
 
 /**
  * Client plugin interface

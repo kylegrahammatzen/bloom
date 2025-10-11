@@ -1,5 +1,5 @@
-import type { ClientPlugin, BloomResponse } from '@/client/types'
-import { bloomFetch } from '@/client/fetch'
+import type { ClientPlugin, BloomResponse } from '../types'
+import { bloomFetch } from '../fetch'
 
 /**
  * Autumn plugin methods for Stripe billing integration

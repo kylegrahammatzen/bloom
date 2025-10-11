@@ -1,5 +1,5 @@
-import { bloomFetch, setConfig } from '@/client/fetch'
-import type { BloomClient, ClientConfig, AuthMethods, BloomResponse, User, Session } from '@/client/types'
+import { bloomFetch, setConfig } from './fetch'
+import type { BloomClient, ClientConfig, AuthMethods, BloomResponse, User, Session } from './types'
 
 /**
  * Create a Bloom client instance
