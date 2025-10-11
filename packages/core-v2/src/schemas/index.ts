@@ -32,3 +32,4 @@ export {
   type RateLimitRule,
   type RateLimitRecord,
 } from './rateLimit'
+export { type Logger, type LoggerConfig, type LogLevel } from './logger'

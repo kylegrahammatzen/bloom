@@ -1,6 +1,6 @@
 import type { BloomAuth, ApiMethodParams, User, Session, BloomPlugin } from '@/types'
 import type { DatabaseAdapter } from '@/storage/adapter'
-import type { Storage, RateLimitConfig } from '@/schemas'
+import type { Storage, RateLimitConfig, Logger, LoggerConfig } from '@/schemas'
 import type { Context } from '@/handler/context'
 import { getCookie } from '@/utils/headers'
 import { parseSessionCookie } from '@/utils/cookies'
@@ -8,6 +8,7 @@ import { ApiMethodParamsSchema, RateLimitConfigSchema } from '@/schemas'
 import { Router } from '@/handler/router'
 import { createHandler } from '@/handler/handler'
 import { RateLimiter } from '@/rateLimit/limiter'
+import { createLogger } from '@/utils/logger'
 import {
   register,
   login,
@@ -122,6 +123,16 @@ export type BloomAuthConfig = {
    * Plugins can use this to query custom tables
    */
   db?: any
+
+  /**
+   * Logger for debugging and monitoring
+   * Can provide either a Logger instance or LoggerConfig
+   * @default createLogger({ level: 'error' })
+   * @example
+   * logger: { level: 'debug', prefix: '[MyApp]' }
+   * logger: createLogger({ level: 'info', colors: true })
+   */
+  logger?: Logger | LoggerConfig
 }
 
 /**
@@ -143,6 +154,16 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
   /** Session cookie name used for storing session data */
   const cookieName = config.cookieName ?? 'bloom.sid'
 
+  /** Create logger if LoggerConfig was provided, or use default */
+  let logger: Logger
+  if (config.logger && !('info' in config.logger)) {
+    logger = createLogger(config.logger as LoggerConfig)
+  } else if (config.logger && 'info' in config.logger) {
+    logger = config.logger
+  } else {
+    logger = createLogger()
+  }
+
   /** Router for registering and matching HTTP routes */
   const router = new Router()
 
@@ -155,9 +176,11 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     for (const [path, handlers] of Object.entries(config.hooks)) {
       if (handlers.before) {
         hooks.set(`${path}:before`, handlers.before)
+        logger.debug(`Registered hook: ${path}:before`)
       }
       if (handlers.after) {
         hooks.set(`${path}:after`, handlers.after)
+        logger.debug(`Registered hook: ${path}:after`)
       }
     }
   }
@@ -165,6 +188,8 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
   // Register plugins
   if (config.plugins) {
     for (const plugin of config.plugins) {
+      logger.debug(`Registering plugin: ${plugin.id}`)
+
       // Register plugin routes
       if (plugin.routes) {
         for (const route of plugin.routes) {
@@ -173,6 +198,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
             method: route.method,
             handler: route.handler,
           })
+          logger.debug(`Registered plugin route: ${route.method} ${route.path}`)
         }
       }
 
@@ -181,9 +207,11 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
         for (const [path, handlers] of Object.entries(plugin.hooks)) {
           if (handlers.before) {
             hooks.set(`${path}:before`, handlers.before)
+            logger.debug(`Registered plugin hook: ${path}:before`)
           }
           if (handlers.after) {
             hooks.set(`${path}:after`, handlers.after)
+            logger.debug(`Registered plugin hook: ${path}:after`)
           }
         }
       }
@@ -200,6 +228,12 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
       storage: config.storage,
       adapter: config.adapter,
     })
+
+    if (config.storage) {
+      logger.debug('Using storage for rate limiting')
+    } else {
+      logger.debug('Using database adapter for rate limiting')
+    }
   }
 
   /**

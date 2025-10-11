@@ -91,6 +91,47 @@ const auth = bloomAuth({
 })
 ```
 
+## Logger
+
+Built-in logger with configurable levels and formatting:
+
+```typescript
+import { bloomAuth, createLogger } from '@bloom/core-v2'
+
+// Option 1: Use logger config
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  logger: {
+    level: 'debug',
+    prefix: '[MyApp]',
+    colors: true,
+  }
+})
+
+// Option 2: Create custom logger
+const logger = createLogger({
+  level: 'info',
+  prefix: '[Auth]',
+})
+
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  logger,
+})
+```
+
+**Log Levels:**
+- `debug`: Detailed debugging info (hook/plugin registration, storage selection)
+- `info`: General informational messages
+- `warn`: Warning messages
+- `error`: Error messages (default level)
+
+**Configuration:**
+- `level`: Minimum log level to display
+- `prefix`: Prefix for log messages (default: `[Bloom]`)
+- `colors`: Enable ANSI colors (auto-detected from terminal)
+- `disabled`: Disable all logging
+
 ## API
 
 | Method | Description |
@@ -145,6 +186,11 @@ import type {
 
   // Storage types
   Storage,
+
+  // Logger types
+  Logger,
+  LoggerConfig,
+  LogLevel,
 
   // Utility types
   RequestHeaders,

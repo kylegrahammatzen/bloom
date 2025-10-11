@@ -56,3 +56,6 @@ export type { Storage } from '@/schemas/storage'
 export { memoryStorage } from '@/storage/memory'
 export { redisStorage } from '@/storage/redis'
 export type { RedisClient, RedisStorageOptions } from '@/storage/redis'
+
+export type { Logger, LoggerConfig, LogLevel } from '@/schemas/logger'
+export { createLogger } from '@/utils/logger'
