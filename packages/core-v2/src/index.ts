@@ -56,3 +56,7 @@ export type { Storage } from '@/schemas/storage'
 export { memoryStorage } from '@/storage/memory'
 export { redisStorage } from '@/storage/redis'
 export type { RedisClient, RedisStorageOptions } from '@/storage/redis'
+
+// Framework adapters
+export { nextAdapter } from '@/frameworks/next'
+export { expressAdapter, expressHandler } from '@/frameworks/express'
