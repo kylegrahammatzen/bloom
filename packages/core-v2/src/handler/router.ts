@@ -55,43 +55,37 @@ export class Router {
    * Returns params object if match, null if no match
    *
    * Examples:
-   * - /auth/session matches /auth/session → {}
-   * - /auth/sessions/:id matches /auth/sessions/123 → { id: '123' }
-   * - /auth/* matches /auth/anything → {}
+   * - /auth/session matches /auth/session = {}
+   * - /auth/sessions/:id matches /auth/sessions/123 = { id: '123' }
+   * - /auth/* matches /auth/anything = {}
    */
   private matchPath(pattern: string, path: string): Record<string, string> | null {
     const patternParts = pattern.split('/').filter(Boolean)
     const pathParts = path.split('/').filter(Boolean)
-
-    // Exact length match unless pattern ends with wildcard
-    const hasWildcard = patternParts[patternParts.length - 1] === '*'
-    if (!hasWildcard && patternParts.length !== pathParts.length) {
-      return null
-    }
-
     const params: Record<string, string> = {}
 
     for (let i = 0; i < patternParts.length; i++) {
       const patternPart = patternParts[i]
       const pathPart = pathParts[i]
 
-      // Wildcard matches anything
-      if (patternPart === '*') {
-        return params
-      }
+      // Wildcard matches rest
+      if (patternPart === '*') return params
 
-      // Dynamic param (:id, :name, etc)
+      // Path too short
+      if (!pathPart) return null
+
+      // Dynamic param
       if (patternPart.startsWith(':')) {
-        const paramName = patternPart.slice(1)
-        params[paramName] = pathPart
+        params[patternPart.slice(1)] = pathPart
         continue
       }
 
       // Exact match required
-      if (patternPart !== pathPart) {
-        return null
-      }
+      if (patternPart !== pathPart) return null
     }
+
+    // Pattern matched but path has extra parts
+    if (pathParts.length > patternParts.length) return null
 
     return params
   }

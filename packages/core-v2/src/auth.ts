@@ -8,7 +8,20 @@ import { EventEmitter } from './events/emitter'
 import { Router } from './handler/router'
 import { createHandler } from './handler/handler'
 import { RateLimiter } from './rateLimit/limiter'
-import { handleRegister, handleLogin, handleLogout, type EmailPasswordConfig, type SessionConfig } from './api'
+import {
+  register,
+  login,
+  logout,
+  getSessions,
+  deleteSession,
+  deleteAllSessions,
+  sendVerificationEmail,
+  verifyEmail,
+  requestPasswordReset,
+  resetPassword,
+  type EmailPasswordConfig,
+  type SessionConfig,
+} from './api'
 
 /**
  * Configuration options for BloomAuth
@@ -76,18 +89,25 @@ export type BloomAuthConfig = {
   emailPassword?: EmailPasswordConfig
 
   /**
-   * Event listeners to register on initialization
+   * Hooks to run before/after specific endpoints
    * @example
-   * events: {
-   *   'signup:complete': async (data) => {
-   *     await sendWelcomeEmail(data.user.email)
+   * hooks: {
+   *   '/register': {
+   *     after: async (ctx) => {
+   *       await sendWelcomeEmail(ctx.user.email)
+   *     }
    *   },
-   *   'user:*': async (data) => {
-   *     console.log('User event:', data)
+   *   '/send-verification-email': {
+   *     after: async (ctx) => {
+   *       await sendVerificationEmail(ctx.body.email, ctx.body.token)
+   *     }
    *   }
    * }
    */
-  events?: Record<string, EventHandler>
+  hooks?: Record<string, {
+    before?: (ctx: import('./handler/context').Context) => Promise<void | Response>
+    after?: (ctx: import('./handler/context').Context) => Promise<void | Response>
+  }>
 
   /**
    * Raw database instance for plugin access
@@ -125,10 +145,20 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
   /** Router for registering and matching HTTP routes */
   const router = new Router()
 
-  // Register events from config
-  if (config.events) {
-    for (const [event, handler] of Object.entries(config.events)) {
-      emitter.on(event, handler)
+  /** Set of paths that have hooks registered (for O(1) lookup) */
+  const hookedPaths = new Set<string>()
+
+  // Register hooks from config
+  if (config.hooks) {
+    for (const [path, handlers] of Object.entries(config.hooks)) {
+      if (handlers.before) {
+        emitter.on(`${path}:before`, handlers.before)
+        hookedPaths.add(`${path}:before`)
+      }
+      if (handlers.after) {
+        emitter.on(`${path}:after`, handlers.after)
+        hookedPaths.add(`${path}:after`)
+      }
     }
   }
 
@@ -151,6 +181,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
   const handler = createHandler({
     router,
     emitter,
+    hookedPaths,
     rateLimiter,
     basePath: '/auth',
   })
@@ -161,36 +192,135 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     method: 'GET',
     handler: async (ctx) => {
       const result = await getSessionFromContext(ctx)
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return Response.json(result, { status: 200 })
     },
   })
 
-  router.register({
-    path: '/register',
-    method: 'POST',
-    handler: async (ctx) => {
-      return await handleRegister(ctx, adapter, emitter, config.emailPassword, config.session, cookieName)
-    },
-  })
+  // Only register email/password routes if config provided
+  if (config.emailPassword) {
+    router.register({
+      path: '/register',
+      method: 'POST',
+      handler: async (ctx) => {
+        return await register({
+          ctx,
+          adapter,
+          emailPasswordConfig: config.emailPassword ?? {},
+          sessionConfig: config.session ?? {},
+          cookieName,
+        })
+      },
+    })
 
-  router.register({
-    path: '/login',
-    method: 'POST',
-    handler: async (ctx) => {
-      return await handleLogin(ctx, adapter, emitter, config.emailPassword, config.session, cookieName)
-    },
-  })
+    router.register({
+      path: '/login',
+      method: 'POST',
+      handler: async (ctx) => {
+        return await login({
+          ctx,
+          adapter,
+          sessionConfig: config.session ?? {},
+          cookieName,
+        })
+      },
+    })
+  }
 
   router.register({
     path: '/logout',
     method: 'POST',
     handler: async (ctx) => {
-      return await handleLogout(ctx, adapter, emitter, cookieName)
+      return await logout({
+        ctx,
+        adapter,
+        cookieName,
+      })
     },
   })
+
+  router.register({
+    path: '/sessions',
+    method: 'GET',
+    handler: async (ctx) => {
+      return await getSessions({
+        ctx,
+        adapter,
+        cookieName,
+      })
+    },
+  })
+
+  router.register({
+    path: '/sessions/:id',
+    method: 'DELETE',
+    handler: async (ctx) => {
+      return await deleteSession({
+        ctx,
+        adapter,
+        cookieName,
+      })
+    },
+  })
+
+  router.register({
+    path: '/sessions',
+    method: 'DELETE',
+    handler: async (ctx) => {
+      return await deleteAllSessions({
+        ctx,
+        adapter,
+        cookieName,
+      })
+    },
+  })
+
+  // Email verification routes (only if email/password enabled)
+  if (config.emailPassword) {
+    router.register({
+      path: '/send-verification-email',
+      method: 'POST',
+      handler: async (ctx) => {
+        return await sendVerificationEmail({
+          ctx,
+          adapter,
+        })
+      },
+    })
+
+    router.register({
+      path: '/verify-email',
+      method: 'POST',
+      handler: async (ctx) => {
+        return await verifyEmail({
+          ctx,
+          adapter,
+        })
+      },
+    })
+
+    router.register({
+      path: '/request-password-reset',
+      method: 'POST',
+      handler: async (ctx) => {
+        return await requestPasswordReset({
+          ctx,
+          adapter,
+        })
+      },
+    })
+
+    router.register({
+      path: '/reset-password',
+      method: 'POST',
+      handler: async (ctx) => {
+        return await resetPassword({
+          ctx,
+          adapter,
+          emailPasswordConfig: config.emailPassword ?? {},
+        })
+      },
+    })
+  }
 
   // Helper to get session from context (extracted from getSession logic)
   async function getSessionFromContext(ctx: any) {
