@@ -4,6 +4,28 @@
   "description": "Bloom Core v2 - Framework-agnostic authentication with Zod v4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./adapters/drizzle": {
+      "types": "./dist/adapters/drizzle/index.d.ts",
+      "default": "./dist/adapters/drizzle/index.js"
+    },
+    "./adapters/kysely": {
+      "types": "./dist/adapters/kysely/index.d.ts",
+      "default": "./dist/adapters/kysely/index.js"
+    },
+    "./adapters/mongodb": {
+      "types": "./dist/adapters/mongodb/index.d.ts",
+      "default": "./dist/adapters/mongodb/index.js"
+    },
+    "./adapters/prisma": {
+      "types": "./dist/adapters/prisma/index.d.ts",
+      "default": "./dist/adapters/prisma/index.js"
+    }
+  },
   "license": "AGPL-3.0",
   "author": "Kyle Graham Matzen <kylegrahammatzen@gmail.com>",
   "repository": {

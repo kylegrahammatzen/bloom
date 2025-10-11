@@ -14,14 +14,6 @@ import type { Request, Response, NextFunction } from 'express'
  * const app = express()
  * app.use(express.json())
  * app.use('/auth/*', toExpressHandler({ auth }))
- *
- * @example
- * // Direct API usage in Express routes
- * app.get('/dashboard', async (req, res) => {
- *   const session = await auth.api.getSession({ headers: req.headers })
- *   if (!session) return res.status(401).json({ error: 'Unauthorized' })
- *   res.json({ user: session.user })
- * })
  */
 export function toExpressHandler(props: { auth: BloomAuth }) {
   return async (req: Request, res: Response, next: NextFunction) => {
