@@ -17,6 +17,18 @@ export type DatabaseAdapter = {
     findByEmail(email: string): Promise<User | null>
 
     /**
+     * Find user by email verification token
+     * @returns User or null if not found
+     */
+    findByEmailVerificationToken(token: string): Promise<User | null>
+
+    /**
+     * Find user by password reset token
+     * @returns User or null if not found
+     */
+    findByPasswordResetToken(token: string): Promise<User | null>
+
+    /**
      * Create a new user
      * @returns Created user
      */
