@@ -94,7 +94,7 @@ const auth = bloomAuth({
 
 ## Headers
 
-Work with [headers and cookies](./src/utils/headers/README.md) across frameworks without manual parsing.
+[Headers and cookies](./src/utils/headers/README.md) abstraction for 8 frameworks.
 
 ```typescript
 import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
@@ -107,22 +107,19 @@ const allHeaders = extractHeaders(await headers())
 
 ## API
 
-### `getSession`
-
-Get the current user session from framework headers:
-
-```typescript
-const session = await auth.api.getSession({
-  headers: await headers()
-})
-
-if (session) {
-  console.log(session.user.email)
-  console.log(session.session.id)
-}
-```
-
-Returns `{ user: User; session: Session } | null`
+| Method | Description | Docs |
+|--------|-------------|------|
+| `getSession` | Get current user session | [→](./src/api/README.md#getsession) |
+| `register` | Register new user with email/password | [→](./src/api/README.md#register) |
+| `login` | Login user with email/password | [→](./src/api/README.md#login) |
+| `logout` | Logout current session | [→](./src/api/README.md#logout) |
+| `getSessions` | Get all user sessions | [→](./src/api/README.md#getsessions) |
+| `deleteSession` | Delete specific session | [→](./src/api/README.md#deletesession) |
+| `deleteAllSessions` | Delete all sessions except current | [→](./src/api/README.md#deleteallsessions) |
+| `sendVerificationEmail` | Send email verification token | [→](./src/api/README.md#sendverificationemail) |
+| `verifyEmail` | Verify email with token | [→](./src/api/README.md#verifyemail) |
+| `requestPasswordReset` | Request password reset token | [→](./src/api/README.md#requestpasswordreset) |
+| `resetPassword` | Reset password with token | [→](./src/api/README.md#resetpassword) |
 
 ## License
 
