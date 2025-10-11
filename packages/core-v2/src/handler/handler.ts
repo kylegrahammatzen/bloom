@@ -7,6 +7,7 @@ import { buildContext } from '@/handler/context'
 export type HandlerConfig = {
   router: Router
   emitter: EventEmitter
+  hookedPaths: Set<string>
   rateLimiter?: RateLimiter
   basePath?: string
 }
@@ -16,54 +17,38 @@ export type HandlerConfig = {
  * Takes Web Standard Request, returns Web Standard Response
  */
 export function createHandler(config: HandlerConfig) {
-  const { router, emitter, rateLimiter, basePath = '/auth' } = config
+  const { router, emitter, hookedPaths, rateLimiter, basePath = '/auth' } = config
 
   return async (request: Request): Promise<Response> => {
     const url = new URL(request.url)
     const fullPath = url.pathname
     const method = request.method
+    const path = fullPath.startsWith(basePath) ? fullPath.slice(basePath.length) || '/' : fullPath
 
-    // Emit request start event
-    await emitter.emit('request:start', { path: fullPath, method })
-
-    // Strip base path if present
-    const path = fullPath.startsWith(basePath)
-      ? fullPath.slice(basePath.length) || '/'
-      : fullPath
-
-    // Build base context
     const baseContext = await buildContext(request)
 
-    // Build context for rate limiting (before route matching)
+    // Rate limiting happens before route matching and authentication
     const rateLimitContext: Context = {
       ...baseContext,
       path,
       params: {},
       user: null,
       session: null,
+      hooks: {},
     }
 
-    // Check rate limit
     if (rateLimiter) {
       const rateLimitResult = await rateLimiter.check(rateLimitContext)
 
       if (!rateLimitResult.allowed) {
-        await emitter.emit('ratelimit:exceeded', {
-          path: fullPath,
-          method,
-          limit: rateLimitResult.limit,
-          retryAfter: rateLimitResult.retryAfter,
-        })
-
-        return new Response(
-          JSON.stringify({
+        return Response.json(
+          {
             error: 'Too Many Requests',
             message: `Rate limit exceeded. Retry after ${rateLimitResult.retryAfter} seconds.`,
-          }),
+          },
           {
             status: 429,
             headers: {
-              'Content-Type': 'application/json',
               'X-RateLimit-Limit': String(rateLimitResult.limit),
               'X-RateLimit-Remaining': String(rateLimitResult.remaining),
               'X-Retry-After': String(rateLimitResult.retryAfter),
@@ -73,63 +58,37 @@ export function createHandler(config: HandlerConfig) {
       }
     }
 
-    // Match route
     const match = router.match(path, method)
-
     if (!match) {
-      await emitter.emit('request:notfound', { path: fullPath, method })
-
-      return new Response(
-        JSON.stringify({ error: 'Not Found' }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      )
+      return Response.json({ error: 'Not Found' }, { status: 404 })
     }
 
-    // Build full context with params
     const ctx: Context = {
       ...baseContext,
       path,
       params: match.params,
       user: null,
       session: null,
+      hooks: {
+        before: hookedPaths.has(`${path}:before`)
+          ? async () => await emitter.emit(`${path}:before`, ctx)
+          : undefined,
+        after: hookedPaths.has(`${path}:after`)
+          ? async () => await emitter.emit(`${path}:after`, ctx)
+          : undefined,
+      },
     }
 
     try {
-      // Emit before endpoint event
-      await emitter.emit('endpoint:before', { path, method, params: match.params })
-
-      // Execute route handler
-      const response = await match.handler(ctx)
-
-      // Emit after endpoint event
-      await emitter.emit('endpoint:after', { path, method, status: response.status })
-
-      // Emit request end event
-      await emitter.emit('request:end', { path: fullPath, method, status: response.status })
-
-      return response
+      return await match.handler(ctx)
     } catch (error) {
-      // Emit error event
-      await emitter.emit('request:error', {
-        path: fullPath,
-        method,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      })
-
       console.error(`Handler error for ${method} ${fullPath}:`, error)
-
-      return new Response(
-        JSON.stringify({
+      return Response.json(
+        {
           error: 'Internal Server Error',
           message: error instanceof Error ? error.message : 'Unknown error',
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        }
+        },
+        { status: 500 }
       )
     }
   }
