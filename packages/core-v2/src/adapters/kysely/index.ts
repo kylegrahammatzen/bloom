@@ -92,6 +92,50 @@ export function kyselyAdapter(
         }
       },
 
+      async findByEmailVerificationToken(token: string): Promise<User | null> {
+        const result = await db
+          .selectFrom(tables.users)
+          .selectAll()
+          .where('email_verification_token', '=', token)
+          .where('email_verification_expires', '>', new Date())
+          .executeTakeFirst()
+
+        if (!result) return null
+
+        return {
+          id: result.id,
+          email: result.email,
+          email_verified: result.email_verified,
+          name: result.name ?? undefined,
+          image: result.image ?? undefined,
+          created_at: result.created_at,
+          updated_at: result.updated_at,
+          last_login: result.last_login ?? undefined,
+        }
+      },
+
+      async findByPasswordResetToken(token: string): Promise<User | null> {
+        const result = await db
+          .selectFrom(tables.users)
+          .selectAll()
+          .where('password_reset_token', '=', token)
+          .where('password_reset_expires', '>', new Date())
+          .executeTakeFirst()
+
+        if (!result) return null
+
+        return {
+          id: result.id,
+          email: result.email,
+          email_verified: result.email_verified,
+          name: result.name ?? undefined,
+          image: result.image ?? undefined,
+          created_at: result.created_at,
+          updated_at: result.updated_at,
+          last_login: result.last_login ?? undefined,
+        }
+      },
+
       async create(data: CreateUserData): Promise<User> {
         const id = generateSessionId()
         const now = new Date()

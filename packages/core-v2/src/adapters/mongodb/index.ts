@@ -91,6 +91,46 @@ export function mongodbAdapter(
         }
       },
 
+      async findByEmailVerificationToken(token: string): Promise<User | null> {
+        const user = await db.collection(collections.users).findOne({
+          email_verification_token: token,
+          email_verification_expires: { $gt: new Date() },
+        })
+
+        if (!user) return null
+
+        return {
+          id: user._id,
+          email: user.email,
+          email_verified: user.email_verified,
+          name: user.name ?? undefined,
+          image: user.image ?? undefined,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          last_login: user.last_login ?? undefined,
+        }
+      },
+
+      async findByPasswordResetToken(token: string): Promise<User | null> {
+        const user = await db.collection(collections.users).findOne({
+          password_reset_token: token,
+          password_reset_expires: { $gt: new Date() },
+        })
+
+        if (!user) return null
+
+        return {
+          id: user._id,
+          email: user.email,
+          email_verified: user.email_verified,
+          name: user.name ?? undefined,
+          image: user.image ?? undefined,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          last_login: user.last_login ?? undefined,
+        }
+      },
+
       async create(data: CreateUserData): Promise<User> {
         const id = generateSessionId()
         const now = new Date()

@@ -6,6 +6,7 @@ import { generateSessionId } from '@/utils/crypto'
 export type PrismaClient = {
   user: {
     findUnique: (args: any) => Promise<any>
+    findFirst: (args: any) => Promise<any>
     create: (args: any) => Promise<any>
     update: (args: any) => Promise<any>
     delete: (args: any) => Promise<any>
@@ -62,6 +63,54 @@ export function prismaAdapter(prisma: PrismaClient): DatabaseAdapter {
         const normalizedEmail = email.toLowerCase()
         const user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
+        })
+
+        if (!user) return null
+
+        return {
+          id: user.id,
+          email: user.email,
+          email_verified: user.email_verified,
+          name: user.name ?? undefined,
+          image: user.image ?? undefined,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          last_login: user.last_login ?? undefined,
+        }
+      },
+
+      async findByEmailVerificationToken(token: string): Promise<User | null> {
+        const user = await prisma.user.findFirst({
+          where: {
+            email_verification_token: token,
+            email_verification_expires: {
+              gt: new Date(),
+            },
+          },
+        })
+
+        if (!user) return null
+
+        return {
+          id: user.id,
+          email: user.email,
+          email_verified: user.email_verified,
+          name: user.name ?? undefined,
+          image: user.image ?? undefined,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          last_login: user.last_login ?? undefined,
+        }
+      },
+
+      async findByPasswordResetToken(token: string): Promise<User | null> {
+        const user = await prisma.user.findFirst({
+          where: {
+            password_reset_token: token,
+            password_reset_expires: {
+              gt: new Date(),
+            },
+          },
         })
 
         if (!user) return null
