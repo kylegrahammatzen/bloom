@@ -107,19 +107,19 @@ const allHeaders = extractHeaders(await headers())
 
 ## API
 
-| Method | Description | Docs |
-|--------|-------------|------|
-| `getSession` | Get current user session | [→](./src/api/README.md#getsession) |
-| `register` | Register new user with email/password | [→](./src/api/README.md#register) |
-| `login` | Login user with email/password | [→](./src/api/README.md#login) |
-| `logout` | Logout current session | [→](./src/api/README.md#logout) |
-| `getSessions` | Get all user sessions | [→](./src/api/README.md#getsessions) |
-| `deleteSession` | Delete specific session | [→](./src/api/README.md#deletesession) |
-| `deleteAllSessions` | Delete all sessions except current | [→](./src/api/README.md#deleteallsessions) |
-| `sendVerificationEmail` | Send email verification token | [→](./src/api/README.md#sendverificationemail) |
-| `verifyEmail` | Verify email with token | [→](./src/api/README.md#verifyemail) |
-| `requestPasswordReset` | Request password reset token | [→](./src/api/README.md#requestpasswordreset) |
-| `resetPassword` | Reset password with token | [→](./src/api/README.md#resetpassword) |
+| Method | Description |
+|--------|-------------|
+| [`getSession`](./src/api/README.md#getsession) | Get current user session |
+| [`register`](./src/api/README.md#register) | Register new user with email/password |
+| [`login`](./src/api/README.md#login) | Login user with email/password |
+| [`logout`](./src/api/README.md#logout) | Logout current session |
+| [`getSessions`](./src/api/README.md#getsessions) | Get all user sessions |
+| [`deleteSession`](./src/api/README.md#deletesession) | Delete specific session |
+| [`deleteAllSessions`](./src/api/README.md#deleteallsessions) | Delete all sessions except current |
+| [`sendVerificationEmail`](./src/api/README.md#sendverificationemail) | Send email verification token |
+| [`verifyEmail`](./src/api/README.md#verifyemail) | Verify email with token |
+| [`requestPasswordReset`](./src/api/README.md#requestpasswordreset) | Request password reset token |
+| [`resetPassword`](./src/api/README.md#resetpassword) | Reset password with token |
 
 ## License
 
