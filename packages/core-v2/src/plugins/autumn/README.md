@@ -160,7 +160,7 @@ const auth = bloomAuth({
         if (!session) throw new Error('Not authenticated')
 
         const user = await db.user.findById(session.user.id)
-        return user.organizationId // Track by org instead of user
+        return user.organizationId
       },
     }),
   ],
