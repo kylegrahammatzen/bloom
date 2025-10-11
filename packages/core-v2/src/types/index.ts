@@ -34,7 +34,7 @@ export type BloomAuth = {
   api: BloomAuthApi
 
   /**
-   * Universal HTTP handler (Web Standard Request into Response)
+   * HTTP handler (Web Standard Request into Response)
    * This is the core handler that processes all auth requests
    */
   handler: (request: Request) => Promise<Response>
