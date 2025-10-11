@@ -42,49 +42,31 @@ export async function bloomFetch<T>(
       },
     })
 
-    const contentType = response.headers.get('content-type')
-    const isJson = contentType?.includes('application/json')
+    // Parse JSON if available
+    const isJson = response.headers.get('content-type')?.includes('application/json')
+    const data = isJson ? (await response.json() as T) : null
 
-    // Handle error responses
+    // Handle errors
     if (!response.ok) {
-      const error: BloomError = isJson
-        ? await response.json().then((json) => ({
-            code: json.error || 'UNKNOWN_ERROR',
-            message: json.message || 'An unknown error occurred',
-            status: response.status,
-          }))
-        : {
-            code: 'HTTP_ERROR',
-            message: `HTTP ${response.status}: ${response.statusText}`,
-            status: response.status,
-          }
-
-      if (config.onError) {
-        config.onError(error)
+      const error: BloomError = {
+        code: (data as any)?.error || 'HTTP_ERROR',
+        message: (data as any)?.message || response.statusText,
+        status: response.status,
       }
-
+      config.onError?.(error)
       return { data: null, error }
     }
 
-    // Handle success responses
-    const data = isJson ? await response.json() : null
-
-    if (data && config.onSuccess) {
-      config.onSuccess(data)
-    }
-
+    // Success
+    config.onSuccess?.(data)
     return { data, error: null }
   } catch (err) {
     const error: BloomError = {
       code: 'NETWORK_ERROR',
-      message: err instanceof Error ? err.message : 'Network error occurred',
+      message: err instanceof Error ? err.message : 'Network error',
       status: 0,
     }
-
-    if (config.onError) {
-      config.onError(error)
-    }
-
+    config.onError?.(error)
     return { data: null, error }
   }
 }

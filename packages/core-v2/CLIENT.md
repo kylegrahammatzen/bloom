@@ -1,11 +1,11 @@
-# @bloom/client-v2
+# Bloom Client
 
 Framework-agnostic client library for Bloom Auth V2.
 
 ## Installation
 
 ```bash
-pnpm add @bloom/client-v2 @bloom/core-v2
+pnpm add @bloom/core-v2
 ```
 
 ## Usage
@@ -13,29 +13,25 @@ pnpm add @bloom/client-v2 @bloom/core-v2
 ### Basic Setup
 
 ```typescript
-import { createClient } from '@bloom/client-v2'
+import { bloomClient } from '@bloom/core-v2/client'
 
-const client = createClient({
-  config: {
-    baseUrl: '/auth', // default
-    credentials: 'include', // for cookies
-  },
+const client = bloomClient({
+  baseUrl: '/auth', // default
+  credentials: 'include', // for cookies
 })
 ```
 
 ### With Plugins
 
 ```typescript
-import { createClient, autumnClient } from '@bloom/client-v2'
+import { bloomClient, autumnClient } from '@bloom/core-v2/client'
 
-const client = createClient({
-  config: {
-    baseUrl: '/auth',
-    credentials: 'include',
-    plugins: [
-      autumnClient(), // Adds billing methods
-    ],
-  },
+const client = bloomClient({
+  baseUrl: '/auth',
+  credentials: 'include',
+  plugins: [
+    autumnClient(), // Adds billing methods
+  ],
 })
 
 // Now you can use autumn methods
@@ -113,12 +109,10 @@ await client.auth.resetPassword({
 The Autumn plugin adds Stripe billing integration. Add it when creating your client:
 
 ```typescript
-import { createClient, autumnClient } from '@bloom/client-v2'
+import { bloomClient, autumnClient } from '@bloom/core-v2/client'
 
-const client = createClient({
-  config: {
-    plugins: [autumnClient()],
-  },
+const client = bloomClient({
+  plugins: [autumnClient()],
 })
 
 // Check feature access
@@ -160,7 +154,7 @@ const { data } = await client.autumn.getBillingPortal({
 You can create your own plugins to extend the client:
 
 ```typescript
-import type { ClientPlugin } from '@bloom/client-v2'
+import type { ClientPlugin } from '@bloom/core-v2/client'
 
 const myPlugin = (): ClientPlugin => {
   return {
@@ -184,10 +178,8 @@ const myPlugin = (): ClientPlugin => {
 }
 
 // Use it
-const client = createClient({
-  config: {
-    plugins: [myPlugin()],
-  },
+const client = bloomClient({
+  plugins: [myPlugin()],
 })
 
 await client.myFeature.myMethod({ foo: 'bar' })

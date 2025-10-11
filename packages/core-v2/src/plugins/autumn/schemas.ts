@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { ApiMethodParams } from '@/schemas'
 
 /**
- * Autumn plugin configuration
+ * Autumn plugin configuration (with function excluded from schema)
  */
 export const AutumnConfigSchema = z.object({
   apiKey: z.string().optional(),
@@ -12,14 +12,15 @@ export const AutumnConfigSchema = z.object({
    * @default 300 (5 minutes)
    */
   customerCacheTTL: z.number().int().positive().optional(),
+})
+
+export type AutumnConfig = z.infer<typeof AutumnConfigSchema> & {
   /**
    * Custom function to get customer ID from request
    * By default uses userId from session, but can be customized for org-based tracking
    */
-  getCustomerId: z.function().args(z.custom<ApiMethodParams>()).returns(z.promise(z.string())).optional(),
-})
-
-export type AutumnConfig = z.infer<typeof AutumnConfigSchema>
+  getCustomerId?: (params: ApiMethodParams) => Promise<string>
+}
 
 /**
  * Autumn API response schemas

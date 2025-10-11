@@ -1,4 +1,4 @@
-import type { User, Session, ApiMethodParams } from '@bloom/core-v2'
+import type { User, Session, BloomPlugin } from '@/types'
 
 /**
  * Client plugin interface
@@ -12,7 +12,7 @@ export type ClientPlugin = {
   /**
    * Type inference from server plugin (for TypeScript)
    */
-  $InferServerPlugin?: any
+  $InferServerPlugin?: BloomPlugin
 
   /**
    * Additional client-side methods provided by the plugin
@@ -39,7 +39,7 @@ export type ClientConfig = {
    * Fetch credentials mode
    * @default 'include'
    */
-  credentials?: RequestCredentials
+  credentials?: 'include' | 'omit' | 'same-origin'
 
   /**
    * Custom headers to include in all requests
@@ -80,26 +80,20 @@ export type BloomResponse<T> = {
 }
 
 /**
- * Helper types for auth responses
- */
-type AuthResponse = { user: User; session: Session }
-type MessageResponse = { message: string }
-
-/**
  * Auth methods interface
  */
 export type AuthMethods = {
-  register(body: { email: string; password: string; name?: string }): Promise<BloomResponse<AuthResponse>>
-  login(body: { email: string; password: string }): Promise<BloomResponse<AuthResponse>>
-  logout(): Promise<BloomResponse<MessageResponse>>
-  getSession(): Promise<BloomResponse<AuthResponse>>
+  register(body: { email: string; password: string; name?: string }): Promise<BloomResponse<{ user: User; session: Session }>>
+  login(body: { email: string; password: string }): Promise<BloomResponse<{ user: User; session: Session }>>
+  logout(): Promise<BloomResponse<{ message: string }>>
+  getSession(): Promise<BloomResponse<{ user: User; session: Session }>>
   getSessions(): Promise<BloomResponse<Session[]>>
-  deleteSession(id: string): Promise<BloomResponse<MessageResponse>>
-  deleteAllSessions(): Promise<BloomResponse<MessageResponse>>
-  sendVerificationEmail(): Promise<BloomResponse<MessageResponse>>
-  verifyEmail(body: { token: string }): Promise<BloomResponse<MessageResponse>>
-  requestPasswordReset(body: { email: string }): Promise<BloomResponse<MessageResponse>>
-  resetPassword(body: { token: string; password: string }): Promise<BloomResponse<MessageResponse>>
+  deleteSession(id: string): Promise<BloomResponse<{ message: string }>>
+  deleteAllSessions(): Promise<BloomResponse<{ message: string }>>
+  sendVerificationEmail(): Promise<BloomResponse<{ message: string }>>
+  verifyEmail(body: { token: string }): Promise<BloomResponse<{ message: string }>>
+  requestPasswordReset(body: { email: string }): Promise<BloomResponse<{ message: string }>>
+  resetPassword(body: { token: string; password: string }): Promise<BloomResponse<{ message: string }>>
 }
 
 /**
