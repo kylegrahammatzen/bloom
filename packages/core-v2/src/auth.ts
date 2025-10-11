@@ -1,4 +1,4 @@
-import type { BloomAuth, ApiMethodParams, User, Session } from '@/types'
+import type { BloomAuth, ApiMethodParams, User, Session, BloomPlugin } from '@/types'
 import type { DatabaseAdapter } from '@/storage/adapter'
 import type { Storage, RateLimitConfig } from '@/schemas'
 import type { Context } from '@/handler/context'
@@ -111,6 +111,13 @@ export type BloomAuthConfig = {
   }>
 
   /**
+   * Plugins to extend Bloom with custom routes and API methods
+   * @example
+   * plugins: [autumn({ apiKey: 'sk_...' })]
+   */
+  plugins?: BloomPlugin[]
+
+  /**
    * Raw database instance for plugin access
    * Plugins can use this to query custom tables
    */
@@ -155,6 +162,34 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     }
   }
 
+  // Register plugins
+  if (config.plugins) {
+    for (const plugin of config.plugins) {
+      // Register plugin routes
+      if (plugin.routes) {
+        for (const route of plugin.routes) {
+          router.register({
+            path: route.path,
+            method: route.method,
+            handler: route.handler,
+          })
+        }
+      }
+
+      // Register plugin hooks
+      if (plugin.hooks) {
+        for (const [path, handlers] of Object.entries(plugin.hooks)) {
+          if (handlers.before) {
+            hooks.set(`${path}:before`, handlers.before)
+          }
+          if (handlers.after) {
+            hooks.set(`${path}:after`, handlers.after)
+          }
+        }
+      }
+    }
+  }
+
   // Create rate limiter if config provided
   let rateLimiter: RateLimiter | undefined
   if (config.rateLimit) {
@@ -183,9 +218,7 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     path: '/session',
     method: 'GET',
     handler: async (ctx) => {
-      const cookieValue = ctx.headers.get('cookie')
-        ? getCookie({ cookie: ctx.headers.get('cookie') }, cookieName)
-        : null
+      const cookieValue = getCookie(ctx.headers, cookieName)
 
       if (!cookieValue) {
         return Response.json(null, { status: 200 })
@@ -356,6 +389,16 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
           adapter: config.adapter,
           cookieName,
         })
+      }
+    }
+  }
+
+  // Register plugin API methods
+  if (config.plugins) {
+    for (const plugin of config.plugins) {
+      if (plugin.api) {
+        const methods = plugin.api(auth, config.storage)
+        auth.api[plugin.id] = methods
       }
     }
   }

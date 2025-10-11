@@ -18,6 +18,9 @@ export {
 export type {
   BloomAuth,
   BloomAuthApi,
+  BloomPlugin,
+  PluginRoute,
+  PluginHooks,
 } from '@/types'
 
 export type { RequestHeaders } from '@/utils/headers'
