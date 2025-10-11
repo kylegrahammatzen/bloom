@@ -1,4 +1,11 @@
-export type EventHandler<T = any> = (data: T) => void | Promise<void>
+/**
+ * Event handler function
+ *
+ * Can return any value, but the EventEmitter ignores return values.
+ * This allows hooks to return Response objects for request short-circuiting
+ * while other events can return void.
+ */
+export type EventHandler<T = any, R = any> = (data: T) => R | Promise<R>
 
 export class EventEmitter {
   private listeners: Map<string, Set<EventHandler>>

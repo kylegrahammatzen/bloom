@@ -1,6 +1,33 @@
 import type { DatabaseAdapter } from '@/storage/adapter'
 import type { User, Session } from '@/types'
 
+/**
+ * Create an in-memory mock database adapter for testing
+ *
+ * Uses Map-based storage that persists within a single test.
+ * Automatically generates unique IDs for users and sessions.
+ * Perfect for unit tests without requiring a real database.
+ *
+ * @returns Mock adapter implementing the full DatabaseAdapter interface
+ *
+ * @example
+ * ```ts
+ * const adapter = createMockAdapter()
+ *
+ * const user = await adapter.user.create({
+ *   email: 'test@example.com',
+ *   password_hash: 'hash',
+ *   password_salt: 'salt',
+ *   email_verified: true
+ * })
+ *
+ * const session = await adapter.session.create({
+ *   id: 'sess_123',
+ *   userId: user.id,
+ *   expiresAt: new Date(Date.now() + 1000 * 60 * 60)
+ * })
+ * ```
+ */
 export function createMockAdapter(): DatabaseAdapter {
   const users: Map<string, User & { password_hash: string; password_salt: string }> = new Map()
   const sessions: Map<string, Session> = new Map()
