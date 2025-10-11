@@ -32,6 +32,32 @@ Reset database:
 pnpm db:reset
 ```
 
+## Testing
+
+Register a user:
+
+```bash
+curl -X POST http://localhost:5002/auth/register -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"password123","name":"Test User"}'
+```
+
+Login:
+
+```bash
+curl -X POST http://localhost:5002/auth/login -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"password123"}' -c cookies.txt
+```
+
+Get session:
+
+```bash
+curl http://localhost:5002/auth/session -b cookies.txt
+```
+
+Logout:
+
+```bash
+curl -X POST http://localhost:5002/auth/logout -b cookies.txt
+```
+
 ## License
 
 GNU Affero General Public License v3.0
