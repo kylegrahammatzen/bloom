@@ -92,19 +92,6 @@ const auth = bloomAuth({
 })
 ```
 
-## Headers
-
-[Headers and cookies](./src/utils/headers/README.md) abstraction for 8 frameworks.
-
-```typescript
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
-
-const userAgent = getHeader(await headers(), 'user-agent')
-const sessionId = getCookie(await headers(), 'bloom.sid')
-const cookies = getAllCookies(await headers())
-const allHeaders = extractHeaders(await headers())
-```
-
 ## API
 
 | Method | Description |
@@ -120,6 +107,19 @@ const allHeaders = extractHeaders(await headers())
 | [`verifyEmail`](./src/api/README.md#verifyemail) | Verify email with token |
 | [`requestPasswordReset`](./src/api/README.md#requestpasswordreset) | Request password reset token |
 | [`resetPassword`](./src/api/README.md#resetpassword) | Reset password with token |
+
+## Headers
+
+[Headers and cookies](./src/utils/headers/README.md) abstraction for 8 frameworks.
+
+```typescript
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
+
+const userAgent = getHeader(await headers(), 'user-agent')
+const sessionId = getCookie(await headers(), 'bloom.sid')
+const cookies = getAllCookies(await headers())
+const allHeaders = extractHeaders(await headers())
+```
 
 ## License
 
