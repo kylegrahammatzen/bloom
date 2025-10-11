@@ -1,11 +1,9 @@
 import { bloomAuth } from '@bloom/core-v2'
 import { mongodbAdapter } from '@bloom/core-v2/adapters/mongodb'
-import { client } from './db'
+import { db } from './db'
 
 export const auth = bloomAuth({
-  adapter: mongodbAdapter(client, {
-    dbName: 'bloom-auth-v2',
-  }),
+  adapter: mongodbAdapter(db),
   cookieName: 'bloom.sid',
   emailPassword: {
     enabled: true,

@@ -4,7 +4,7 @@ if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is required')
 }
 
-export const client = new MongoClient(process.env.DATABASE_URL)
+const client = new MongoClient(process.env.DATABASE_URL)
 
 // Connect on startup
 client.connect()
@@ -19,3 +19,5 @@ process.on('SIGINT', async () => {
   await client.close()
   process.exit(0)
 })
+
+export const db = client.db('bloom-auth-v2')
