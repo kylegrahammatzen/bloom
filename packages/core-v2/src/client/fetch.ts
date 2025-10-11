@@ -42,22 +42,22 @@ export async function bloomFetch<T>(
       },
     })
 
-    // Parse JSON if available
     const isJson = response.headers.get('content-type')?.includes('application/json')
-    const data = isJson ? (await response.json() as T) : null
 
     // Handle errors
     if (!response.ok) {
+      const errorData = isJson ? (await response.json() as { error?: string; message?: string }) : null
       const error: BloomError = {
-        code: (data as any)?.error || 'HTTP_ERROR',
-        message: (data as any)?.message || response.statusText,
+        code: errorData?.error || 'HTTP_ERROR',
+        message: errorData?.message || response.statusText,
         status: response.status,
       }
       config.onError?.(error)
       return { data: null, error }
     }
 
-    // Success
+    // Success - parse as T
+    const data = isJson ? (await response.json() as T) : null
     config.onSuccess?.(data)
     return { data, error: null }
   } catch (err) {
