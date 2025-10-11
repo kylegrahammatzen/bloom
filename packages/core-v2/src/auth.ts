@@ -1,13 +1,13 @@
-import type { BloomAuth, ApiMethodParams, User, Session, EventHandler } from './types'
-import type { DatabaseAdapter } from './storage/adapter'
-import type { Storage, RateLimitConfig } from './schemas'
-import { getCookie } from './utils/headers'
-import { parseSessionCookie } from './utils/cookies'
-import { ApiMethodParamsSchema, RateLimitConfigSchema } from './schemas'
-import { EventEmitter } from './events/emitter'
-import { Router } from './handler/router'
-import { createHandler } from './handler/handler'
-import { RateLimiter } from './rateLimit/limiter'
+import type { BloomAuth, ApiMethodParams, User, Session, EventHandler } from '@/types'
+import type { DatabaseAdapter } from '@/storage/adapter'
+import type { Storage, RateLimitConfig } from '@/schemas'
+import { getCookie } from '@/utils/headers'
+import { parseSessionCookie } from '@/utils/cookies'
+import { ApiMethodParamsSchema, RateLimitConfigSchema } from '@/schemas'
+import { EventEmitter } from '@/events/emitter'
+import { Router } from '@/handler/router'
+import { createHandler } from '@/handler/handler'
+import { RateLimiter } from '@/rateLimit/limiter'
 import {
   register,
   login,
@@ -21,7 +21,7 @@ import {
   resetPassword,
   type EmailPasswordConfig,
   type SessionConfig,
-} from './api'
+} from '@/api'
 
 /**
  * Configuration options for BloomAuth
