@@ -1,63 +1,48 @@
 import type { Context } from '@/handler/context'
 import type { DatabaseAdapter } from '@/storage/adapter'
-import type { EventEmitter } from '@/events/emitter'
 import { getCookie } from '@/utils/headers'
 import { parseSessionCookie, clearSessionCookie } from '@/utils/cookies'
 
-/**
- * Handle user logout (session termination)
- */
-export async function handleLogout(
-  ctx: Context,
-  adapter: DatabaseAdapter,
-  emitter: EventEmitter,
-  cookieName: string = 'bloom.sid'
-): Promise<Response> {
-  // Get session cookie
-  const cookieHeader = ctx.headers.get('cookie')
+export type LogoutParams = {
+  ctx: Context
+  adapter: DatabaseAdapter
+  cookieName: string
+}
+
+export async function logout(params: LogoutParams): Promise<Response> {
+  const cookieHeader = params.ctx.headers.get('cookie')
   const cookieValue = cookieHeader
-    ? getCookie({ cookie: cookieHeader }, cookieName)
+    ? getCookie({ cookie: cookieHeader }, params.cookieName)
     : null
 
   if (!cookieValue) {
-    return new Response(
-      JSON.stringify({ error: 'No active session' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    return Response.json(
+      { error: 'No active session' },
+      { status: 401 }
     )
   }
 
-  // Parse session cookie
   const sessionData = parseSessionCookie(cookieValue)
   if (!sessionData) {
-    return new Response(
-      JSON.stringify({ error: 'Invalid session cookie' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    return Response.json(
+      { error: 'Invalid session cookie' },
+      { status: 401 }
     )
   }
 
-  // Emit: logout starting
-  await emitter.emit('user:logout:before', { sessionId: sessionData.sessionId })
+  await params.ctx.hooks.before?.()
 
-  // Delete session from database
-  const deleted = await adapter.session.delete(sessionData.sessionId)
+  await params.adapter.session.delete(sessionData.sessionId)
 
-  if (deleted) {
-    // Emit: session deleted
-    await emitter.emit('session:deleted', { sessionId: sessionData.sessionId })
-  }
+  const clearCookie = clearSessionCookie(params.cookieName)
 
-  // Emit: logout complete
-  await emitter.emit('user:logout', { sessionId: sessionData.sessionId })
+  await params.ctx.hooks.after?.()
 
-  // Clear session cookie
-  const clearCookie = clearSessionCookie(cookieName)
-
-  return new Response(
-    JSON.stringify({ success: true, message: 'Logged out successfully' }),
+  return Response.json(
+    { success: true, message: 'Logged out successfully' },
     {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
         'Set-Cookie': clearCookie,
       },
     }
