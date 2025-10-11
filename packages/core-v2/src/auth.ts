@@ -12,6 +12,7 @@ import {
   register,
   login,
   logout,
+  getSession,
   getSessions,
   deleteSession,
   deleteAllSessions,
@@ -187,8 +188,31 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     path: '/session',
     method: 'GET',
     handler: async (ctx) => {
-      const result = await getSessionFromContext(ctx)
-      return Response.json(result, { status: 200 })
+      const cookieValue = ctx.headers.get('cookie')
+        ? getCookie({ cookie: ctx.headers.get('cookie') }, cookieName)
+        : null
+
+      if (!cookieValue) {
+        return Response.json(null, { status: 200 })
+      }
+
+      const sessionData = parseSessionCookie(cookieValue)
+      if (!sessionData) {
+        return Response.json(null, { status: 200 })
+      }
+
+      const session = await config.adapter.session.findById(sessionData.sessionId)
+      if (!session || session.userId !== sessionData.userId) {
+        return Response.json(null, { status: 200 })
+      }
+
+      const user = await config.adapter.user.findById(session.userId)
+      if (!user) {
+        return Response.json(null, { status: 200 })
+      }
+
+      await config.adapter.session.updateLastAccessed(session.id)
+      return Response.json({ user, session }, { status: 200 })
     },
   })
 
@@ -318,35 +342,6 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
     })
   }
 
-  // Helper to get session from context (extracted from getSession logic)
-  async function getSessionFromContext(ctx: any) {
-    const cookieValue = ctx.headers.get('cookie')
-      ? getCookie({ cookie: ctx.headers.get('cookie') }, cookieName)
-      : null
-
-    if (!cookieValue) {
-      return null
-    }
-
-    const sessionData = parseSessionCookie(cookieValue)
-    if (!sessionData) {
-      return null
-    }
-
-    const session = await config.adapter.session.findById(sessionData.sessionId)
-    if (!session || session.userId !== sessionData.userId) {
-      return null
-    }
-
-    const user = await config.adapter.user.findById(session.userId)
-    if (!user) {
-      return null
-    }
-
-    await config.adapter.session.updateLastAccessed(session.id)
-    return { user, session }
-  }
-
   /**
    * BloomAuth instance
    *
@@ -362,48 +357,11 @@ export function bloomAuth(config: BloomAuthConfig): BloomAuth {
 
     api: {
       async getSession(params: ApiMethodParams): Promise<{ user: User; session: Session } | null> {
-        // Validate input params at runtime
-        const validatedParams = ApiMethodParamsSchema.safeParse(params)
-        if (!validatedParams.success) {
-          return null
-        }
-
-        // Extract session cookie from framework-agnostic headers
-        const cookieValue = validatedParams.data.headers
-          ? getCookie(validatedParams.data.headers as any, cookieName)
-          : null
-
-        if (!cookieValue) {
-          return null
-        }
-
-        // Parse and validate session cookie JSON
-        const sessionData = parseSessionCookie(cookieValue)
-        if (!sessionData) {
-          return null
-        }
-
-        // Load session from adapter
-        const session = await config.adapter.session.findById(sessionData.sessionId)
-        if (!session) {
-          return null
-        }
-
-        // Verify session belongs to the user in the cookie
-        if (session.userId !== sessionData.userId) {
-          return null
-        }
-
-        // Load user from adapter
-        const user = await config.adapter.user.findById(session.userId)
-        if (!user) {
-          return null
-        }
-
-        // Update last accessed time
-        await config.adapter.session.updateLastAccessed(session.id)
-
-        return { user, session }
+        return await getSession({
+          params,
+          adapter: config.adapter,
+          cookieName,
+        })
       }
     },
 

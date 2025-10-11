@@ -1,7 +1,7 @@
 export { register } from './register'
 export { login } from './login'
 export { logout } from './logout'
-export { getSessions, deleteSession, deleteAllSessions } from './sessions'
+export { getSession, getSessions, deleteSession, deleteAllSessions } from './sessions'
 export { sendVerificationEmail, verifyEmail } from './verification'
 export { requestPasswordReset, resetPassword } from './password-reset'
 export type { EmailPasswordConfig, SessionConfig } from './register'

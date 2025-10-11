@@ -1,7 +1,53 @@
 import type { Context } from '@/handler/context'
 import type { DatabaseAdapter } from '@/storage/adapter'
+import type { ApiMethodParams, User, Session } from '@/schemas'
 import { getCookie } from '@/utils/headers'
 import { parseSessionCookie } from '@/utils/cookies'
+import { ApiMethodParamsSchema } from '@/schemas'
+
+export type GetSessionParams = {
+  params: ApiMethodParams
+  adapter: DatabaseAdapter
+  cookieName: string
+}
+
+export async function getSession(config: GetSessionParams): Promise<{ user: User; session: Session } | null> {
+  const validatedParams = ApiMethodParamsSchema.safeParse(config.params)
+  if (!validatedParams.success) {
+    return null
+  }
+
+  const cookieValue = validatedParams.data.headers
+    ? getCookie(validatedParams.data.headers as any, config.cookieName)
+    : null
+
+  if (!cookieValue) {
+    return null
+  }
+
+  const sessionData = parseSessionCookie(cookieValue)
+  if (!sessionData) {
+    return null
+  }
+
+  const session = await config.adapter.session.findById(sessionData.sessionId)
+  if (!session) {
+    return null
+  }
+
+  if (session.userId !== sessionData.userId) {
+    return null
+  }
+
+  const user = await config.adapter.user.findById(session.userId)
+  if (!user) {
+    return null
+  }
+
+  await config.adapter.session.updateLastAccessed(session.id)
+
+  return { user, session }
+}
 
 export type GetSessionsParams = {
   ctx: Context
