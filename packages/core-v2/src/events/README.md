@@ -1,61 +1,166 @@
 <img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - Events
+# Bloom Core V2 - Hooks & Events
 
-Dynamic event system for lifecycle hooks, custom events, and plugin communication.
+Path-based hooks for auth operations and dynamic event system for custom events and plugin communication.
 
 ## Overview
 
-Event-driven architecture that uses string-based event names with wildcard support. No predefined events - just emit and listen to any event name. Built for flexibility and plugin extensibility.
+Bloom provides two ways to extend functionality:
 
-Events use colon notation (e.g., `user:created`, `session:found`) and support wildcard patterns like `user:*`, `*:created`, or `*`.
+1. **Hooks** - Path-based before/after hooks for auth operations
+2. **Events** - Dynamic event system with wildcard support for custom events and plugins
 
-## API Reference
+Hooks are the recommended way to extend auth operations. Events are for custom functionality and plugin communication.
 
-### `EventHandler` Type
+## Hooks
 
-Handler function for event listeners.
+### Quick Start
 
 ```typescript
-type EventHandler<T = any> = (data: T) => void | Promise<void>
+import { bloomAuth } from '@bloom/core-v2'
+import { drizzleAdapter } from '@bloom/adapters/drizzle'
+
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  hooks: {
+    '/register': {
+      after: async (ctx) => {
+        await sendWelcomeEmail(ctx.body.email)
+      }
+    },
+    '/send-verification-email': {
+      after: async (ctx) => {
+        await sendEmail({
+          to: ctx.body.email,
+          subject: 'Verify your email',
+          html: `Click here to verify: ${verificationLink}`
+        })
+      }
+    }
+  }
+})
 ```
 
----
+### Available Paths
+
+- `/register` - User registration
+- `/login` - User login
+- `/logout` - User logout
+- `/sessions` - Get all sessions (GET) or delete all except current (DELETE)
+- `/sessions/:id` - Delete specific session
+- `/send-verification-email` - Request email verification
+- `/verify-email` - Verify email with token
+- `/request-password-reset` - Request password reset
+- `/reset-password` - Reset password with token
+
+### Execution Order
+
+1. Request received
+2. Validation checks pass
+3. `before` hook runs
+4. Database operations
+5. `after` hook runs
+6. Response sent
+
+### Context Type
+
+```typescript
+type Context = {
+  request: Request
+  method: string
+  path: string
+  query: Record<string, string>
+  headers: Headers
+  body: unknown
+  params: Record<string, string>
+  user: User | null
+  session: Session | null
+  hooks: {
+    before?: () => Promise<void>
+    after?: () => Promise<void>
+  }
+}
+```
+
+### Examples
+
+**Send welcome email:**
+```typescript
+hooks: {
+  '/register': {
+    after: async (ctx) => {
+      await sendEmail({
+        to: ctx.body.email,
+        subject: 'Welcome!',
+        html: `<h1>Welcome ${ctx.body.name}!</h1>`
+      })
+    }
+  }
+}
+```
+
+**Log auth events:**
+```typescript
+hooks: {
+  '/login': {
+    after: async (ctx) => {
+      await db.insert(auditLog).values({
+        userId: ctx.user!.id,
+        action: 'login'
+      })
+    }
+  }
+}
+```
+
+**Rate limit resets:**
+```typescript
+hooks: {
+  '/request-password-reset': {
+    before: async (ctx) => {
+      const recent = await checkRecentPasswordResets(ctx.body.email)
+      if (recent > 3) {
+        throw new Error('Too many password reset attempts')
+      }
+    }
+  }
+}
+```
+
+### Performance
+
+O(1) Set lookups for registered hooks. No runtime overhead for paths without hooks.
+
+## Events
 
 ### `auth.on()`
 
-Register an event listener.
+Register an event listener with wildcard support.
 
 ```typescript
 auth.on(event: string, handler: EventHandler): void
 ```
 
-**Parameters:**
-- `event` - Event name or wildcard pattern
-- `handler` - Function to call when event is emitted
-
 **Examples:**
 ```typescript
-// Exact match
 auth.on('user:created', async (user) => {
-  console.log('New user:', user.email)
+  await sendWelcomeEmail(user.email)
 })
 
 // Wildcard patterns
 auth.on('user:*', async (data) => {
-  console.log('User event:', data)
+  await logUserActivity(data)
 })
 
 auth.on('*:created', async (data) => {
-  console.log('Something was created:', data)
+  await notifyAdmins(data)
 })
 
 auth.on('*', async (data) => {
   console.log('Any event:', data)
 })
 ```
-
----
 
 ### `auth.emit()`
 
@@ -64,10 +169,6 @@ Emit an event to all matching listeners.
 ```typescript
 auth.emit(event: string, data?: any): Promise<void>
 ```
-
-**Parameters:**
-- `event` - Event name to emit
-- `data` - Payload to pass to listeners
 
 **Example:**
 ```typescript
@@ -78,12 +179,9 @@ await auth.emit('user:created', {
 ```
 
 **Behavior:**
-- Executes all exact matches
-- Executes all matching wildcard patterns
-- Handlers run in parallel (via `Promise.all`)
-- Errors are caught and logged (don't crash app)
-
----
+- Matches exact event names and wildcard patterns
+- Handlers run in parallel via `Promise.all`
+- Errors are caught and logged without crashing
 
 ### `auth.off()`
 
@@ -93,18 +191,6 @@ Remove an event listener.
 auth.off(event: string, handler: EventHandler): void
 ```
 
-**Example:**
-```typescript
-const handler = async (user) => {
-  console.log('User created:', user.email)
-}
-
-auth.on('user:created', handler)
-auth.off('user:created', handler)
-```
-
----
-
 ### `auth.events.list()`
 
 List all registered event names.
@@ -112,14 +198,6 @@ List all registered event names.
 ```typescript
 auth.events.list(): string[]
 ```
-
-**Example:**
-```typescript
-const events = auth.events.list()
-// ['user:created', 'user:*', 'session:found']
-```
-
----
 
 ### `auth.events.listeners()`
 
@@ -129,191 +207,19 @@ Get all listeners for a specific event.
 auth.events.listeners(event: string): EventHandler[]
 ```
 
-**Example:**
-```typescript
-const handlers = auth.events.listeners('user:created')
-console.log(`${handlers.length} listeners registered`)
-```
+## Plugin Events
 
----
-
-## Usage Examples
-
-### Basic Events
+Plugins can emit custom events that the core or other plugins can listen to:
 
 ```typescript
-import { bloomAuth } from '@bloom/core-v2'
-import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
-
-export const auth = bloomAuth({
-  adapter: drizzleAdapter(db),
-  events: {
-    'user:created': async (user) => {
-      await sendWelcomeEmail(user.email)
-    },
-    'session:found': async ({ user }) => {
-      console.log('Session loaded for:', user.email)
-    }
-  }
-})
-```
-
-### Wildcard Patterns
-
-```typescript
-// Listen to all user events
-auth.on('user:*', async (data) => {
-  await logUserActivity(data)
+// Plugin emits event
+await ctx.emit('oauth:connected', {
+  user: ctx.user,
+  provider: 'github'
 })
 
-// Listen to all created events
-auth.on('*:created', async (data) => {
-  await notifyAdmins('New resource created', data)
-})
-
-// Catch-all for debugging
-auth.on('*', async (data) => {
-  console.log('Event fired:', data)
-})
-```
-
-### Runtime Registration
-
-```typescript
-// Register events after auth initialization
-auth.on('user:login', async (user) => {
-  await trackLogin(user.id)
-})
-
-// Emit custom events
-await auth.emit('payment:completed', {
-  userId: '123',
-  amount: 99.99
-})
-```
-
-### Plugin Events
-
-```typescript
-// Plugin emits custom events
-const oauthPlugin = {
-  id: 'oauth',
-  endpoints: [{
-    path: '/oauth/callback',
-    handler: async (req, ctx) => {
-      const account = await linkOAuthAccount(ctx.user)
-
-      // Emit plugin event
-      await ctx.emit('oauth:connected', {
-        user: ctx.user,
-        provider: 'github'
-      })
-    }
-  }]
-}
-
-// Core auth listens to plugin events
+// Core listens to plugin event
 auth.on('oauth:connected', async ({ user, provider }) => {
   await sendEmail(user.email, `${provider} connected!`)
 })
 ```
-
----
-
-## Error Handling
-
-Event handlers that throw errors are caught and logged but don't crash the app:
-
-```typescript
-auth.on('user:created', async (user) => {
-  throw new Error('Handler failed!')
-  // Error is logged, other handlers still run
-})
-
-auth.on('user:created', async (user) => {
-  // This still executes
-  await sendEmail(user.email)
-})
-```
-
-Console output:
-```
-Error in event handler for "user:created": Error: Handler failed!
-```
-
----
-
-## Async Handlers
-
-All handlers run in parallel via `Promise.all`:
-
-```typescript
-auth.on('user:created', async (user) => {
-  await sendWelcomeEmail(user.email)  // Runs in parallel
-})
-
-auth.on('user:created', async (user) => {
-  await createStripeCustomer(user)    // Runs in parallel
-})
-
-await auth.emit('user:created', user)
-// Both handlers complete before emit() resolves
-```
-
-If you need sequential execution, chain them:
-
-```typescript
-auth.on('user:created', async (user) => {
-  await sendWelcomeEmail(user.email)
-  await waitForEmailConfirmation(user.email)
-  await activateAccount(user.id)
-})
-```
-
----
-
-## Testing Events
-
-### Verify Events Fire
-
-```typescript
-import { vi } from 'vitest'
-
-const handler = vi.fn()
-auth.on('user:created', handler)
-
-await createUser({ email: 'test@example.com' })
-
-expect(handler).toHaveBeenCalledWith(
-  expect.objectContaining({ email: 'test@example.com' })
-)
-```
-
-### Test Event Data
-
-```typescript
-const data = []
-auth.on('user:created', (user) => {
-  data.push(user)
-})
-
-await createUser({ email: 'test@example.com' })
-
-expect(data[0].email).toBe('test@example.com')
-```
-
-### Mock Event Emitter
-
-```typescript
-const mockEmit = vi.spyOn(auth, 'emit')
-
-await auth.api.getSession({ headers })
-
-expect(mockEmit).toHaveBeenCalledWith('session:found', expect.any(Object))
-```
-
----
-
-## License
-
-This project is licensed under the GNU Affero General Public License v3.0.

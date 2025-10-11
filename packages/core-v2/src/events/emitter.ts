@@ -12,10 +12,9 @@ export class EventEmitter {
    * Supports wildcard patterns: 'user:*', '*:created', '*'
    */
   on(event: string, handler: EventHandler): void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set())
-    }
-    this.listeners.get(event)!.add(handler)
+    const handlers = this.listeners.get(event) ?? new Set()
+    handlers.add(handler)
+    this.listeners.set(event, handlers)
   }
 
   /**
@@ -23,12 +22,8 @@ export class EventEmitter {
    */
   off(event: string, handler: EventHandler): void {
     const handlers = this.listeners.get(event)
-    if (handlers) {
-      handlers.delete(handler)
-      if (handlers.size === 0) {
-        this.listeners.delete(event)
-      }
-    }
+    if (!handlers?.delete(handler)) return
+    if (handlers.size === 0) this.listeners.delete(event)
   }
 
   /**
@@ -38,28 +33,17 @@ export class EventEmitter {
   async emit(event: string, data?: any): Promise<void> {
     const handlers: EventHandler[] = []
 
-    // Exact match
-    const exactHandlers = this.listeners.get(event)
-    if (exactHandlers) {
-      handlers.push(...exactHandlers)
-    }
-
-    // Wildcard matches
-    for (const [pattern, patternHandlers] of this.listeners.entries()) {
-      if (pattern === event) continue // Already handled
-
-      if (this.matchesPattern(event, pattern)) {
+    for (const [pattern, patternHandlers] of this.listeners) {
+      if (pattern === event || this.matchesPattern(event, pattern)) {
         handlers.push(...patternHandlers)
       }
     }
 
-    // Execute all handlers
     await Promise.all(
       handlers.map(async (handler) => {
         try {
           await handler(data)
         } catch (error) {
-          // Log error but don't crash
           console.error(`Error in event handler for "${event}":`, error)
         }
       })
@@ -93,12 +77,6 @@ export class EventEmitter {
 
     if (eventParts.length !== patternParts.length) return false
 
-    for (let i = 0; i < patternParts.length; i++) {
-      if (patternParts[i] !== '*' && patternParts[i] !== eventParts[i]) {
-        return false
-      }
-    }
-
-    return true
+    return patternParts.every((part, i) => part === '*' || part === eventParts[i])
   }
 }
