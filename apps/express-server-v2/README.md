@@ -4,14 +4,64 @@ Express.js server using Bloom Auth V2 with MongoDB.
 
 ## Setup
 
+1. **Start MongoDB** (from project root):
+```bash
+pnpm docker:up
+```
+
+2. **Install dependencies and configure**:
 ```bash
 pnpm install
-cp .env.example .env
-# Edit .env with your MongoDB connection string
+```
+
+The `.env` file is already created with MongoDB connection to `bloom-auth-v2` database.
+
+3. **Start the development server**:
+```bash
 pnpm dev
 ```
 
 Server runs at `http://localhost:5002` with auth routes at `/auth/*`
+
+## Database Management
+
+**Reset/Clear the database:**
+```bash
+# From project root
+pnpm docker:down -v        # Stop and remove volumes (clears all data)
+pnpm docker:up             # Start fresh
+```
+
+**View MongoDB logs:**
+```bash
+# From project root
+pnpm docker:logs
+```
+
+**Connect to MongoDB shell:**
+```bash
+docker exec -it bloom-mongodb mongosh -u bloom -p bloom-dev-password --authenticationDatabase admin
+use bloom-auth-v2
+db.users.find()            # View all users
+db.sessions.find()         # View all sessions
+db.dropDatabase()          # Drop entire database
+```
+
+## API Endpoints
+
+All endpoints are available under `/auth`:
+
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login user
+- `POST /auth/logout` - Logout user
+- `GET /auth/session` - Get current session
+- `GET /auth/sessions` - Get all user sessions
+- `DELETE /auth/sessions/:id` - Delete specific session
+- `DELETE /auth/sessions` - Delete all sessions
+- `POST /auth/send-verification-email` - Send verification email
+- `POST /auth/verify-email` - Verify email with token
+- `POST /auth/request-password-reset` - Request password reset
+- `POST /auth/reset-password` - Reset password with token
 
 ## License
 
