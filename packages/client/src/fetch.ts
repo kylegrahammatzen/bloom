@@ -1,87 +1,72 @@
-import type { BloomResponse, RequestOptions } from "@/types";
-import { clientConfig } from "@/config";
+import type { BloomResponse, BloomError, ClientConfig } from './types'
 
-export async function apiFetch<T>(
-	endpoint: string,
-	options: RequestInit & { requestOptions?: RequestOptions<T> } = {}
+/**
+ * Global client configuration
+ */
+let globalConfig: ClientConfig = {
+  baseUrl: '/auth',
+  credentials: 'include',
+}
+
+/**
+ * Set global client configuration
+ */
+export function setConfig(config: ClientConfig) {
+  globalConfig = { ...globalConfig, ...config }
+}
+
+/**
+ * Get current global configuration
+ */
+export function getConfig(): ClientConfig {
+  return globalConfig
+}
+
+/**
+ * Make a fetch request to the Bloom API
+ */
+export async function bloomFetch<T>(
+  params: { path: string; options?: RequestInit }
 ): Promise<BloomResponse<T>> {
-	const { requestOptions, ...fetchOptions } = options;
-	const url = `${clientConfig.baseUrl}${endpoint}`;
+  const config = getConfig()
+  const url = `${config.baseUrl}${params.path}`
 
-	const defaultOptions: RequestInit = {
-		credentials: "include",
-		headers: {
-			"Content-Type": "application/json",
-			...fetchOptions.headers,
-		},
-		...fetchOptions,
-	};
+  try {
+    const response = await fetch(url, {
+      ...params.options,
+      credentials: config.credentials,
+      headers: {
+        'Content-Type': 'application/json',
+        ...config.headers,
+        ...params.options?.headers,
+      },
+    })
 
-	let response: Response;
-	let data: T;
+    const isJson = response.headers.get('content-type')?.includes('application/json')
 
-	try {
-		response = await fetch(url, defaultOptions);
-		data = await response.json();
-	} catch (error) {
-		const errorResponse = {
-			error: {
-				message: error instanceof Error ? error.message : "Network error",
-				status: 0,
-				statusText: "Network Error",
-			},
-		};
+    // Handle errors
+    if (!response.ok) {
+      const errorData = isJson ? (await response.json() as { error?: string; message?: string }) : null
+      const error: BloomError = {
+        code: errorData?.error || 'HTTP_ERROR',
+        message: errorData?.message || response.statusText,
+        status: response.status,
+      }
+      config.onError?.(error)
+      return { data: null, error }
+    }
 
-		if (requestOptions?.onError) {
-			await requestOptions.onError({
-				error: errorResponse.error,
-				response: new Response(),
-			});
-		}
-
-		if (clientConfig.fetchOptions?.onError) {
-			await clientConfig.fetchOptions.onError({
-				error: errorResponse.error,
-				response: new Response(),
-			});
-		}
-
-		return errorResponse;
-	}
-
-	if (!response.ok) {
-		const errorResponse = {
-			error: {
-				message: (data as any).error?.message || `Request failed with status ${response.status}`,
-				status: response.status,
-				statusText: response.statusText,
-				details: (data as any).error?.details,
-			},
-		};
-
-		if (requestOptions?.onError) {
-			await requestOptions.onError({
-				error: errorResponse.error,
-				response,
-			});
-		}
-
-		if (clientConfig.fetchOptions?.onError) {
-			await clientConfig.fetchOptions.onError({
-				error: errorResponse.error,
-				response,
-			});
-		}
-
-		return errorResponse;
-	}
-
-	if (requestOptions?.onSuccess) {
-		await requestOptions.onSuccess({
-			data,
-			response,
-		});
-	}
-
-	return { data };
+    // Success - parse as T
+    const data = isJson ? (await response.json() as T) : null
+    config.onSuccess?.(data)
+    return { data, error: null }
+  } catch (err) {
+    const error: BloomError = {
+      code: 'NETWORK_ERROR',
+      message: err instanceof Error ? err.message : 'Network error',
+      status: 0,
+    }
+    config.onError?.(error)
+    return { data: null, error }
+  }
 }

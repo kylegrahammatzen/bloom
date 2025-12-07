@@ -1,42 +1,37 @@
 {
   "name": "@bloom/client",
-  "version": "1.0.0",
+  "version": "2.0.0-alpha.1",
   "type": "module",
-  "description": "Client-side authentication library for Bloom - framework-agnostic",
+  "description": "Bloom Client - Framework-agnostic client library for Bloom Auth",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "license": "AGPL-3.0",
-  "author": "Kyle Graham Matzen <kgrahammatzen@gmail.com>",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kylegrahammatzen/bloom.git",
-    "directory": "packages/client"
-  },
-  "homepage": "https://github.com/kylegrahammatzen/bloom#readme",
-  "bugs": {
-    "url": "https://github.com/kylegrahammatzen/bloom/issues"
-  },
-  "keywords": [
-    "auth",
-    "client",
-    "typescript"
-  ],
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsc && tsc-alias",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
+  "license": "AGPL-3.0",
+  "author": "Kyle Graham Matzen <kylegrahammatzen@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kylegrahammatzen/bloom.git",
+    "directory": "packages/client"
+  },
+  "keywords": [
+    "auth",
+    "authentication",
+    "client",
+    "typescript",
+    "framework-agnostic"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@bloom/core": "workspace:*"
+  },
   "devDependencies": {
-    "tsc-alias": "^1.8.16",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.3"
   }
 }

@@ -1,98 +1,67 @@
-import { apiFetch } from "@/fetch";
-import { setClientConfig } from "@/config";
-import type { BloomResponse, Session, RequestOptions, ClientConfig } from "@/types";
+import { bloomFetch, setConfig } from './fetch'
+import type { BloomClient, ClientConfig, AuthMethods, BloomResponse, User, Session } from './types'
 
-export function createBloomClient(config?: ClientConfig) {
-	if (config) {
-		setClientConfig(config);
-	}
+/**
+ * Create a Bloom client instance
+ *
+ * @example
+ * import { bloomClient } from '@bloom/core-v2/client'
+ *
+ * const client = bloomClient({ baseUrl: '/auth' })
+ *
+ * const { data, error } = await client.auth.login({ email, password })
+ */
+export function bloomClient(props?: ClientConfig): BloomClient {
+  if (props) {
+    setConfig(props)
+  }
 
-	return {
-		signUp: async (
-			body: { email: string; password: string },
-			options?: RequestOptions<Session>
-		): Promise<BloomResponse<Session>> => {
-			return apiFetch<Session>("/api/auth/register", {
-				method: "POST",
-				body: JSON.stringify(body),
-				requestOptions: options,
-			});
-		},
+  // Generic method factory
+  const createMethod = <T>(path: string, method: 'GET' | 'POST' | 'DELETE') =>
+    async (bodyOrId?: any): Promise<BloomResponse<T>> => {
+      const finalPath = typeof bodyOrId === 'string' && path.includes('/:')
+        ? path.replace(/:\w+/, bodyOrId)
+        : path
 
-		signIn: async (
-			body: { email: string; password: string },
-			options?: RequestOptions<Session>
-		): Promise<BloomResponse<Session>> => {
-			return apiFetch<Session>("/api/auth/login", {
-				method: "POST",
-				body: JSON.stringify(body),
-				requestOptions: options,
-			});
-		},
+      return bloomFetch<T>({
+        path: finalPath,
+        options: {
+          method,
+          body: method !== 'GET' && bodyOrId && typeof bodyOrId !== 'string'
+            ? JSON.stringify(bodyOrId)
+            : undefined,
+        },
+      })
+    }
 
-		signOut: async (
-			options?: RequestOptions<{ message: string }>
-		): Promise<BloomResponse<{ message: string }>> => {
-			return apiFetch("/api/auth/logout", {
-				method: "POST",
-				requestOptions: options,
-			});
-		},
+  const auth: AuthMethods = {
+    register: createMethod<{ user: User; session: Session }>('/register', 'POST'),
+    login: createMethod<{ user: User; session: Session }>('/login', 'POST'),
+    logout: createMethod<{ message: string }>('/logout', 'POST'),
+    getSession: createMethod<{ user: User; session: Session }>('/session', 'GET'),
+    getSessions: createMethod<Session[]>('/sessions', 'GET'),
+    deleteSession: createMethod<{ message: string }>('/sessions/:id', 'DELETE'),
+    deleteAllSessions: createMethod<{ message: string }>('/sessions', 'DELETE'),
+    sendVerificationEmail: createMethod<{ message: string }>('/send-verification-email', 'POST'),
+    verifyEmail: createMethod<{ message: string }>('/verify-email', 'POST'),
+    requestPasswordReset: createMethod<{ message: string }>('/request-password-reset', 'POST'),
+    resetPassword: createMethod<{ message: string }>('/reset-password', 'POST'),
+  }
 
-		deleteAccount: async (
-			options?: RequestOptions<{ message: string }>
-		): Promise<BloomResponse<{ message: string }>> => {
-			return apiFetch("/api/auth/account", {
-				method: "DELETE",
-				requestOptions: options,
-			});
-		},
+  // Build client with auth methods
+  const client: BloomClient = {
+    auth,
+  }
 
-		getSession: async (
-			options?: RequestOptions<Session>
-		): Promise<BloomResponse<Session>> => {
-			return apiFetch<Session>("/api/auth/me", {
-				requestOptions: options,
-			});
-		},
+  // Add plugin methods if plugins are provided
+  if (props?.plugins) {
+    for (const plugin of props.plugins) {
+      if (plugin.getActions) {
+        const pluginActions = plugin.getActions(bloomFetch)
+        Object.assign(client, pluginActions)
+      }
+    }
+  }
 
-		getSessions: async (
-			options?: RequestOptions<{ sessions: Session[] }>
-		): Promise<BloomResponse<{ sessions: Session[] }>> => {
-			return apiFetch<{ sessions: Session[] }>("/api/auth/sessions", {
-				requestOptions: options,
-			});
-		},
-
-		revokeSession: async (
-			sessionId: string,
-			options?: RequestOptions<{ message: string }>
-		): Promise<BloomResponse<{ message: string }>> => {
-			return apiFetch("/api/auth/sessions/revoke", {
-				method: "POST",
-				body: JSON.stringify({ sessionId }),
-				requestOptions: options,
-			});
-		},
-
-		requestEmailVerification: async (
-			options?: RequestOptions<{ message: string }>
-		): Promise<BloomResponse<{ message: string }>> => {
-			return apiFetch("/api/auth/request-email-verification", {
-				method: "POST",
-				requestOptions: options,
-			});
-		},
-
-		requestPasswordReset: async (
-			body: { email: string },
-			options?: RequestOptions<{ message: string }>
-		): Promise<BloomResponse<{ message: string }>> => {
-			return apiFetch("/api/auth/request-password-reset", {
-				method: "POST",
-				body: JSON.stringify(body),
-				requestOptions: options,
-			});
-		},
-	};
+  return client
 }

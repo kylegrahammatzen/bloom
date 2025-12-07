@@ -1,289 +1,301 @@
-<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+# @bloom/client-v2
 
-# Bloom - Client
-
-Browser HTTP client for Bloom authentication, providing a simple API for interacting with Bloom auth endpoints.
-
-## Features
-
-- Type-safe authentication API
-- Automatic error handling
-- Promise-based interface
-- Framework-agnostic
-- TypeScript support
-- Cookie-based session management
+Framework-agnostic client library for Bloom Auth V2.
 
 ## Installation
 
 ```bash
-pnpm add @bloom/client
+pnpm add @bloom/client-v2
 ```
 
-## Quick Start
+## Usage
+
+### Basic Setup
 
 ```typescript
-import { createBloomClient } from '@bloom/client';
+import { bloomClient } from '@bloom/client-v2'
 
-const client = createBloomClient({
-  baseUrl: 'http://localhost:3000',
-});
+const client = bloomClient({
+  baseUrl: '/auth', // default
+  credentials: 'include', // for cookies
+})
+```
 
-const result = await client.signIn({
+### With Plugins
+
+```typescript
+import { bloomClient, autumnClient } from '@bloom/client-v2'
+
+const client = bloomClient({
+  baseUrl: '/auth',
+  credentials: 'include',
+  plugins: [
+    autumnClient(), // Adds billing methods
+  ],
+})
+
+// Now you can use autumn methods
+const { data } = await client.autumn.check({ featureId: 'messages' })
+```
+
+### Authentication
+
+```typescript
+// Register
+const { data, error } = await client.auth.register({
   email: 'user@example.com',
-  password: 'password123',
-});
+  password: 'securepassword',
+  name: 'John Doe',
+})
 
-if (result.data) {
-  console.log('Logged in:', result.data.user);
+// Login
+const { data, error } = await client.auth.login({
+  email: 'user@example.com',
+  password: 'securepassword',
+})
+
+// Logout
+await client.auth.logout()
+
+// Get current session
+const { data } = await client.auth.getSession()
+if (data) {
+  console.log(data.user.email)
+}
+```
+
+### Session Management
+
+```typescript
+// Get all sessions
+const { data } = await client.auth.getSessions()
+
+// Delete a specific session
+await client.auth.deleteSession('session-id')
+
+// Delete all sessions (except current)
+await client.auth.deleteAllSessions()
+```
+
+### Email Verification
+
+```typescript
+// Send verification email
+await client.auth.sendVerificationEmail()
+
+// Verify email with token
+await client.auth.verifyEmail({ token: 'verification-token' })
+```
+
+### Password Reset
+
+```typescript
+// Request password reset
+await client.auth.requestPasswordReset({
+  email: 'user@example.com'
+})
+
+// Reset password with token
+await client.auth.resetPassword({
+  token: 'reset-token',
+  password: 'newpassword'
+})
+```
+
+## Plugins
+
+### Autumn (Stripe Billing)
+
+The Autumn plugin adds Stripe billing integration. Add it when creating your client:
+
+```typescript
+import { bloomClient, autumnClient } from '@bloom/client-v2'
+
+const client = bloomClient({
+  plugins: [autumnClient()],
+})
+
+// Check feature access
+const { data } = await client.autumn.check({
+  featureId: 'messages',
+})
+
+if (data?.allowed) {
+  // User has access
 }
 
-if (result.error) {
-  console.error('Login failed:', result.error);
+// Track usage
+await client.autumn.track({
+  featureId: 'messages',
+  value: 1,
+})
+
+// Create checkout session
+const { data } = await client.autumn.checkout({
+  productId: 'prod_123',
+  successUrl: '/dashboard',
+})
+
+if (data) {
+  window.location.href = data.url
 }
+
+// Get customer data
+const { data } = await client.autumn.getCustomer()
+
+// Get billing portal
+const { data } = await client.autumn.getBillingPortal({
+  returnUrl: '/settings',
+})
+```
+
+### Creating Custom Plugins
+
+You can create your own plugins to extend the client:
+
+```typescript
+import type { ClientPlugin } from '@bloom/client-v2'
+
+const myPlugin = (): ClientPlugin => {
+  return {
+    id: 'my-plugin',
+    getActions: (fetchFn) => {
+      return {
+        myFeature: {
+          myMethod: async (body: { foo: string }) => {
+            return fetchFn({
+              path: '/my-plugin/my-method',
+              options: {
+                method: 'POST',
+                body: JSON.stringify(body),
+              },
+            })
+          },
+        },
+      }
+    },
+  }
+}
+
+// Use it
+const client = bloomClient({
+  plugins: [myPlugin()],
+})
+
+await client.myFeature.myMethod({ foo: 'bar' })
 ```
 
 ## Configuration
 
+### Custom Headers
+
 ```typescript
-const client = createBloomClient({
-  baseUrl: 'https://api.example.com',
-});
+const client = bloomClient({
+  headers: {
+    'X-Custom-Header': 'value',
+  },
+})
 ```
 
-## API Methods
-
-### Sign Up
+### Error Handling
 
 ```typescript
-const result = await client.signUp({
-  email: 'user@example.com',
-  password: 'securePassword123',
-});
+const client = bloomClient({
+  onError: (error) => {
+    console.error('Bloom error:', error.message)
+    // Show toast notification, etc.
+  },
+  onSuccess: (data) => {
+    console.log('Success:', data)
+  },
+})
 ```
 
-Response:
+### Response Format
+
+All methods return a standardized response:
 
 ```typescript
-{
-  data?: {
-    message: string;
-    user: User;
-    session: Session;
-  };
-  error?: {
-    code: string;
-    message: string;
-    details?: any;
-  };
+type BloomResponse<T> = {
+  data: T | null
+  error: BloomError | null
+}
+
+type BloomError = {
+  code: string        // Error code (e.g., 'UNAUTHENTICATED')
+  message: string     // Human-readable message
+  status: number      // HTTP status code
 }
 ```
 
-### Sign In
+## TypeScript
 
-```typescript
-const result = await client.signIn({
-  email: 'user@example.com',
-  password: 'securePassword123',
-});
-```
-
-### Sign Out
-
-```typescript
-const result = await client.signOut();
-```
-
-### Get Session
-
-```typescript
-const result = await client.getSession();
-
-if (result.data) {
-  console.log('Current user:', result.data.user);
-  console.log('Session:', result.data.session);
-}
-```
-
-### Delete Account
-
-```typescript
-const result = await client.deleteAccount();
-```
-
-### Get All Sessions
-
-Get all active sessions for the authenticated user (requires `sessions` plugin):
-
-```typescript
-const result = await client.getSessions();
-
-if (result.data) {
-  console.log('Active sessions:', result.data.sessions);
-
-  result.data.sessions.forEach(session => {
-    console.log(`${session.browser} on ${session.os}`);
-    console.log(`Last active: ${session.lastAccessedAt}`);
-    if (session.isCurrent) {
-      console.log('This is your current session');
-    }
-  });
-}
-```
-
-Response:
-
-```typescript
-{
-  data?: {
-    sessions: Session[];
-  };
-  error?: BloomError;
-}
-```
-
-### Revoke Session
-
-Revoke a specific session (requires `sessions` plugin):
-
-```typescript
-const result = await client.revokeSession('session-id-to-revoke');
-
-if (result.data) {
-  console.log('Session revoked successfully');
-}
-```
-
-**Note:** You cannot revoke your current session using this method. Use `signOut()` instead.
-
-### Verify Email
-
-```typescript
-const result = await client.verifyEmail({
-  token: 'verification-token-from-email',
-});
-```
-
-### Request Email Verification
-
-```typescript
-const result = await client.requestEmailVerification();
-```
-
-### Reset Password
-
-```typescript
-const result = await client.resetPassword({
-  token: 'reset-token-from-email',
-  newPassword: 'newSecurePassword123',
-});
-```
-
-### Request Password Reset
-
-```typescript
-const result = await client.requestPasswordReset({
-  email: 'user@example.com',
-});
-```
-
-## Error Handling
-
-All methods return a result object with `data` or `error`:
-
-```typescript
-const result = await client.signIn({ email, password });
-
-if (result.error) {
-  switch (result.error.code) {
-    case 'INVALID_CREDENTIALS':
-      console.error('Wrong email or password');
-      break;
-    case 'ACCOUNT_LOCKED':
-      console.error('Account is locked');
-      break;
-    case 'RATE_LIMITED':
-      console.error('Too many attempts');
-      break;
-    default:
-      console.error('Login failed:', result.error.message);
-  }
-}
-```
-
-## Type Exports
+### Available Type Exports
 
 ```typescript
 import type {
+  // Client types
+  BloomClient,
+  BloomResponse,
+  BloomError,
+  ClientConfig,
+  ClientPlugin,
+
+  // Auth types
+  AuthMethods,
   User,
   Session,
-  SignInCredentials,
-  SignUpCredentials,
-} from '@bloom/client';
+
+  // Plugin types
+  AutumnMethods,
+} from '@bloom/client-v2'
 ```
 
-## Usage with React
-
-For React applications, use the [@bloom/react](../react) package which provides hooks and context:
+### Usage Example
 
 ```typescript
-import { useAuth } from '@bloom/react';
+import type { User, Session, BloomResponse } from '@bloom/client-v2'
 
-function LoginForm() {
-  const { signIn, isLoading, error } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const { data, error }: BloomResponse<{ user: User; session: Session }> =
+  await client.auth.login({ email, password })
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await signIn({ email, password });
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {error && <div>{error}</div>}
-      <input value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit" disabled={isLoading}>Sign In</button>
-    </form>
-  );
+if (data) {
+  const user: User = data.user
+  const session: Session = data.session
 }
 ```
 
-Or use the client directly:
+## Framework Integration
+
+This client works with **any JavaScript framework** (React, Vue, Svelte, Solid, vanilla JS). No framework-specific wrappers needed - just import and use!
 
 ```typescript
-import { createBloomClient } from '@bloom/client';
-import { useState } from 'react';
-
+// React
 function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState('')
+  const login = async () => {
+    const { data, error } = await client.auth.login({ email, password })
+    if (error) console.error(error.message)
+  }
+  // ...
+}
 
-  const client = createBloomClient({ baseUrl: '/api/auth' });
+// Vue
+const email = ref('')
+const login = async () => {
+  const { data, error } = await client.auth.login({
+    email: email.value,
+    password
+  })
+}
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const result = await client.signIn({ email, password });
-
-    if (result.error) {
-      setError(result.error.message);
-    } else {
-      window.location.href = '/dashboard';
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {error && <div>{error}</div>}
-      <input value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      <button type="submit">Sign In</button>
-    </form>
-  );
+// Svelte
+let email = ''
+async function login() {
+  const { data, error } = await client.auth.login({ email, password })
 }
 ```
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0.
+GNU Affero General Public License v3.0
