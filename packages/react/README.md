@@ -1,12 +1,12 @@
 <img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom - React
+# Bloom - React V2
 
-React hooks and context provider for Bloom authentication, enabling seamless integration with React applications.
+React 19 hooks and context provider for Bloom Auth V2, with native support for the new `use()` hook for context consumption.
 
 ## Features
 
-- React 19 support
+- React 19 support with `use()` hook
 - `useAuth` hook for authentication state
 - `BloomProvider` context provider
 - Automatic session management
@@ -16,13 +16,13 @@ React hooks and context provider for Bloom authentication, enabling seamless int
 ## Installation
 
 ```bash
-pnpm add @bloom/react @bloom/client
+pnpm add @bloom/react-v2 @bloom/client-v2
 ```
 
 ## Quick Start
 
 ```typescript
-import { BloomProvider, useAuth } from '@bloom/react';
+import { BloomProvider, useAuth } from '@bloom/react-v2';
 
 function App() {
   return (
@@ -57,7 +57,7 @@ function Dashboard() {
 Wrap your app with `BloomProvider` to enable authentication:
 
 ```typescript
-import { BloomProvider } from '@bloom/react';
+import { BloomProvider } from '@bloom/react-v2';
 
 <BloomProvider baseURL="http://localhost:3000/api/auth">
   <App />
@@ -71,13 +71,13 @@ const {
   user,
   session,
   isLoading,
+  isSignedIn,
   signIn,
   signUp,
   signOut,
-  deleteAccount,
-  verifyEmail,
+  getSessions,
+  revokeSession,
   requestEmailVerification,
-  resetPassword,
   requestPasswordReset,
   refetch,
 } = useAuth();
@@ -88,6 +88,7 @@ const {
 - `user`: Current user object or null
 - `session`: Current session object or null
 - `isLoading`: Boolean indicating if auth state is loading
+- `isSignedIn`: Boolean indicating if user is authenticated
 
 ### Methods
 
@@ -104,7 +105,7 @@ if (result.error) {
 ## Sign In Form
 
 ```typescript
-import { useAuth } from '@bloom/react';
+import { useAuth } from '@bloom/react-v2';
 import { useState } from 'react';
 
 export function LoginForm() {
@@ -186,26 +187,6 @@ export function SignUpForm() {
 }
 ```
 
-## Delete Account
-
-```typescript
-export function DeleteAccountButton() {
-  const { deleteAccount } = useAuth();
-
-  const handleDelete = async () => {
-    if (confirm('Are you sure you want to delete your account?')) {
-      const result = await deleteAccount();
-
-      if (result.error) {
-        alert(result.error.message);
-      }
-    }
-  };
-
-  return <button onClick={handleDelete}>Delete Account</button>;
-}
-```
-
 ## Password Reset
 
 ```typescript
@@ -244,7 +225,7 @@ export function RequestResetForm() {
 ## Protected Routes
 
 ```typescript
-import { useAuth } from '@bloom/react';
+import { useAuth } from '@bloom/react-v2';
 import { Navigate } from 'react-router-dom';
 
 export function ProtectedRoute({ children }) {
@@ -268,8 +249,8 @@ export function ProtectedRoute({ children }) {
 import type {
   User,
   Session,
-  AuthContextValue,
-} from '@bloom/react';
+  BloomProviderProps,
+} from '@bloom/react-v2';
 ```
 
 ## License

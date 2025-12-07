@@ -1,8 +1,8 @@
 {
   "name": "@bloom/react",
-  "version": "1.0.0",
+  "version": "2.0.0-alpha.1",
   "type": "module",
-  "description": "React bindings for Bloom authentication",
+  "description": "React 19 bindings for Bloom Auth",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "AGPL-3.0",
@@ -19,26 +19,22 @@
   "keywords": [
     "auth",
     "react",
+    "react-19",
     "typescript"
   ],
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "build": "tsc"
   },
   "dependencies": {
     "@bloom/client": "workspace:*"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
     "@types/react": "^19.0.2",
-    "happy-dom": "^19.0.2",
     "react": "^19.0.0",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "react": "^19.0.0"
