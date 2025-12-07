@@ -1,71 +1,66 @@
-import { createClient, RedisClientType } from 'redis';
-import type { SecondaryStorage, RedisStorageConfig } from '../schemas/storage';
+import type { Storage } from '@/schemas/storage'
 
-const clientCache = new Map<string, RedisClientType>();
+export type RedisClient = {
+  get: (key: string) => Promise<string | null>
+  set: (key: string, value: string) => Promise<unknown>
+  setEx: (key: string, seconds: number, value: string) => Promise<unknown>
+  del: (key: string) => Promise<unknown>
+}
 
-export class RedisStorage implements SecondaryStorage {
-  private client: RedisClientType;
-  private namespace: string;
+export type RedisStorageOptions = {
+  keyPrefix?: string
+  defaultTTL?: number
+}
 
-  constructor(config: RedisStorageConfig) {
-    this.namespace = config.namespace || 'bloom';
+/**
+ * Redis storage implementation
+ *
+ * @example Basic usage
+ * ```ts
+ * import { createClient } from 'redis'
+ * import { redisStorage } from '@bloom/core/storage/redis'
+ *
+ * const redis = createClient({ url: process.env.REDIS_URL })
+ * await redis.connect()
+ *
+ * const auth = bloomAuth({
+ *   adapter: drizzleAdapter(db),
+ *   storage: redisStorage(redis),
+ * })
+ * ```
+ *
+ * @example With options
+ * ```ts
+ * storage: redisStorage(redis, {
+ *   keyPrefix: 'bloom:',
+ *   defaultTTL: 3600,
+ * })
+ * ```
+ */
+export function redisStorage(client: RedisClient, options?: RedisStorageOptions): Storage {
+  const prefix = options?.keyPrefix || ''
+  const defaultTTL = options?.defaultTTL
 
-    const cacheKey = `${config.url}:${config.poolSize || 10}`;
+  const prefixKey = (key: string) => `${prefix}${key}`
 
-    if (!clientCache.has(cacheKey)) {
-      clientCache.set(cacheKey, createClient({
-        url: config.url,
-        socket: {
-          connectTimeout: 5000,
-          reconnectStrategy: (retries: number) => {
-            if (retries > 10) return new Error('Max retries reached');
-            return Math.min(retries * 100, 3000);
-          },
-        },
-        isolationPoolOptions: {
-          min: 2,
-          max: config.poolSize || 10,
-        },
-      }));
-    }
+  return {
+    async get(key: string): Promise<string | null> {
+      return await client.get(prefixKey(key))
+    },
 
-    this.client = clientCache.get(cacheKey)!;
-  }
+    async set(key: string, value: string, ttl?: number): Promise<void> {
+      const finalTTL = ttl ?? defaultTTL
+      const prefixedKey = prefixKey(key)
 
-  private key(k: string): string {
-    return `${this.namespace}:${k}`;
-  }
+      if (finalTTL) {
+        await client.setEx(prefixedKey, finalTTL, value)
+      } else {
+        await client.set(prefixedKey, value)
+      }
+    },
 
-  private async ensureConnected(): Promise<void> {
-    if (!this.client.isOpen) {
-      await this.client.connect();
-    }
-  }
-
-  async get<T = unknown>(key: string): Promise<T | null> {
-    await this.ensureConnected();
-    const value = await this.client.get(this.key(key));
-    return value ? JSON.parse(value) : null;
-  }
-
-  async set(key: string, value: unknown, ttl?: number): Promise<void> {
-    await this.ensureConnected();
-    const serialized = JSON.stringify(value);
-    if (ttl) {
-      await this.client.set(this.key(key), serialized, { EX: ttl });
-    } else {
-      await this.client.set(this.key(key), serialized);
-    }
-  }
-
-  async delete(key: string): Promise<void> {
-    await this.ensureConnected();
-    await this.client.del(this.key(key));
-  }
-
-  async disconnect(): Promise<void> {
-    if (this.client.isOpen) {
-      await this.client.quit();
-    }
+    async delete(key: string): Promise<void> {
+      await client.del(prefixKey(key))
+    },
   }
 }

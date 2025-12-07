@@ -1,0 +1,279 @@
+import { describe, it, expect, beforeEach } from 'bun:test'
+import { bloomAuth } from '@/auth'
+import { createMockAdapter } from '@/utils/mockAdapter'
+import type { DatabaseAdapter } from '@/storage/adapter'
+
+describe('Auth API Routes', () => {
+  let auth: ReturnType<typeof bloomAuth>
+  let adapter: DatabaseAdapter
+
+  beforeEach(() => {
+    adapter = createMockAdapter()
+    auth = bloomAuth({
+      adapter,
+      emailPassword: {
+        minPasswordLength: 8,
+        maxPasswordLength: 128,
+      },
+      session: {
+        expiresIn: 7 * 24 * 60 * 60,
+      },
+    })
+  })
+
+  describe('POST /register', () => {
+    it('should create user and return session', async () => {
+      const request = new Request('http://localhost/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'Password123!',
+          name: 'Test User',
+        }),
+      })
+
+      const response = await auth.handler(request)
+      expect(response.status).toBe(201)
+
+      const data = (await response.json()) as any
+      expect(data).toHaveProperty('user')
+      expect(data).toHaveProperty('session')
+      expect(data.user.email).toBe('test@example.com')
+      expect(data.user.name).toBe('Test User')
+
+      const setCookie = response.headers.get('Set-Cookie')
+      expect(setCookie).toContain('bloom.sid=')
+    })
+
+    it('should reject duplicate email', async () => {
+      const userData = {
+        email: 'test@example.com',
+        password: 'Password123!',
+      }
+
+      const request1 = new Request('http://localhost/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      })
+
+      await auth.handler(request1)
+
+      const request2 = new Request('http://localhost/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      })
+
+      const response = await auth.handler(request2)
+      expect(response.status).toBe(409)
+
+      const data = (await response.json()) as any
+      expect(data.error).toBe('User already exists')
+    })
+
+    it('should validate password length', async () => {
+      const request = new Request('http://localhost/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'short',
+        }),
+      })
+
+      const response = await auth.handler(request)
+      expect(response.status).toBe(400)
+
+      const data = (await response.json()) as any
+      expect(data.error).toBe('Invalid password')
+    })
+
+    it('should validate email format', async () => {
+      const request = new Request('http://localhost/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'not-an-email',
+          password: 'Password123!',
+        }),
+      })
+
+      const response = await auth.handler(request)
+      expect(response.status).toBe(400)
+
+      const data = (await response.json()) as any
+      expect(data.error).toBe('Invalid request')
+    })
+  })
+
+  describe('POST /login', () => {
+    beforeEach(async () => {
+      const request = new Request('http://localhost/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'Password123!',
+        }),
+      })
+      await auth.handler(request)
+    })
+
+    it('should login with correct credentials', async () => {
+      const request = new Request('http://localhost/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'Password123!',
+        }),
+      })
+
+      const response = await auth.handler(request)
+      expect(response.status).toBe(200)
+
+      const data = (await response.json()) as any
+      expect(data).toHaveProperty('user')
+      expect(data).toHaveProperty('session')
+      expect(data.user.email).toBe('test@example.com')
+
+      const setCookie = response.headers.get('Set-Cookie')
+      expect(setCookie).toContain('bloom.sid=')
+    })
+
+    it('should reject incorrect password', async () => {
+      const request = new Request('http://localhost/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'WrongPassword!',
+        }),
+      })
+
+      const response = await auth.handler(request)
+      expect(response.status).toBe(401)
+
+      const data = (await response.json()) as any
+      expect(data.error).toBe('Invalid email or password')
+    })
+
+    it('should reject non-existent user', async () => {
+      const request = new Request('http://localhost/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'nonexistent@example.com',
+          password: 'Password123!',
+        }),
+      })
+
+      const response = await auth.handler(request)
+      expect(response.status).toBe(401)
+
+      const data = (await response.json()) as any
+      expect(data.error).toBe('Invalid email or password')
+    })
+  })
+
+  describe('POST /logout', () => {
+    let sessionCookie: string
+
+    beforeEach(async () => {
+      const registerRequest = new Request('http://localhost/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'test@example.com',
+          password: 'Password123!',
+        }),
+      })
+
+      const registerResponse = await auth.handler(registerRequest)
+      const cookie = registerResponse.headers.get('Set-Cookie')
+      sessionCookie = cookie?.split(';')[0] || ''
+    })
+
+    it('should logout and clear session', async () => {
+      const request = new Request('http://localhost/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Cookie': sessionCookie,
+        },
+      })
+
+      const response = await auth.handler(request)
+      expect(response.status).toBe(200)
+
+      const data = (await response.json()) as any
+      expect(data.success).toBe(true)
+
+      const clearCookie = response.headers.get('Set-Cookie')
+      expect(clearCookie).toContain('Max-Age=0')
+    })
+
+    it('should reject logout without session', async () => {
+      const request = new Request('http://localhost/auth/logout', {
+        method: 'POST',
+      })
+
+      const response = await auth.handler(request)
+      expect(response.status).toBe(401)
+
+      const data = (await response.json()) as any
+      expect(data.error).toBe('No active session')
+    })
+  })
+
+  describe('Integration Flow', () => {
+    it('should complete full auth flow', async () => {
+      const registerRequest = new Request('http://localhost/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'flow@example.com',
+          password: 'FlowPassword123!',
+        }),
+      })
+
+      const registerResponse = await auth.handler(registerRequest)
+      expect(registerResponse.status).toBe(201)
+      const registerCookie = registerResponse.headers.get('Set-Cookie')?.split(';')[0] || ''
+
+      const sessionRequest = new Request('http://localhost/auth/session', {
+        method: 'GET',
+        headers: {
+          'Cookie': registerCookie,
+        },
+      })
+
+      const sessionResponse = await auth.handler(sessionRequest)
+      expect(sessionResponse.status).toBe(200)
+      const sessionData = (await sessionResponse.json()) as any
+      expect(sessionData.user.email).toBe('flow@example.com')
+
+      const logoutRequest = new Request('http://localhost/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Cookie': registerCookie,
+        },
+      })
+
+      const logoutResponse = await auth.handler(logoutRequest)
+      expect(logoutResponse.status).toBe(200)
+
+      const sessionAfterLogout = new Request('http://localhost/auth/session', {
+        method: 'GET',
+        headers: {
+          'Cookie': registerCookie,
+        },
+      })
+
+      const sessionAfterLogoutResponse = await auth.handler(sessionAfterLogout)
+      const sessionAfterLogoutData = (await sessionAfterLogoutResponse.json()) as any
+      expect(sessionAfterLogoutData).toBeNull()
+    })
+  })
+})

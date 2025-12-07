@@ -1,111 +1,179 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 /**
- * User schema for runtime validation and type inference
+ * API method parameters schema
+ * Note: headers are unknown since they can be any framework type
  */
-export const UserSchema = z.object({
-  id: z.string(),
-  email: z.email(),
-  email_verified: z.boolean(),
-  name: z.string().optional(),
-  image: z.string().url().optional(),
-  created_at: z.date(),
-  updated_at: z.date(),
-  last_login: z.date().optional(),
-});
+export const ApiMethodParamsSchema = z.object({
+  headers: z.unknown().optional().meta({
+    id: 'headers',
+    title: 'Request Headers',
+    description: 'HTTP headers from any framework (Headers, ReadonlyHeaders, plain object, etc.)',
+  }),
+  body: z.record(z.string(), z.unknown()).optional().meta({
+    id: 'body',
+    title: 'Request Body',
+    description: 'Request body data as key-value pairs',
+  }),
+  query: z.record(z.string(), z.unknown()).optional().meta({
+    id: 'query',
+    title: 'Query Parameters',
+    description: 'URL query parameters as key-value pairs',
+  }),
+})
 
 /**
- * Session schema for runtime validation and type inference
+ * Inferred TypeScript type from ApiMethodParamsSchema
  */
-export const SessionSchema = z.object({
+export type ApiMethodParams = z.infer<typeof ApiMethodParamsSchema>
+
+/**
+ * Registration request body schema
+ */
+export const RegisterRequestSchema = z.object({
+  email: z.email().meta({
+    id: 'register_email',
+    title: 'Email',
+    description: 'User email address',
+  }),
+  password: z.string().meta({
+    id: 'register_password',
+    title: 'Password',
+    description: 'User password (length validated per config)',
+  }),
+  name: z.string().optional().meta({
+    id: 'register_name',
+    title: 'Name',
+    description: 'Optional display name',
+  }),
+})
+
+/**
+ * Login request body schema
+ */
+export const LoginRequestSchema = z.object({
+  email: z.email().meta({
+    id: 'login_email',
+    title: 'Email',
+    description: 'User email address',
+  }),
+  password: z.string().meta({
+    id: 'login_password',
+    title: 'Password',
+    description: 'User password',
+  }),
+})
+
+/**
+ * Auth response schema (used for register and login)
+ */
+export const AuthResponseSchema = z.object({
+  user: z.object({
+    id: z.string(),
+    email: z.email(),
+    name: z.string().optional(),
+    email_verified: z.boolean(),
+  }),
+  session: z.object({
+    id: z.string(),
+    expiresAt: z.date(),
+  }),
+})
+
+export type RegisterRequest = z.infer<typeof RegisterRequestSchema>
+export type LoginRequest = z.infer<typeof LoginRequestSchema>
+export type AuthResponse = z.infer<typeof AuthResponseSchema>
+
+/**
+ * Session item schema (for listing sessions)
+ */
+export const SessionItemSchema = z.object({
   id: z.string(),
   userId: z.string(),
   expiresAt: z.date(),
-  createdAt: z.date(),
-  lastAccessedAt: z.date(),
-  ipAddress: z.string().optional(),
-  userAgent: z.string().optional(),
-  browser: z.string().optional(),
-  os: z.string().optional(),
-  deviceType: z.enum(['desktop', 'mobile', 'tablet', 'unknown']).optional(),
-  isCurrent: z.boolean().optional(),
-  user: UserSchema.optional(),
-});
+  createdAt: z.date().optional(),
+  lastAccessed: z.date().optional(),
+})
 
 /**
- * Generic request schema for API handlers
+ * Sessions list response schema
  */
-export const GenericRequestSchema = z.object({
-  method: z.string(),
-  path: z.string(),
-  url: z.string().optional(),
-  body: z.any().optional(),
-  query: z.record(z.string(), z.any()).optional(),
-  headers: z.record(z.string(), z.union([z.string(), z.array(z.string()), z.undefined()])).optional(),
-  ip: z.string().optional(),
-  userAgent: z.string().optional(),
-});
+export const SessionsListResponseSchema = z.object({
+  sessions: z.array(SessionItemSchema),
+})
 
 /**
- * Generic response schema for API handlers
+ * Delete session response schema
  */
-export const GenericResponseSchema = z.object({
-  status: z.number().int().min(100).max(599),
-  body: z.any(),
-  sessionData: z.any().optional(),
-  clearSession: z.boolean().optional(),
-  callbackUrl: z.string().optional(),
-});
+export const DeleteSessionResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+})
 
 /**
- * Auth event context schema for callbacks
+ * Delete all sessions response schema
  */
-export const AuthEventContextSchema = z.object({
-  action: z.string(),
-  userId: z.string().optional(),
-  email: z.email().optional(),
-  endpoint: z.string(),
-  ip: z.string().optional(),
-});
+export const DeleteAllSessionsResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  count: z.number(),
+})
+
+export type SessionItem = z.infer<typeof SessionItemSchema>
+export type SessionsListResponse = z.infer<typeof SessionsListResponseSchema>
+export type DeleteSessionResponse = z.infer<typeof DeleteSessionResponseSchema>
+export type DeleteAllSessionsResponse = z.infer<typeof DeleteAllSessionsResponseSchema>
 
 /**
- * Send verification email callback context (fires when verification email needs to be sent)
+ * Send verification email request schema
  */
-export const SendVerificationContextSchema = z.object({
-  email: z.email(),
-  token: z.string(),
-  userId: z.string(),
-  verificationUrl: z.string(),
-});
+export const SendVerificationEmailRequestSchema = z.object({
+  email: z.email().meta({
+    id: 'send_verification_email',
+    title: 'Email',
+    description: 'Email address to send verification link to',
+  }),
+})
 
 /**
- * Email verification callback context (fires after successful verification)
+ * Verify email request schema
  */
-export const EmailVerificationContextSchema = z.object({
-  userId: z.string(),
-  email: z.email(),
-  ip: z.string().optional(),
-});
+export const VerifyEmailRequestSchema = z.object({
+  token: z.string().meta({
+    id: 'verify_email_token',
+    title: 'Verification Token',
+    description: 'Email verification token',
+  }),
+})
 
 /**
- * Password reset callback context (fires when reset is requested, for sending email)
+ * Request password reset schema
  */
-export const PasswordResetContextSchema = z.object({
-  email: z.email(),
-  token: z.string(),
-  userId: z.string(),
-  resetUrl: z.string(),
-});
+export const RequestPasswordResetSchema = z.object({
+  email: z.email().meta({
+    id: 'reset_password_email',
+    title: 'Email',
+    description: 'Email address for password reset',
+  }),
+})
 
 /**
- * Inferred TypeScript types from schemas
- * Use these instead of manually maintaining duplicate types
+ * Reset password schema
  */
-export type User = z.infer<typeof UserSchema>;
-export type Session = z.infer<typeof SessionSchema>;
-export type GenericRequest = z.infer<typeof GenericRequestSchema>;
-export type GenericResponse = z.infer<typeof GenericResponseSchema>;
-export type AuthEventContext = z.infer<typeof AuthEventContextSchema>;
-export type SendVerificationContext = z.infer<typeof SendVerificationContextSchema>;
-export type EmailVerificationContext = z.infer<typeof EmailVerificationContextSchema>;
-export type PasswordResetContext = z.infer<typeof PasswordResetContextSchema>;
+export const ResetPasswordSchema = z.object({
+  token: z.string().meta({
+    id: 'reset_password_token',
+    title: 'Reset Token',
+    description: 'Password reset token',
+  }),
+  password: z.string().meta({
+    id: 'reset_password_new',
+    title: 'New Password',
+    description: 'New password (length validated per config)',
+  }),
+})
+
+export type SendVerificationEmailRequest = z.infer<typeof SendVerificationEmailRequestSchema>
+export type VerifyEmailRequest = z.infer<typeof VerifyEmailRequestSchema>
+export type RequestPasswordReset = z.infer<typeof RequestPasswordResetSchema>
+export type ResetPassword = z.infer<typeof ResetPasswordSchema>

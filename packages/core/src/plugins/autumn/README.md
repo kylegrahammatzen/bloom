@@ -1,8 +1,6 @@
-<img src="../../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
+# Bloom Core V2 - Autumn Plugin
 
-# Bloom - Autumn Plugin
-
-Provides pricing and billing integration with [Autumn](https://useautumn.com/) - an open-source infrastructure layer over Stripe.
+Pricing and billing integration with [Autumn](https://useautumn.com/) - open-source infrastructure layer over Stripe.
 
 ## Features
 
@@ -23,119 +21,186 @@ AUTUMN_SECRET_KEY=am_sk_1234567890
 Add the plugin to your auth configuration:
 
 ```typescript
-import { bloomAuth, autumn } from '@bloom/core';
+import { bloomAuth } from '@bloom/core-v2'
+import { autumn } from '@bloom/core-v2/plugins/autumn'
+import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
 
 const auth = bloomAuth({
-  database: mongoose,
+  adapter: drizzleAdapter(db),
   plugins: [
     autumn(), // Reads AUTUMN_SECRET_KEY from env
   ],
-});
+})
 ```
 
 Or with custom configuration:
 
 ```typescript
+import { redisStorage } from '@bloom/core-v2/storage/redis'
+
 const auth = bloomAuth({
-  database: mongoose,
+  adapter: drizzleAdapter(db),
+  storage: redisStorage(redis), // Optional: enables customer caching
   plugins: [
     autumn({
-      apiKey: 'am_sk_1234567890',  // Optional: override env variable
-      apiUrl: 'https://api.useautumn.com/v1',  // Optional: for self-hosted
+      apiKey: 'am_sk_1234567890',
+      apiUrl: 'https://api.useautumn.com/v1',
+      customerCacheTTL: 300, // 5 minutes (default)
     }),
   ],
-});
+})
 ```
 
 ## Usage
 
 ```typescript
-'use server';
-import { auth } from '@/lib/auth';
-import { getCookieHeader } from '@bloom/adapters/nextjs/server';
+'use server'
+import { auth } from '@/lib/auth'
 
 export async function sendMessage(text: string) {
-  const cookie = await getCookieHeader();
-
   // Check access
   const { data } = await auth.api.autumn.check({
-    headers: { cookie },
+    headers: await headers(),
     body: { featureId: 'messages' },
-  });
+  })
 
   if (!data.allowed) {
-    throw new Error('Message limit reached');
+    throw new Error('Message limit reached')
   }
 
   // Perform action
-  await saveMessage(text);
+  await saveMessage(text)
 
   // Track usage
   await auth.api.autumn.track({
-    headers: { cookie },
+    headers: await headers(),
     body: { featureId: 'messages', value: 1 },
-  });
+  })
 
-  return { success: true };
+  return { success: true }
 }
 ```
 
 ## API Methods
 
-### `auth.api.autumn.check(params)`
-Check if user has access to a feature or product.
+```typescript
+// Check feature access
+const { data } = await auth.api.autumn.check({
+  headers: await headers(),
+  body: { featureId: 'messages' }
+})
 
-- **Params:** `{ featureId?: string, productId?: string }`
-- **Returns:** `{ data: { allowed: boolean, remaining?: number, limit?: number } }`
+// Track usage
+await auth.api.autumn.track({
+  headers: await headers(),
+  body: { featureId: 'messages', value: 1 }
+})
 
-### `auth.api.autumn.track(params)`
-Record feature usage for metering.
+// Create checkout session
+const { url } = await auth.api.autumn.checkout({
+  headers: await headers(),
+  body: { productId: 'prod_123', successUrl: '/dashboard' }
+})
 
-- **Params:** `{ featureId: string, value?: number }`
-- **Returns:** `{ success: boolean }`
+// Get customer data
+const customer = await auth.api.autumn.getCustomer({
+  headers: await headers()
+})
 
-### `auth.api.autumn.checkout(params)`
-Create a Stripe checkout session.
+// Get billing portal
+const { url } = await auth.api.autumn.getBillingPortal({
+  headers: await headers(),
+  body: { returnUrl: '/settings' }
+})
 
-- **Params:** `{ productId: string, successUrl?: string }`
-- **Returns:** `{ url: string }`
+// Attach product (upgrade/downgrade)
+await auth.api.autumn.attach({
+  headers: await headers(),
+  body: { productId: 'prod_456' }
+})
 
-### `auth.api.autumn.attach(params)`
-Attach product to customer (upgrade/downgrade without checkout).
+// Cancel subscription
+await auth.api.autumn.cancel({
+  headers: await headers(),
+  body: { productId: 'prod_123' }
+})
 
-- **Params:** `{ productId: string, successUrl?: string }`
-- **Returns:** `{ success: boolean, url?: string }`
+// Create entities (seats, workspaces)
+await auth.api.autumn.createEntity({
+  headers: await headers(),
+  body: {
+    entities: [{ id: 'seat_1', feature_id: 'seats', name: 'Team Member' }]
+  }
+})
 
-### `auth.api.autumn.cancel(params)`
-Cancel a subscription.
+// Query usage data
+const usage = await auth.api.autumn.query({
+  headers: await headers(),
+  body: { featureId: 'messages' }
+})
+```
 
-- **Params:** `{ productId?: string }`
-- **Returns:** `{ success: boolean }`
+For detailed API reference and response types, see [Autumn API Documentation](https://docs.useautumn.com/api-reference/).
 
-### `auth.api.autumn.getCustomer(params)`
-Get customer subscription and usage data.
+## Advanced Configuration
 
-- **Returns:** `{ products: [...], features: {...}, invoices: [...] }`
+### Custom Customer ID
 
-### `auth.api.autumn.getBillingPortal(params)`
-Get Stripe billing portal URL.
+By default, Autumn uses the logged-in user's ID as the customer ID. You can customize this for organization-based tracking:
 
-- **Params:** `{ returnUrl?: string }`
-- **Returns:** `{ url: string }`
+```typescript
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  plugins: [
+    autumn({
+      // Custom function to extract customer ID from requests
+      getCustomerId: async (params) => {
+        // Example: Use organization ID instead of user ID
+        const session = await auth.api.getSession(params)
+        if (!session) throw new Error('Not authenticated')
 
-### `auth.api.autumn.createEntity(params)`
-Create entities like seats or workspaces.
+        const user = await db.user.findById(session.user.id)
+        return user.organizationId
+      },
+    }),
+  ],
+})
+```
 
-- **Params:** `{ entities: { id: string, feature_id: string, name: string } }`
-- **Returns:** Entity data
+### Storage and Caching
 
-### `auth.api.autumn.query(params)`
-Query usage data.
+When you provide a `storage` option to BloomAuth, the Autumn plugin caches customer existence checks to reduce API calls:
 
-- **Params:** `{ featureId?: string, startDate?: string, endDate?: string }`
-- **Returns:** Usage data array
+```typescript
+import { redisStorage } from '@bloom/core-v2/storage/redis'
 
-For detailed API reference, see [Autumn API Documentation](https://docs.useautumn.com/api-reference/).
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  storage: redisStorage(redis),
+  plugins: [
+    autumn({
+      customerCacheTTL: 300, // Cache for 5 minutes (default)
+    }),
+  ],
+})
+```
+
+**Without storage:** Customer existence is checked on every request (no caching)
+**With storage:** Customer existence is cached for the configured TTL
+
+### Clear Customer Cache
+
+If a customer is deleted, you can clear their cache manually:
+
+```typescript
+// Clear by customer ID
+await auth.api.autumn.clearCustomerCache('cust_123')
+
+// Or clear from authenticated request
+await auth.api.autumn.clearCustomerCache({
+  headers: await headers()
+})
+```
 
 ## License
 

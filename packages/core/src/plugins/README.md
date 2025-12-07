@@ -1,122 +1,208 @@
-<img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
+# Bloom Core V2 - Plugins
 
-# Bloom - Plugins
+Extend Bloom with custom routes, hooks, and API methods.
 
-Plugins extend Bloom's authentication system with additional features and API methods.
+## Plugin Architecture
+
+Plugins are the recommended way to add custom functionality to Bloom. Each plugin can provide:
+
+- **Routes**: Custom HTTP endpoints
+- **Hooks**: Before/after middleware for existing routes
+- **API Methods**: Server-side methods on `auth.api`
 
 ## Available Plugins
 
-| Plugin | Description | Documentation |
-|--------|-------------|---------------|
-| [sessions](./sessions) | Multi-session management with device fingerprinting | [README](./sessions/README.md) |
-| [autumn](./autumn) | Pricing & billing integration with Autumn (Stripe infrastructure) | [README](./autumn/README.md) |
+- [Autumn](./autumn/README.md) - Pricing & billing with Stripe integration
 
-## Creating Custom Plugins
-
-Plugins use the `init` hook to extend the `auth.api` object with new methods.
-
-### Plugin Interface
+## Creating a Plugin
 
 ```typescript
-type BloomPlugin = {
-  name: string;
-  init?: (auth: BloomAuth) => void | Promise<void>;
-};
-```
+import type { BloomPlugin } from '@bloom/core-v2'
 
-### Example: Custom Plugin
-
-```typescript
-import type { BloomPlugin, BloomAuth, ApiMethodParams } from '@bloom/core';
-
-export const myPlugin = (): BloomPlugin => {
+export const myPlugin = (config: MyConfig): BloomPlugin => {
   return {
-    name: 'my-plugin',
-    init: (auth: BloomAuth) => {
-      // Access auth config
-      const cookieName = auth.config.session?.cookieName || 'bloom.sid';
+    id: 'my-plugin',
 
-      // Add custom API methods
-      auth.api.myFeature = {
-        doSomething: async (params: ApiMethodParams) => {
-          // Access headers, body, query from params
-          const { headers, body, query } = params;
-
-          // Use auth.config for configuration
-          // Use auth.getSession() or auth.verifySession() for auth
-
-          return { success: true };
+    // Custom HTTP routes
+    routes: [
+      {
+        path: '/custom-endpoint',
+        method: 'POST',
+        handler: async (ctx) => {
+          return Response.json({ data: 'custom response' })
         },
-      };
+      },
+    ],
+
+    // Path-based hooks
+    hooks: {
+      '/register': {
+        after: async (ctx) => {
+          await sendWelcomeEmail(ctx.user.email)
+        },
+      },
     },
-  };
-};
+
+    // API methods (automatically assigned to auth.api[id])
+    // Receives auth instance and optional storage
+    api: (auth, storage) => ({
+      doSomething: async (params) => {
+        // Custom API method with optional caching
+        if (storage) {
+          const cached = await storage.get('key')
+          if (cached) return JSON.parse(cached)
+        }
+
+        const data = await fetchData()
+
+        if (storage) {
+          await storage.set('key', JSON.stringify(data), 300)
+        }
+
+        return data
+      },
+    }),
+  }
+}
 ```
 
-### Plugin Best Practices
+## Using Plugins
 
-1. **Use the init hook with closure** to access `auth.config`:
-   ```typescript
-   init: (auth: BloomAuth) => {
-     const config = auth.config.session;
-     // Use config in your methods
-   }
-   ```
+Add plugins to your auth configuration:
 
-2. **Validate authentication** in your methods:
-   ```typescript
-   const sessionData = parseSessionCookie(cookies[cookieName]);
-   if (!sessionData) {
-     throw new APIError(APIErrorCode.NOT_AUTHENTICATED);
-   }
-   ```
+```typescript
+import { bloomAuth } from '@bloom/core-v2'
+import { autumn } from '@bloom/core-v2/plugins/autumn'
+import { myPlugin } from './my-plugin'
 
-3. **Use structured errors** from `@/schemas/errors`:
-   ```typescript
-   import { APIError, APIErrorCode } from '@/schemas/errors';
-   throw new APIError(APIErrorCode.UNAUTHORIZED);
-   ```
-
-4. **Add TypeScript types** for type safety:
-   ```typescript
-   declare module '@bloom/core' {
-     interface BloomAuthApi {
-       myFeature?: {
-         doSomething: (params: ApiMethodParams) => Promise<{ success: boolean }>;
-       };
-     }
-   }
-   ```
-
-5. **Register HTTP routes** in the handler by adding to `packages/core/src/handler.ts`:
-   ```typescript
-   const routes: Record<string, Record<string, RouteHandler>> = {
-     POST: {
-       '/my-feature/action': handleMyFeatureAction,
-     },
-   };
-   ```
-
-### Plugin Architecture
-
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  plugins: [
+    autumn({ apiKey: 'am_sk_...' }),
+    myPlugin({ /* config */ }),
+  ],
+})
 ```
-┌─────────────────┐
-│   bloomAuth()   │
-└────────┬────────┘
-         │
-         ├─ Register plugins
-         │
-         v
-┌─────────────────┐
-│  plugin.init()  │
-└────────┬────────┘
-         │
-         ├─ Extend auth.api
-         │
-         v
-┌─────────────────┐
-│   auth.api.X    │  ← New API methods
-└─────────────────┘
+
+### With Storage (Optional)
+
+Plugins can leverage storage for caching and temporary data:
+
+```typescript
+import { redisStorage } from '@bloom/core-v2/storage/redis'
+
+const auth = bloomAuth({
+  adapter: drizzleAdapter(db),
+  storage: redisStorage(redis), // Passed to all plugins for caching
+  plugins: [
+    myPlugin({ /* config */ }),
+  ],
+})
+```
+
+**Without storage:** Plugins work normally but cannot cache data
+**With storage:** Plugins can cache data using `storage.get()` and `storage.set()`
+
+## Plugin Context
+
+Plugin route handlers receive a `Context` object with:
+
+```typescript
+type Context = {
+  body: any                    // Parsed JSON body
+  params: Record<string, string>  // URL params (/users/:id)
+  headers: Headers             // Request headers
+  user?: User                  // Current user (if authenticated)
+  session?: Session            // Current session (if authenticated)
+}
+```
+
+## Plugin API Methods
+
+Plugin API methods are automatically assigned to `auth.api[plugin.id]`. The `api` function receives the auth instance and optional storage:
+
+```typescript
+api: (auth, storage) => {
+  // Private helper (not exposed to users)
+  const getUser = async (params: ApiMethodParams) => {
+    const session = await auth.api.getSession(params)
+    if (!session) throw new Error('Not authenticated')
+    return session.user
+  }
+
+  // Public methods (exposed via auth.api.myPlugin)
+  return {
+    myMethod: async (params: ApiMethodParams) => {
+      const user = await getUser(params)
+
+      // Use storage if available
+      if (storage) {
+        const cacheKey = `user:${user.id}:data`
+        const cached = await storage.get(cacheKey)
+        if (cached) return JSON.parse(cached)
+
+        const data = await fetchData(user.id)
+        await storage.set(cacheKey, JSON.stringify(data), 300)
+        return data
+      }
+
+      // Without storage, fetch every time
+      return await fetchData(user.id)
+    },
+  }
+}
+```
+
+## TypeScript Types
+
+Extend the `BloomAuthApi` type for TypeScript support:
+
+```typescript
+declare module '@bloom/core-v2' {
+  interface BloomAuthApi {
+    myPlugin: {
+      myMethod(params: ApiMethodParams): Promise<MyResponse>
+    }
+  }
+}
+```
+
+## Examples
+
+### Custom Route with Authentication
+
+```typescript
+routes: [
+  {
+    path: '/admin/stats',
+    method: 'GET',
+    handler: async (ctx) => {
+      if (!ctx.user) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      const stats = await getAdminStats()
+      return Response.json(stats)
+    },
+  },
+]
+```
+
+### Hook with Error Handling
+
+```typescript
+hooks: {
+  '/login': {
+    after: async (ctx) => {
+      try {
+        await trackLogin(ctx.user.id)
+      } catch (error) {
+        console.error('Failed to track login:', error)
+        // Don't throw - hooks should not block the request
+      }
+    },
+  },
+}
 ```
 
 ## License

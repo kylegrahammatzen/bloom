@@ -1,120 +1,19 @@
-import type { BloomPlugin, BloomAuth, ApiMethodParams } from '@/schemas';
-import { parseSessionCookie } from '@/schemas/session';
-import { APIError, APIErrorCode } from '@/schemas/errors';
+import type { BloomPlugin, BloomAuth, ApiMethodParams } from '@/types'
+import type { Storage, Logger } from '@/schemas'
+import type {
+  AutumnConfig,
+  AutumnCheckResponse,
+  AutumnTrackResponse,
+  AutumnCheckoutResponse,
+  AutumnAttachResponse,
+  AutumnCancelResponse,
+  AutumnBillingPortalResponse,
+  AutumnEntityResponse,
+  AutumnQueryResponse,
+  AutumnCustomerResponse,
+} from '@/plugins/autumn/schemas'
 
-/**
- * Autumn plugin configuration
- */
-export type AutumnConfig = {
-  /**
-   * Autumn API secret key
-   * Get from https://app.useautumn.com/ under "Developer"
-   */
-  apiKey?: string;
-
-  /**
-   * Autumn API URL (for self-hosted instances)
-   * @default "https://api.useautumn.com"
-   */
-  apiUrl?: string;
-}
-
-/**
- * Autumn API request types
- */
-export type AutumnEntity = {
-  id: string;
-  feature_id: string;
-  name: string;
-}
-
-/**
- * Autumn API response types
- */
-export type AutumnCheckResponse = {
-  data: {
-    allowed: boolean;
-    remaining?: number;
-    limit?: number;
-  };
-}
-
-export type AutumnTrackResponse = {
-  success: boolean;
-}
-
-export type AutumnCheckoutResponse = {
-  url: string; // Stripe checkout URL
-}
-
-export type AutumnAttachResponse = {
-  success: boolean;
-  url?: string; // Stripe checkout URL if payment required
-}
-
-export type AutumnCancelResponse = {
-  success: boolean;
-}
-
-export type AutumnBillingPortalResponse = {
-  url: string; // Stripe billing portal URL
-}
-
-export type AutumnEntityResponse = {
-  id: string;
-  feature_id: string;
-  customer_id: string;
-  data?: Record<string, any>;
-}
-
-export type AutumnQueryResponse = {
-  data: {
-    feature_id?: string;
-    usage: number;
-    limit?: number;
-    period_start?: string;
-    period_end?: string;
-  }[];
-}
-
-export type AutumnCustomerResponse = {
-  autumn_id: string;
-  created_at: number;
-  env: string;
-  id: string;
-  name?: string;
-  email?: string;
-  fingerprint?: string;
-  stripe_id?: string;
-  products: Array<{
-    id: string;
-    name: string | null;
-    group: string | null;
-    status: 'active' | 'past_due' | 'trialing' | 'scheduled';
-    started_at: number;
-    canceled_at: number | null;
-    current_period_start: number | null;
-    current_period_end: number | null;
-  }>;
-  features: Array<{
-    feature_id: string;
-    unlimited: boolean;
-    interval: 'month' | 'year' | null;
-    balance: number | null;
-    usage: number | null;
-    included_usage: number | null;
-    next_reset_at: number | null;
-  }>;
-  invoices?: Array<{
-    product_ids: string[];
-    stripe_id: string;
-    status: 'paid' | 'unpaid' | 'void';
-    total: number;
-    currency: string;
-    created_at: number;
-    hosted_invoice_url: string;
-  }>;
-}
+export type { AutumnConfig } from '@/plugins/autumn/schemas'
 
 /**
  * Autumn plugin - provides pricing & billing integration
@@ -132,47 +31,65 @@ export type AutumnCustomerResponse = {
  * - getCustomer(): Get customer subscription and usage data
  */
 export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
-  return {
-    name: 'autumn',
-    init: (auth: BloomAuth) => {
-      const apiKey = config.apiKey || process.env.AUTUMN_SECRET_KEY;
-      const apiUrl = config.apiUrl || process.env.AUTUMN_API_URL || 'https://api.useautumn.com/v1';
-      const cookieName = auth.config.session?.cookieName || 'bloom.sid';
+  const apiKey = config.apiKey || process.env.AUTUMN_SECRET_KEY
+  const apiUrl = config.apiUrl || process.env.AUTUMN_API_URL || 'https://api.useautumn.com/v1'
 
-      if (!apiKey) {
-        throw new Error('Autumn API key is required. Set AUTUMN_SECRET_KEY environment variable or pass apiKey in config.');
+  if (!apiKey) {
+    throw new Error('Autumn API key is required. Set AUTUMN_SECRET_KEY environment variable or pass apiKey in config.')
+  }
+
+  return {
+    id: 'autumn',
+
+    api: (auth: BloomAuth, storage?: Storage, logger?: Logger) => {
+      const cacheTTL = config.customerCacheTTL ?? 300
+
+      const getCustomerId = async (params: ApiMethodParams): Promise<string> => {
+        // Use custom getCustomerId if provided
+        if (config.getCustomerId) {
+          return await config.getCustomerId(params)
+        }
+
+        // Default: use userId from session
+        const sessionData = await auth.api.getSession(params)
+
+        if (!sessionData) {
+          throw new Error('Not authenticated')
+        }
+
+        return sessionData.user.id
       }
 
-      /**
-       * Get user ID from session cookie
-       */
-      const getUserId = (params: ApiMethodParams): string => {
-        const cookieValue = params.headers?.['cookie'] || params.headers?.['Cookie'];
-
-        if (!cookieValue || typeof cookieValue !== 'string') {
-          throw new APIError(APIErrorCode.NOT_AUTHENTICATED);
+      const ensureCustomer = async (customerId: string): Promise<void> => {
+        // Only cache if storage is provided
+        if (!storage) {
+          // No storage, always try to create
+          try {
+            await autumnRequest('/customers', 'POST', { id: customerId })
+          } catch {
+            // Customer already exists or other error - either way we're good
+          }
+          return
         }
 
-        const cookies = parseCookies(cookieValue);
-        const sessionCookie = cookies[cookieName];
+        // Check cache
+        const cacheKey = `autumn:customer:${customerId}`
+        const cached = await storage.get(cacheKey)
+        if (cached) return
 
-        if (!sessionCookie) {
-          throw new APIError(APIErrorCode.NOT_AUTHENTICATED);
+        // Try to create customer
+        try {
+          await autumnRequest('/customers', 'POST', { id: customerId })
+        } catch {
+          // Customer already exists or other error - either way we're good
         }
 
-        const sessionData = parseSessionCookie(sessionCookie);
-        if (!sessionData) {
-          throw new APIError(APIErrorCode.NOT_AUTHENTICATED);
-        }
+        // Cache the result
+        await storage.set(cacheKey, '1', cacheTTL)
+      }
 
-        return sessionData.userId;
-      };
-
-      /**
-       * Make request to Autumn API
-       */
-      const autumnRequest = async <T = any>(endpoint: string, method: string = 'POST', body?: any): Promise<T> => {
-        const url = `${apiUrl}${endpoint}`;
+      const autumnRequest = async <T>(endpoint: string, method: string = 'POST', body?: unknown): Promise<T> => {
+        const url = `${apiUrl}${endpoint}`
         const response = await fetch(url, {
           method,
           headers: {
@@ -180,238 +97,175 @@ export const autumn = (config: AutumnConfig = {}): BloomPlugin => {
             'Authorization': `Bearer ${apiKey}`,
           },
           body: body ? JSON.stringify(body) : undefined,
-        });
+        })
 
         if (!response.ok) {
-          const errorText = await response.text();
-          let errorMessage = response.statusText;
+          const errorText = await response.text()
+          let errorMessage = response.statusText
 
           try {
-            const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.message || errorJson.error || errorText;
+            const errorJson = JSON.parse(errorText)
+            errorMessage = errorJson.message || errorJson.error || errorText
           } catch {
-            errorMessage = errorText || response.statusText;
+            errorMessage = errorText || response.statusText
           }
 
-          console.error(`[Autumn API] ${method} ${url} failed:`, {
+          logger?.error(`Autumn API ${method} ${url} failed:`, {
             status: response.status,
             statusText: response.statusText,
             error: errorMessage,
-          });
+          })
 
-          throw new Error(`Autumn API error (${response.status}): ${errorMessage}`);
+          throw new Error(`Autumn API error (${response.status}): ${errorMessage}`)
         }
 
-        return response.json() as Promise<T>;
-      };
+        return response.json() as Promise<T>
+      }
 
-      auth.api.autumn = {
-        /**
-         * Check if user has access to a feature or product
-         */
+      return {
         check: async (params: ApiMethodParams): Promise<AutumnCheckResponse> => {
-          const userId = getUserId(params);
-          const { featureId, productId } = params.body || {};
+          const customerId = await getCustomerId(params)
+          await ensureCustomer(customerId)
+
+          const { featureId, productId } = params.body || {}
 
           if (!featureId && !productId) {
-            throw new APIError(APIErrorCode.INVALID_INPUT, 'Either featureId or productId is required');
+            throw new Error('Either featureId or productId is required')
           }
 
-          const payload: any = { customer_id: userId };
-          if (featureId) payload.feature_id = featureId;
-          if (productId) payload.product_id = productId;
+          const payload: Record<string, unknown> = { customer_id: customerId }
+          if (featureId) payload.feature_id = featureId
+          if (productId) payload.product_id = productId
 
-          return autumnRequest<AutumnCheckResponse>('/check', 'POST', payload);
+          return autumnRequest<AutumnCheckResponse>('/check', 'POST', payload)
         },
 
-        /**
-         * Track usage of a feature
-         */
         track: async (params: ApiMethodParams): Promise<AutumnTrackResponse> => {
-          const userId = getUserId(params);
-          const { featureId, value = 1 } = params.body || {};
+          const customerId = await getCustomerId(params)
+          const { featureId, value = 1 } = params.body || {}
 
           if (!featureId) {
-            throw new APIError(APIErrorCode.INVALID_INPUT, 'featureId is required');
+            throw new Error('featureId is required')
           }
 
           return autumnRequest<AutumnTrackResponse>('/track', 'POST', {
-            customer_id: userId,
+            customer_id: customerId,
             feature_id: featureId,
             value,
-          });
+          })
         },
 
-        /**
-         * Create checkout session for product purchase
-         */
         checkout: async (params: ApiMethodParams): Promise<AutumnCheckoutResponse> => {
-          const userId = getUserId(params);
-          const { productId, successUrl } = params.body || {};
+          const customerId = await getCustomerId(params)
+          const { productId, successUrl } = params.body || {}
 
           if (!productId) {
-            throw new APIError(APIErrorCode.INVALID_INPUT, 'productId is required');
+            throw new Error('productId is required')
           }
 
-          const payload: any = {
-            customer_id: userId,
+          const payload: Record<string, unknown> = {
+            customer_id: customerId,
             product_id: productId,
-          };
+          }
+          if (successUrl) payload.success_url = successUrl
 
-          if (successUrl) payload.success_url = successUrl;
-
-          return autumnRequest<AutumnCheckoutResponse>('/checkout', 'POST', payload);
+          return autumnRequest<AutumnCheckoutResponse>('/checkout', 'POST', payload)
         },
 
-        /**
-         * Get customer subscription and usage data
-         */
         getCustomer: async (params: ApiMethodParams): Promise<AutumnCustomerResponse> => {
-          const userId = getUserId(params);
-
-          try {
-            return await autumnRequest<AutumnCustomerResponse>(`/customers/${userId}`, 'GET');
-          } catch (error: any) {
-            // If customer doesn't exist (401/404), create them first
-            if (error.message?.includes('401') || error.message?.includes('404')) {
-              console.log(`[Autumn] Customer ${userId} not found, creating...`);
-
-              try {
-                // Create the customer - POST /customers returns the full customer object
-                const newCustomer = await autumnRequest<AutumnCustomerResponse>('/customers', 'POST', {
-                  id: userId,
-                });
-                console.log(`[Autumn] Customer ${userId} created successfully`);
-
-                // Return the customer object directly from POST response
-                return newCustomer;
-              } catch (createError: any) {
-                console.error(`[Autumn] Failed to create customer ${userId}:`, createError.message);
-                throw new Error(`Failed to create Autumn customer: ${createError.message}`);
-              }
-            }
-
-            // Re-throw other errors (not 401/404)
-            console.error(`[Autumn] Failed to get customer ${userId}:`, error.message);
-            throw error;
-          }
+          const customerId = await getCustomerId(params)
+          return autumnRequest<AutumnCustomerResponse>(`/customers/${customerId}`, 'GET')
         },
 
-        /**
-         * Attach product to customer (upgrade/downgrade)
-         */
         attach: async (params: ApiMethodParams): Promise<AutumnAttachResponse> => {
-          const userId = getUserId(params);
-          const { productId, successUrl, cancelUrl } = params.body || {};
+          const customerId = await getCustomerId(params)
+          const { productId, successUrl, cancelUrl } = params.body || {}
 
           if (!productId) {
-            throw new APIError(APIErrorCode.INVALID_INPUT, 'productId is required');
+            throw new Error('productId is required')
           }
 
-          const payload: any = {
-            customer_id: userId,
+          const payload: Record<string, unknown> = {
+            customer_id: customerId,
             product_id: productId,
-          };
+          }
+          if (successUrl) payload.success_url = successUrl
+          if (cancelUrl) payload.cancel_url = cancelUrl
 
-          if (successUrl) payload.success_url = successUrl;
-          if (cancelUrl) payload.cancel_url = cancelUrl;
-
-          return autumnRequest<AutumnAttachResponse>('/attach', 'POST', payload);
+          return autumnRequest<AutumnAttachResponse>('/attach', 'POST', payload)
         },
 
-        /**
-         * Cancel product subscription
-         */
         cancel: async (params: ApiMethodParams): Promise<AutumnCancelResponse> => {
-          const userId = getUserId(params);
-          const { productId } = params.body || {};
+          const customerId = await getCustomerId(params)
+          const { productId } = params.body || {}
 
-          const payload: any = {
-            customer_id: userId,
-          };
+          const payload: Record<string, unknown> = { customer_id: customerId }
+          if (productId) payload.product_id = productId
 
-          if (productId) payload.product_id = productId;
-
-          return autumnRequest<AutumnCancelResponse>('/cancel', 'POST', payload);
+          return autumnRequest<AutumnCancelResponse>('/cancel', 'POST', payload)
         },
 
-        /**
-         * Get Stripe billing portal URL
-         */
         getBillingPortal: async (params: ApiMethodParams): Promise<AutumnBillingPortalResponse> => {
-          const userId = getUserId(params);
-          const { returnUrl } = params.body || {};
+          const customerId = await getCustomerId(params)
+          const { returnUrl } = params.body || {}
 
-          const payload: any = {};
+          const payload: Record<string, unknown> = {}
+          if (returnUrl) payload.return_url = returnUrl
 
-          if (returnUrl) payload.return_url = returnUrl;
-
-          return autumnRequest<AutumnBillingPortalResponse>(`/customers/${userId}/billing_portal`, 'POST', payload);
+          return autumnRequest<AutumnBillingPortalResponse>(`/customers/${customerId}/billing_portal`, 'POST', payload)
         },
 
-        /**
-         * Create entity (seats, workspaces, etc.)
-         * Can create single or multiple entities
-         */
         createEntity: async (params: ApiMethodParams): Promise<AutumnEntityResponse> => {
-          const userId = getUserId(params);
-          const { entities } = params.body || {};
+          const customerId = await getCustomerId(params)
+          const { entities } = params.body || {}
 
           if (!entities) {
-            throw new APIError(APIErrorCode.INVALID_INPUT, 'entities array is required');
+            throw new Error('entities array is required')
           }
 
-          // API expects array of { id, feature_id, name }
-          const payload = Array.isArray(entities) ? entities : [entities];
-
-          return autumnRequest<AutumnEntityResponse>(`/customers/${userId}/entities`, 'POST', payload);
+          const payload = Array.isArray(entities) ? entities : [entities]
+          return autumnRequest<AutumnEntityResponse>(`/customers/${customerId}/entities`, 'POST', payload)
         },
 
-        /**
-         * Get entity information
-         */
         getEntity: async (params: ApiMethodParams): Promise<AutumnEntityResponse> => {
-          const userId = getUserId(params);
-          const { entityId } = params.body || {};
+          const customerId = await getCustomerId(params)
+          const { entityId } = params.body || {}
 
           if (!entityId) {
-            throw new APIError(APIErrorCode.INVALID_INPUT, 'entityId is required');
+            throw new Error('entityId is required')
           }
 
-          return autumnRequest<AutumnEntityResponse>(`/customers/${userId}/entities/${entityId}`, 'GET');
+          return autumnRequest<AutumnEntityResponse>(`/customers/${customerId}/entities/${entityId}`, 'GET')
+        },
+
+        query: async (params: ApiMethodParams): Promise<AutumnQueryResponse> => {
+          const customerId = await getCustomerId(params)
+          const { featureId, startDate, endDate } = params.body || {}
+
+          const payload: Record<string, unknown> = { customer_id: customerId }
+          if (featureId) payload.feature_id = featureId
+          if (startDate) payload.start_date = startDate
+          if (endDate) payload.end_date = endDate
+
+          return autumnRequest<AutumnQueryResponse>('/query', 'POST', payload)
         },
 
         /**
-         * Query usage data
+         * Clear customer cache - useful when a customer is deleted
+         * Accepts customerId directly or gets it from params
          */
-        query: async (params: ApiMethodParams): Promise<AutumnQueryResponse> => {
-          const userId = getUserId(params);
-          const { featureId, startDate, endDate } = params.body || {};
+        clearCustomerCache: async (customerIdOrParams: string | ApiMethodParams): Promise<void> => {
+          const customerId = typeof customerIdOrParams === 'string'
+            ? customerIdOrParams
+            : await getCustomerId(customerIdOrParams)
 
-          const payload: any = {
-            customer_id: userId,
-          };
-
-          if (featureId) payload.feature_id = featureId;
-          if (startDate) payload.start_date = startDate;
-          if (endDate) payload.end_date = endDate;
-
-          return autumnRequest<AutumnQueryResponse>('/query', 'POST', payload);
+          // Only clear if storage is provided
+          if (storage) {
+            const cacheKey = `autumn:customer:${customerId}`
+            await storage.delete(cacheKey)
+          }
         },
-      };
-    }
-  };
-};
-
-/**
- * Simple cookie parser helper
- */
-function parseCookies(cookieString: string): Record<string, string> {
-  return cookieString.split(';').reduce((acc, cookie) => {
-    const [key, value] = cookie.trim().split('=');
-    if (key && value) {
-      acc[key] = decodeURIComponent(value);
-    }
-    return acc;
-  }, {} as Record<string, string>);
+      }
+    },
+  }
 }
