@@ -1,52 +1,65 @@
-import express, { type Application } from 'express';
-import { bloomAuth } from '@bloom/core';
-import type { BloomServerConfig, BloomServerInstance } from '@bloom/core/schemas/server';
-import { toExpressHandler, requireAuth } from './handlers.js';
-import { setupHelmet, setupCors, setupCookieParser } from './middleware.js';
-import { setupHealthRoute, setupErrorHandler } from './routes.js';
+import type { BloomAuth } from '@bloom/core-v2'
+import type { Request, Response, NextFunction } from 'express'
 
-export function bloomServer(config: BloomServerConfig): BloomServerInstance {
-  if (!config.session?.secret) {
-    throw new Error('Session secret is required. Please provide config.session.secret');
-  }
+/**
+ * Express framework adapter for Bloom Auth V2
+ *
+ * Converts Express req/res to Web Standard Request/Response format
+ *
+ * @example
+ * import express from 'express'
+ * import { auth } from './auth'
+ * import { toExpressHandler } from '@bloom/adapters-v2/express'
+ *
+ * const app = express()
+ * app.use(express.json())
+ * app.use('/auth/*', toExpressHandler({ auth }))
+ */
+export function toExpressHandler(props: { auth: BloomAuth }) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Build Web Standard Request from Express request
+      const protocol = req.protocol || 'http'
+      const host = req.get('host') || 'localhost'
+      const url = new URL(req.originalUrl || req.url, `${protocol}://${host}`)
 
-  const app: Application = express();
-  const auth = bloomAuth(config);
-
-  setupHelmet(app, config);
-  setupCors(app, config);
-  setupCookieParser(app);
-
-  app.all('/api/auth/*', toExpressHandler(auth));
-
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-  setupHealthRoute(app);
-  setupErrorHandler(app);
-
-  const addRoute = (path: string, handler: any, options?: { protected?: boolean }) => {
-    if (options?.protected) {
-      app.use(path, requireAuth(), handler);
-    } else {
-      app.use(path, handler);
-    }
-  };
-
-  const start = async (port?: number) => {
-    const serverPort = port || config.port || parseInt(process.env.PORT || '5000', 10);
-
-    app.listen(serverPort, () => {
-      if (config.onReady) {
-        config.onReady(serverPort);
+      // Get body as string if it exists
+      let body: string | undefined
+      if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+        body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body)
       }
-    });
-  };
 
-  return {
-    app,
-    auth,
-    addRoute,
-    start,
-  };
+      const request = new Request(url.toString(), {
+        method: req.method,
+        headers: new Headers(req.headers as Record<string, string>),
+        body,
+      })
+
+      // Call Bloom handler
+      const response = await props.auth.handler(request)
+
+      // Convert Web Standard Response to Express response
+      res.status(response.status)
+
+      // Set headers
+      response.headers.forEach((value: string, key: string) => {
+        res.setHeader(key, value)
+      })
+
+      // Send body
+      const responseBody = await response.text()
+
+      // Try to parse as JSON for better Express integration
+      try {
+        const json = JSON.parse(responseBody)
+        res.json(json)
+      } catch {
+        // Not JSON, send as text
+        res.send(responseBody)
+      }
+    } catch (error) {
+      // Pass error to Express error handler
+      next(error)
+    }
+  }
 }
