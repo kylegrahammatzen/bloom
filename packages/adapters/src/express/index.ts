@@ -1,4 +1,4 @@
-import type { BloomAuth } from '@bloom/core-v2'
+import type { BloomAuth } from '@bloom/core'
 import type { Request, Response, NextFunction } from 'express'
 
 /**

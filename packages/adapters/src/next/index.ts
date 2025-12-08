@@ -1,4 +1,4 @@
-import type { BloomAuth } from '@bloom/core-v2'
+import type { BloomAuth } from '@bloom/core'
 
 /**
  * Next.js framework adapter for Bloom Auth V2

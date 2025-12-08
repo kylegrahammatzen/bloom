@@ -15,6 +15,8 @@
   "scripts": {
     "dev": "turbo dev",
     "dev:express": "bun run --cwd apps/express-server dev",
+    "dev:bun": "bun run --cwd apps/bun-server dev",
+    "dev:elysia": "bun run --cwd apps/elysia-server dev",
     "build": "turbo build",
     "test": "turbo test",
     "docker:up": "docker-compose up -d",

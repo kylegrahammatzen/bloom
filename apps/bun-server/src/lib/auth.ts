@@ -1,6 +1,6 @@
 import { bloomAuth, type Context } from '@bloom/core'
 import { mongodbAdapter } from '@bloom/core/adapters/mongodb'
-import { db } from '@/lib/db'
+import { db } from './db'
 
 export const auth = bloomAuth({
   adapter: mongodbAdapter(db),
@@ -10,12 +10,12 @@ export const auth = bloomAuth({
     requireEmailVerification: false,
   },
   session: {
-    expiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
+    expiresIn: 7 * 24 * 60 * 60,
   },
   rateLimit: {
-    enabled: true,
-    window: 60, // 60 seconds
-    max: 100, // 100 requests per window
+    enabled: process.env.NODE_ENV === 'production',
+    window: 60,
+    max: 100,
     rules: {
       '/login': { window: 60, max: 5 },
       '/register': { window: 60, max: 3 },

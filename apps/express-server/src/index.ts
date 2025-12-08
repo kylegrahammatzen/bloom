@@ -2,7 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
-import { toExpressHandler } from '@bloom/adapters-v2/express'
+import { toExpressHandler } from '@bloom/adapters/express'
 import { auth } from '@/lib/auth'
 
 const app = express()
