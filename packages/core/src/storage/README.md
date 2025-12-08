@@ -1,6 +1,6 @@
 <img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - Storage
+# Bloom Core - Storage
 
 High-speed storage for rate limiting, session caching, and temporary data.
 
@@ -82,8 +82,8 @@ function redisStorage(client: RedisClient, options?: RedisStorageOptions): Stora
 ### Memory Storage
 
 ```typescript
-import { memoryStorage } from '@bloom/core-v2'
-import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
+import { memoryStorage } from '@bloom/core'
+import { drizzleAdapter } from '@bloom/core/adapters/drizzle'
 
 export const auth = bloomAuth({
   adapter: drizzleAdapter(db),
@@ -107,8 +107,8 @@ export const auth = bloomAuth({
 
 ```typescript
 import { createClient } from 'redis'
-import { redisStorage } from '@bloom/core-v2'
-import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
+import { redisStorage } from '@bloom/core'
+import { drizzleAdapter } from '@bloom/core/adapters/drizzle'
 
 const redis = createClient({
   url: process.env.REDIS_URL,
@@ -187,7 +187,7 @@ When storage is NOT provided, fallback strategies are used:
 Implement your own storage by following the `Storage` interface:
 
 ```typescript
-import type { Storage } from '@bloom/core-v2'
+import type { Storage } from '@bloom/core'
 
 function customStorage(): Storage {
   return {
@@ -251,7 +251,7 @@ storage: redisStorage(redis, {
 Use memory storage for tests to avoid external dependencies:
 
 ```typescript
-import { memoryStorage } from '@bloom/core-v2'
+import { memoryStorage } from '@bloom/core'
 
 const storage = memoryStorage()
 

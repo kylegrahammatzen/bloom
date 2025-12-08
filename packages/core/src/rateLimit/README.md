@@ -1,6 +1,6 @@
 <img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - Rate Limiting
+# Bloom Core - Rate Limiting
 
 Protect your auth endpoints from abuse with configurable rate limits.
 
@@ -23,8 +23,8 @@ Built-in rate limiter with auto-detection (Storage > Database > Memory). No exte
 ## Basic Example
 
 ```typescript
-import { bloomAuth } from '@bloom/core-v2'
-import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
+import { bloomAuth } from '@bloom/core'
+import { drizzleAdapter } from '@bloom/core/adapters/drizzle'
 
 export const auth = bloomAuth({
   adapter: drizzleAdapter(db),
@@ -44,7 +44,7 @@ Rate limiting automatically chooses the best strategy:
 
 **1. With Storage (Recommended for Production):**
 ```typescript
-import { redisStorage } from '@bloom/core-v2'
+import { redisStorage } from '@bloom/core'
 
 export const auth = bloomAuth({
   adapter: drizzleAdapter(db, {
@@ -229,7 +229,7 @@ export const auth = bloomAuth({
 
 ```typescript
 import { createClient } from 'redis'
-import { redisStorage } from '@bloom/core-v2'
+import { redisStorage } from '@bloom/core'
 
 const redis = createClient({ url: process.env.REDIS_URL })
 await redis.connect()

@@ -1,6 +1,6 @@
 <img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - Kysely Adapter
+# Bloom Core - Kysely Adapter
 
 Database adapter for Kysely query builder supporting SQLite, PostgreSQL, and MySQL.
 
@@ -30,8 +30,8 @@ pnpm add mysql2
 ```typescript
 import { Kysely, SqliteDialect } from 'kysely'
 import Database from 'better-sqlite3'
-import { kyselyAdapter } from '@bloom/core-v2/adapters/kysely'
-import { bloomAuth } from '@bloom/core-v2'
+import { kyselyAdapter } from '@bloom/core/adapters/kysely'
+import { bloomAuth } from '@bloom/core'
 
 const db = new Kysely({
   dialect: new SqliteDialect({
@@ -49,8 +49,8 @@ export const auth = bloomAuth({
 ```typescript
 import { Kysely, PostgresDialect } from 'kysely'
 import { Pool } from 'pg'
-import { kyselyAdapter } from '@bloom/core-v2/adapters/kysely'
-import { bloomAuth } from '@bloom/core-v2'
+import { kyselyAdapter } from '@bloom/core/adapters/kysely'
+import { bloomAuth } from '@bloom/core'
 
 const db = new Kysely({
   dialect: new PostgresDialect({
@@ -71,8 +71,8 @@ export const auth = bloomAuth({
 ```typescript
 import { Kysely, MysqlDialect } from 'kysely'
 import { createPool } from 'mysql2'
-import { kyselyAdapter } from '@bloom/core-v2/adapters/kysely'
-import { bloomAuth } from '@bloom/core-v2'
+import { kyselyAdapter } from '@bloom/core/adapters/kysely'
+import { bloomAuth } from '@bloom/core'
 
 const db = new Kysely({
   dialect: new MysqlDialect({

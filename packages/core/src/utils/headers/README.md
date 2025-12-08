@@ -1,8 +1,8 @@
 <img src="../../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - Headers
+# Bloom Core - Headers
 
-Framework-agnostic header utilities for Bloom Core v2.
+Framework-agnostic header utilities for Bloom Core.
 
 ## Overview
 
@@ -99,7 +99,7 @@ function extractHeaders(input: RequestHeaders): Map<string, string>
 
 ```typescript
 import { headers } from 'next/headers'
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core'
 
 // Get single header
 export async function GET() {
@@ -150,7 +150,7 @@ export async function GET() {
 ```typescript
 import express from 'express'
 // or: import Fastify from 'fastify'
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core'
 
 const app = express()
 // or: const fastify = Fastify()
@@ -200,7 +200,7 @@ app.get('/api/debug', (req, res) => {
 
 ```typescript
 // Nuxt/H3
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core'
 
 export default defineEventHandler((event) => {
   // Get single header
@@ -228,7 +228,7 @@ export default defineEventHandler((event) => {
 ```typescript
 // Elysia
 import { Elysia } from 'elysia'
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core'
 
 new Elysia()
   .get('/api', ({ headers }) => {
@@ -259,7 +259,7 @@ new Elysia()
 
 ```typescript
 // SvelteKit
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core'
 
 export async function load({ request }) {
   // Get single header
@@ -290,7 +290,7 @@ export async function load({ request }) {
 ```typescript
 // Hono
 import { Hono } from 'hono'
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core'
 
 const app = new Hono()
 
@@ -318,7 +318,7 @@ app.get('/api', (c) => {
 
 ```typescript
 // Astro
-import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core-v2'
+import { getHeader, getCookie, getAllCookies, extractHeaders } from '@bloom/core'
 
 export async function GET({ request }) {
   // Get single header

@@ -1,8 +1,8 @@
 <img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom - React V2
+# @bloom/react
 
-React 19 hooks and context provider for Bloom Auth V2, with native support for the new `use()` hook for context consumption.
+React 19 hooks and context provider for Bloom Auth, with native support for the new `use()` hook for context consumption.
 
 ## Features
 
@@ -16,13 +16,13 @@ React 19 hooks and context provider for Bloom Auth V2, with native support for t
 ## Installation
 
 ```bash
-pnpm add @bloom/react-v2 @bloom/client-v2
+bun add @bloom/react @bloom/client
 ```
 
 ## Quick Start
 
 ```typescript
-import { BloomProvider, useAuth } from '@bloom/react-v2';
+import { BloomProvider, useAuth } from '@bloom/react';
 
 function App() {
   return (
@@ -57,7 +57,7 @@ function Dashboard() {
 Wrap your app with `BloomProvider` to enable authentication:
 
 ```typescript
-import { BloomProvider } from '@bloom/react-v2';
+import { BloomProvider } from '@bloom/react';
 
 <BloomProvider baseURL="http://localhost:3000/api/auth">
   <App />
@@ -105,7 +105,7 @@ if (result.error) {
 ## Sign In Form
 
 ```typescript
-import { useAuth } from '@bloom/react-v2';
+import { useAuth } from '@bloom/react';
 import { useState } from 'react';
 
 export function LoginForm() {
@@ -225,7 +225,7 @@ export function RequestResetForm() {
 ## Protected Routes
 
 ```typescript
-import { useAuth } from '@bloom/react-v2';
+import { useAuth } from '@bloom/react';
 import { Navigate } from 'react-router-dom';
 
 export function ProtectedRoute({ children }) {
@@ -250,7 +250,7 @@ import type {
   User,
   Session,
   BloomProviderProps,
-} from '@bloom/react-v2';
+} from '@bloom/react';
 ```
 
 ## License

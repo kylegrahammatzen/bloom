@@ -1,6 +1,6 @@
 <img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - Prisma Adapter
+# Bloom Core - Prisma Adapter
 
 Database adapter for Prisma ORM supporting SQLite, PostgreSQL, MySQL, and more.
 
@@ -23,8 +23,8 @@ pnpm prisma init
 
 ```typescript
 import { PrismaClient } from '@prisma/client'
-import { prismaAdapter } from '@bloom/core-v2/adapters/prisma'
-import { bloomAuth } from '@bloom/core-v2'
+import { prismaAdapter } from '@bloom/core/adapters/prisma'
+import { bloomAuth } from '@bloom/core'
 
 const prisma = new PrismaClient()
 

@@ -1,6 +1,6 @@
 <img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - Drizzle Adapter
+# Bloom Core - Drizzle Adapter
 
 Database adapter for Drizzle ORM supporting SQLite, PostgreSQL, and MySQL.
 
@@ -28,8 +28,8 @@ pnpm add mysql2
 ```typescript
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import Database from 'better-sqlite3'
-import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
-import { bloomAuth } from '@bloom/core-v2'
+import { drizzleAdapter } from '@bloom/core/adapters/drizzle'
+import { bloomAuth } from '@bloom/core'
 import { users, sessions } from './schema'
 
 const sqlite = new Database('auth.db')

@@ -1,11 +1,11 @@
-# @bloom/client-v2
+# @bloom/client
 
-Framework-agnostic client library for Bloom Auth V2.
+Framework-agnostic client library for Bloom Auth.
 
 ## Installation
 
 ```bash
-pnpm add @bloom/client-v2
+bun add @bloom/client
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ pnpm add @bloom/client-v2
 ### Basic Setup
 
 ```typescript
-import { bloomClient } from '@bloom/client-v2'
+import { bloomClient } from '@bloom/client'
 
 const client = bloomClient({
   baseUrl: '/auth', // default
@@ -24,7 +24,7 @@ const client = bloomClient({
 ### With Plugins
 
 ```typescript
-import { bloomClient, autumnClient } from '@bloom/client-v2'
+import { bloomClient, autumnClient } from '@bloom/client'
 
 const client = bloomClient({
   baseUrl: '/auth',
@@ -109,7 +109,7 @@ await client.auth.resetPassword({
 The Autumn plugin adds Stripe billing integration. Add it when creating your client:
 
 ```typescript
-import { bloomClient, autumnClient } from '@bloom/client-v2'
+import { bloomClient, autumnClient } from '@bloom/client'
 
 const client = bloomClient({
   plugins: [autumnClient()],
@@ -154,7 +154,7 @@ const { data } = await client.autumn.getBillingPortal({
 You can create your own plugins to extend the client:
 
 ```typescript
-import type { ClientPlugin } from '@bloom/client-v2'
+import type { ClientPlugin } from '@bloom/client'
 
 const myPlugin = (): ClientPlugin => {
   return {
@@ -248,13 +248,13 @@ import type {
 
   // Plugin types
   AutumnMethods,
-} from '@bloom/client-v2'
+} from '@bloom/client'
 ```
 
 ### Usage Example
 
 ```typescript
-import type { User, Session, BloomResponse } from '@bloom/client-v2'
+import type { User, Session, BloomResponse } from '@bloom/client'
 
 const { data, error }: BloomResponse<{ user: User; session: Session }> =
   await client.auth.login({ email, password })

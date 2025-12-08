@@ -1,11 +1,11 @@
-# @bloom/adapters-v2
+# @bloom/adapters
 
-Framework adapters for Bloom Auth V2.
+Framework adapters for Bloom Auth.
 
 ## Installation
 
 ```bash
-pnpm add @bloom/adapters-v2 @bloom/core-v2
+bun add @bloom/adapters @bloom/core
 ```
 
 ## Next.js
@@ -15,7 +15,7 @@ pnpm add @bloom/adapters-v2 @bloom/core-v2
 ```typescript
 // app/api/auth/[...bloom]/route.ts
 import { auth } from '@/lib/auth'
-import { toNextJsHandler } from '@bloom/adapters-v2/next'
+import { toNextJsHandler } from '@bloom/adapters/next'
 
 export const { GET, POST, DELETE, OPTIONS } = toNextJsHandler({ auth })
 ```
@@ -63,7 +63,7 @@ export default async function DashboardPage() {
 ```typescript
 import express from 'express'
 import { auth } from './auth'
-import { toExpressHandler } from '@bloom/adapters-v2/express'
+import { toExpressHandler } from '@bloom/adapters/express'
 
 const app = express()
 
@@ -90,15 +90,30 @@ app.get('/dashboard', async (req, res) => {
 })
 ```
 
+## Elysia
+
+```typescript
+import { Elysia } from 'elysia'
+import { cors } from '@elysiajs/cors'
+import { toElysiaHandler } from '@bloom/adapters/elysia'
+import { auth } from './auth'
+
+new Elysia()
+  .use(cors({ origin: 'http://localhost:3000', credentials: true }))
+  .all('/auth/*', toElysiaHandler({ auth }))
+  .listen(5004)
+```
+
 ## Other Frameworks
 
-Bloom V2 uses Web Standard Request/Response, so it works with any framework that supports these standards:
+Bloom uses Web Standard Request/Response, so it works with any framework that supports these standards:
 
 - **Hono**: Use `auth.handler` directly
 - **SvelteKit**: Use `auth.handler` in `+server.ts` files
 - **Astro**: Use `auth.handler` in API routes
 - **Fastify**: Create adapter similar to Express
 - **Remix**: Use `auth.handler` in route modules
+- **Bun.serve()**: Use `auth.handler` directly
 
 ### Example: Hono
 
@@ -133,13 +148,30 @@ export async function DELETE({ request }: { request: Request }) {
 }
 ```
 
-## TypeScript
-
-This package exports only adapter functions, not types. For TypeScript types, import from `@bloom/core-v2`:
+### Example: Bun.serve()
 
 ```typescript
-import type { BloomAuth, User, Session } from '@bloom/core-v2'
-import { toNextJsHandler } from '@bloom/adapters-v2/next'
+import { auth } from './auth'
+
+Bun.serve({
+  port: 5003,
+  async fetch(request) {
+    const url = new URL(request.url)
+    if (url.pathname.startsWith('/auth/')) {
+      return auth.handler(request)
+    }
+    return new Response('Not Found', { status: 404 })
+  }
+})
+```
+
+## TypeScript
+
+This package exports only adapter functions, not types. For TypeScript types, import from `@bloom/core`:
+
+```typescript
+import type { BloomAuth, User, Session } from '@bloom/core'
+import { toNextJsHandler } from '@bloom/adapters/next'
 
 const auth: BloomAuth = bloomAuth({ /* ... */ })
 export const { GET, POST } = toNextJsHandler({ auth })

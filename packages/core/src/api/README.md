@@ -1,4 +1,4 @@
-# Bloom Core V2 - API Reference
+# Bloom Core - API Reference
 
 Server-side API methods for authentication operations.
 

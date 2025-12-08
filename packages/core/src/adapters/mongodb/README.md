@@ -1,6 +1,6 @@
 <img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - MongoDB Adapter
+# Bloom Core - MongoDB Adapter
 
 Database adapter for MongoDB NoSQL database.
 
@@ -14,8 +14,8 @@ pnpm add mongodb
 
 ```typescript
 import { MongoClient } from 'mongodb'
-import { mongodbAdapter } from '@bloom/core-v2/adapters/mongodb'
-import { bloomAuth } from '@bloom/core-v2'
+import { mongodbAdapter } from '@bloom/core/adapters/mongodb'
+import { bloomAuth } from '@bloom/core'
 
 const client = new MongoClient('mongodb://localhost:27017')
 await client.connect()
@@ -45,8 +45,8 @@ export const auth = bloomAuth({
 
 ```typescript
 import { MongoClient } from 'mongodb'
-import { mongodbAdapter } from '@bloom/core-v2/adapters/mongodb'
-import { bloomAuth } from '@bloom/core-v2'
+import { mongodbAdapter } from '@bloom/core/adapters/mongodb'
+import { bloomAuth } from '@bloom/core'
 
 const uri = process.env.MONGODB_URI // MongoDB Atlas connection string
 const client = new MongoClient(uri)
@@ -151,8 +151,8 @@ mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=rs0
 
 ```typescript
 import { MongoClient } from 'mongodb'
-import { mongodbAdapter } from '@bloom/core-v2/adapters/mongodb'
-import { bloomAuth } from '@bloom/core-v2'
+import { mongodbAdapter } from '@bloom/core/adapters/mongodb'
+import { bloomAuth } from '@bloom/core'
 
 let client: MongoClient
 

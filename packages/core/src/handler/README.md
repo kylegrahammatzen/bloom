@@ -1,6 +1,6 @@
 <img src="../../../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom Core V2 - Handler
+# Bloom Core - Handler
 
 HTTP handler using Web Standard Request/Response. Framework-agnostic foundation for all auth requests.
 

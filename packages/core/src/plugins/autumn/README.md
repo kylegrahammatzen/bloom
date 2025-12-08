@@ -1,4 +1,4 @@
-# Bloom Core V2 - Autumn Plugin
+# Bloom Core - Autumn Plugin
 
 Pricing and billing integration with [Autumn](https://useautumn.com/) - open-source infrastructure layer over Stripe.
 
@@ -21,9 +21,9 @@ AUTUMN_SECRET_KEY=am_sk_1234567890
 Add the plugin to your auth configuration:
 
 ```typescript
-import { bloomAuth } from '@bloom/core-v2'
-import { autumn } from '@bloom/core-v2/plugins/autumn'
-import { drizzleAdapter } from '@bloom/core-v2/adapters/drizzle'
+import { bloomAuth } from '@bloom/core'
+import { autumn } from '@bloom/core/plugins/autumn'
+import { drizzleAdapter } from '@bloom/core/adapters/drizzle'
 
 const auth = bloomAuth({
   adapter: drizzleAdapter(db),
@@ -36,7 +36,7 @@ const auth = bloomAuth({
 Or with custom configuration:
 
 ```typescript
-import { redisStorage } from '@bloom/core-v2/storage/redis'
+import { redisStorage } from '@bloom/core/storage/redis'
 
 const auth = bloomAuth({
   adapter: drizzleAdapter(db),
@@ -172,7 +172,7 @@ const auth = bloomAuth({
 When you provide a `storage` option to BloomAuth, the Autumn plugin caches customer existence checks to reduce API calls:
 
 ```typescript
-import { redisStorage } from '@bloom/core-v2/storage/redis'
+import { redisStorage } from '@bloom/core/storage/redis'
 
 const auth = bloomAuth({
   adapter: drizzleAdapter(db),

@@ -1,4 +1,4 @@
-# Bloom Core V2 - Plugins
+# Bloom Core - Plugins
 
 Extend Bloom with custom routes, hooks, and API methods.
 
@@ -17,7 +17,7 @@ Plugins are the recommended way to add custom functionality to Bloom. Each plugi
 ## Creating a Plugin
 
 ```typescript
-import type { BloomPlugin } from '@bloom/core-v2'
+import type { BloomPlugin } from '@bloom/core'
 
 export const myPlugin = (config: MyConfig): BloomPlugin => {
   return {
@@ -71,8 +71,8 @@ export const myPlugin = (config: MyConfig): BloomPlugin => {
 Add plugins to your auth configuration:
 
 ```typescript
-import { bloomAuth } from '@bloom/core-v2'
-import { autumn } from '@bloom/core-v2/plugins/autumn'
+import { bloomAuth } from '@bloom/core'
+import { autumn } from '@bloom/core/plugins/autumn'
 import { myPlugin } from './my-plugin'
 
 const auth = bloomAuth({
@@ -89,7 +89,7 @@ const auth = bloomAuth({
 Plugins can leverage storage for caching and temporary data:
 
 ```typescript
-import { redisStorage } from '@bloom/core-v2/storage/redis'
+import { redisStorage } from '@bloom/core/storage/redis'
 
 const auth = bloomAuth({
   adapter: drizzleAdapter(db),
@@ -158,7 +158,7 @@ api: (auth, storage) => {
 Extend the `BloomAuthApi` type for TypeScript support:
 
 ```typescript
-declare module '@bloom/core-v2' {
+declare module '@bloom/core' {
   interface BloomAuthApi {
     myPlugin: {
       myMethod(params: ApiMethodParams): Promise<MyResponse>
