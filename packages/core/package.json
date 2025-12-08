@@ -1,92 +1,73 @@
 {
   "name": "@bloom/core",
-  "version": "1.0.0",
-  "description": "Core authentication library for Bloom - framework-agnostic",
+  "version": "2.0.0-alpha.1",
+  "type": "module",
+  "description": "Bloom Core - Framework-agnostic authentication with Zod v4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc && tsc-alias",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "argon2": "^0.31.2",
-    "mongoose": "^7.6.3",
-    "zod": "^4.0.0"
-  },
-  "peerDependencies": {
-    "redis": "^4.7.0"
-  },
-  "peerDependenciesMeta": {
-    "redis": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "redis": "^4.7.0",
-    "tsc-alias": "^1.8.16",
-    "vitest": "^2.1.9"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "default": "./dist/types/index.js"
+    "./adapters/drizzle": {
+      "types": "./dist/adapters/drizzle/index.d.ts",
+      "default": "./dist/adapters/drizzle/index.js"
     },
-    "./schemas": {
-      "types": "./dist/schemas/index.d.ts",
-      "default": "./dist/schemas/index.js"
+    "./adapters/kysely": {
+      "types": "./dist/adapters/kysely/index.d.ts",
+      "default": "./dist/adapters/kysely/index.js"
     },
-    "./schemas/auth": {
-      "types": "./dist/schemas/auth.d.ts",
-      "default": "./dist/schemas/auth.js"
+    "./adapters/mongodb": {
+      "types": "./dist/adapters/mongodb/index.d.ts",
+      "default": "./dist/adapters/mongodb/index.js"
     },
-    "./schemas/auth/client": {
-      "types": "./dist/schemas/auth.client.d.ts",
-      "default": "./dist/schemas/auth.client.js"
-    },
-    "./schemas/config": {
-      "types": "./dist/schemas/config.d.ts",
-      "default": "./dist/schemas/config.js"
-    },
-    "./schemas/cookies": {
-      "types": "./dist/schemas/cookies.d.ts",
-      "default": "./dist/schemas/cookies.js"
-    },
-    "./schemas/api": {
-      "types": "./dist/schemas/api.d.ts",
-      "default": "./dist/schemas/api.js"
-    },
-    "./schemas/errors": {
-      "types": "./dist/schemas/errors.d.ts",
-      "default": "./dist/schemas/errors.js"
-    },
-    "./schemas/handler": {
-      "types": "./dist/schemas/handler.d.ts",
-      "default": "./dist/schemas/handler.js"
-    },
-    "./schemas/plugin": {
-      "types": "./dist/schemas/plugin.d.ts",
-      "default": "./dist/schemas/plugin.js"
-    },
-    "./schemas/server": {
-      "types": "./dist/schemas/server.d.ts",
-      "default": "./dist/schemas/server.js"
-    },
-    "./schemas/session": {
-      "types": "./dist/schemas/session.d.ts",
-      "default": "./dist/schemas/session.js"
-    },
-    "./schemas/validation": {
-      "types": "./dist/schemas/validation.d.ts",
-      "default": "./dist/schemas/validation.js"
-    },
-    "./utils/logger": {
-      "types": "./dist/utils/logger.d.ts",
-      "default": "./dist/utils/logger.js"
+    "./adapters/prisma": {
+      "types": "./dist/adapters/prisma/index.d.ts",
+      "default": "./dist/adapters/prisma/index.js"
     }
+  },
+  "license": "AGPL-3.0",
+  "author": "Kyle Graham Matzen <kylegrahammatzen@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kylegrahammatzen/bloom.git",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "auth",
+    "authentication",
+    "session",
+    "typescript",
+    "framework-agnostic",
+    "zod"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json --resolve-full-paths",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@fastify/busboy": "^3.2.0",
+    "argon2": "^0.31.2",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "6.3.0",
+    "@sveltejs/kit": "2.46.2",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.18.8",
+    "astro": "5.14.1",
+    "better-sqlite3": "^11.8.1",
+    "drizzle-orm": "^0.38.3",
+    "elysia": "^1.4.9",
+    "fastify": "^5.6.1",
+    "h3": "^1.13.0",
+    "hono": "4.9.10",
+    "kysely": "0.28.1",
+    "mongodb": "6.12.0",
+    "next": "15.5.4",
+    "redis": "^4.7.0",
+    "tsc-alias": "^1.8.16",
+    "typescript": "^5.7.3"
   }
 }

@@ -1,11 +1,14 @@
-export { createBloomClient } from '@/client';
+export { bloomClient } from './client'
+export { bloomFetch, setConfig, getConfig } from './fetch'
+export { autumnClient } from './plugins/autumn'
+export type { AutumnMethods } from './plugins/autumn'
 export type {
-	User,
-	Session,
-	SessionData,
-	BloomError,
-	BloomResponse,
-	RequestOptions,
-	FetchOptions,
-	ClientConfig,
-} from '@/types';
+  BloomClient,
+  BloomResponse,
+  BloomError,
+  ClientConfig,
+  ClientPlugin,
+  AuthMethods,
+  User,
+  Session,
+} from './types'

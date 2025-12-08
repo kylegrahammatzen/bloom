@@ -1,22 +1,21 @@
 'use client';
 
 import { use, createContext, useEffect, useState, type ReactNode } from "react";
-import { createBloomClient } from "@bloom/client";
-import type { User, Session, ClientConfig } from "@bloom/client";
+import { bloomClient } from "@bloom/client-v2";
+import type { User, Session, ClientConfig } from "@bloom/client-v2";
 
 type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   isSignedIn: boolean;
-  signIn: ReturnType<typeof createBloomClient>["signIn"];
-  signOut: ReturnType<typeof createBloomClient>["signOut"];
-  signUp: ReturnType<typeof createBloomClient>["signUp"];
-  deleteAccount: ReturnType<typeof createBloomClient>["deleteAccount"];
-  getSessions: ReturnType<typeof createBloomClient>["getSessions"];
-  revokeSession: ReturnType<typeof createBloomClient>["revokeSession"];
-  requestEmailVerification: ReturnType<typeof createBloomClient>["requestEmailVerification"];
-  requestPasswordReset: ReturnType<typeof createBloomClient>["requestPasswordReset"];
+  signIn: ReturnType<typeof bloomClient>["auth"]["login"];
+  signOut: ReturnType<typeof bloomClient>["auth"]["logout"];
+  signUp: ReturnType<typeof bloomClient>["auth"]["register"];
+  getSessions: ReturnType<typeof bloomClient>["auth"]["getSessions"];
+  revokeSession: ReturnType<typeof bloomClient>["auth"]["deleteSession"];
+  requestEmailVerification: ReturnType<typeof bloomClient>["auth"]["sendVerificationEmail"];
+  requestPasswordReset: ReturnType<typeof bloomClient>["auth"]["requestPasswordReset"];
   refetch: () => Promise<void>;
 };
 
@@ -32,10 +31,10 @@ export function BloomProvider(props: BloomProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const client = createBloomClient(props.config || { baseUrl: props.baseURL ?? '' });
+  const client = bloomClient(props.config || { baseUrl: props.baseURL ?? '' });
 
   const fetchUser = async () => {
-    const response = await client.getSession();
+    const response = await client.auth.getSession();
     if (response.data) {
       setSession(response.data);
     } else {
@@ -53,14 +52,13 @@ export function BloomProvider(props: BloomProviderProps) {
     session,
     isLoading,
     isSignedIn: session !== null,
-    signIn: client.signIn,
-    signOut: client.signOut,
-    signUp: client.signUp,
-    deleteAccount: client.deleteAccount,
-    getSessions: client.getSessions,
-    revokeSession: client.revokeSession,
-    requestEmailVerification: client.requestEmailVerification,
-    requestPasswordReset: client.requestPasswordReset,
+    signIn: client.auth.login,
+    signOut: client.auth.logout,
+    signUp: client.auth.register,
+    getSessions: client.auth.getSessions,
+    revokeSession: client.auth.deleteSession,
+    requestEmailVerification: client.auth.sendVerificationEmail,
+    requestPasswordReset: client.auth.requestPasswordReset,
     refetch: fetchUser,
   };
 

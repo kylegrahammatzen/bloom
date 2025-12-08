@@ -1,198 +1,182 @@
-<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+# @bloom/adapters
 
-# Bloom - Adapters
-
-Framework adapters for Bloom authentication, providing middleware and handlers for popular web frameworks.
-
-## Features
-
-- Express middleware adapter
-- Type-safe request handling
-- Automatic session management
-- Framework-agnostic core integration
+Framework adapters for Bloom Auth.
 
 ## Installation
 
 ```bash
-pnpm add @bloom/adapters @bloom/core
+bun add @bloom/adapters @bloom/core
 ```
 
-## Express Adapter
+## Next.js
 
-### Router Handler
-
-Create a dedicated auth router:
+### App Router (Route Handlers)
 
 ```typescript
-import express from 'express';
-import { toExpressHandler } from '@bloom/adapters/express';
-import { bloomAuth } from '@bloom/core';
+// app/api/auth/[...bloom]/route.ts
+import { auth } from '@/lib/auth'
+import { toNextJsHandler } from '@bloom/adapters/next'
 
-const app = express();
-
-const auth = bloomAuth({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
-  session: {
-    secret: process.env.SESSION_SECRET,
-  },
-});
-
-app.use('/api/auth', toExpressHandler(auth));
-
-app.listen(5000);
+export const { GET, POST, DELETE, OPTIONS } = toNextJsHandler({ auth })
 ```
 
-### Middleware Handler
+### Server Actions
 
-Use as middleware for specific routes:
-
-```typescript
-import { createExpressHandler } from '@bloom/adapters/express';
-
-const authHandler = createExpressHandler(auth);
-
-app.post('/api/auth/login', authHandler);
-app.post('/api/auth/register', authHandler);
-app.get('/api/auth/me', authHandler);
-```
-
-### Require Authentication
-
-Protect routes with authentication middleware:
+Use `auth.api` directly in Server Actions:
 
 ```typescript
-import { requireAuth } from '@bloom/adapters/express';
+'use server'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
 
-app.get('/api/protected', requireAuth(), (req, res) => {
-  res.json({ userId: req.session.userId });
-});
-```
+export async function getUser() {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
 
-## Complete Express Example
-
-See the [Express Server example app](../../apps/express-server) for a complete implementation.
-
-## Next.js Adapter
-
-### API Route Handler
-
-Create authentication API routes with the Next.js App Router:
-
-```typescript
-import { createAuthHandler } from '@bloom/adapters/nextjs';
-import { bloomAuth } from '@bloom/core';
-import { connectDB } from '@/lib/db';
-
-const auth = bloomAuth({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
-  session: {
-    secret: process.env.SESSION_SECRET,
-    expiresIn: 7 * 24 * 60 * 60 * 1000,
-  },
-});
-
-const handler = createAuthHandler({ auth, connectDB });
-
-export const GET = handler.GET;
-export const POST = handler.POST;
-export const DELETE = handler.DELETE;
-export const OPTIONS = handler.OPTIONS;
-```
-
-### Server-Side Session Validation
-
-Get validated session in Server Components:
-
-```typescript
-import { getSession } from '@bloom/adapters/nextjs/server';
-
-export default async function Page() {
-  const session = await getSession();
-
-  if (!session) {
-    return <div>Please sign in</div>;
-  }
-
-  return <div>Welcome, {session.user.email}</div>;
+  return session?.user || null
 }
 ```
 
-### Middleware Protection
-
-Protect routes with middleware:
+### Server Components
 
 ```typescript
-import { bloomMiddleware } from '@bloom/adapters/nextjs/middleware';
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
 
-export default bloomMiddleware({
-  protectedRoutes: ['/dashboard', '/settings'],
-});
+export default async function DashboardPage() {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
 
-export const config = {
-  matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
-  ],
-};
-```
-
-### CORS Configuration
-
-```typescript
-const handler = createAuthHandler({
-  auth,
-  connectDB,
-  cors: {
-    origin: ['https://app.example.com'],
-    credentials: true,
-  },
-});
-```
-
-## API Routes
-
-The Express adapter automatically provides these routes when using `toExpressHandler`:
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `DELETE /api/auth/account`
-- `POST /api/auth/email/verify`
-- `POST /api/auth/email/request-verification`
-- `POST /api/auth/password/reset`
-- `POST /api/auth/password/request-reset`
-
-## Error Handling
-
-The adapter automatically converts Bloom errors to Express responses:
-
-```typescript
-import { APIError, APIErrorCode } from '@bloom/core';
-
-app.use((err, req, res, next) => {
-  if (err instanceof APIError) {
-    const response = err.toResponse();
-    return res.status(response.status).json(response.body);
+  if (!session) {
+    redirect('/login')
   }
 
-  res.status(500).json({ error: { message: 'Internal server error' } });
-});
+  return <div>Welcome, {session.user.name}!</div>
+}
 ```
 
-## Type Exports
+## Express
 
 ```typescript
-import type {
-  BloomAuth,
-  BloomHandlerContext,
-} from '@bloom/adapters/express';
+import express from 'express'
+import { auth } from './auth'
+import { toExpressHandler } from '@bloom/adapters/express'
+
+const app = express()
+
+// Body parser MUST come before auth middleware
+app.use(express.json())
+app.use('/auth/*', toExpressHandler({ auth }))
+
+app.listen(3000)
+```
+
+### Access Session in Express Routes
+
+```typescript
+app.get('/dashboard', async (req, res) => {
+  const session = await auth.api.getSession({
+    headers: req.headers
+  })
+
+  if (!session) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
+  res.json({ user: session.user })
+})
+```
+
+## Elysia
+
+```typescript
+import { Elysia } from 'elysia'
+import { cors } from '@elysiajs/cors'
+import { toElysiaHandler } from '@bloom/adapters/elysia'
+import { auth } from './auth'
+
+new Elysia()
+  .use(cors({ origin: 'http://localhost:3000', credentials: true }))
+  .all('/auth/*', toElysiaHandler({ auth }))
+  .listen(5004)
+```
+
+## Other Frameworks
+
+Bloom uses Web Standard Request/Response, so it works with any framework that supports these standards:
+
+- **Hono**: Use `auth.handler` directly
+- **SvelteKit**: Use `auth.handler` in `+server.ts` files
+- **Astro**: Use `auth.handler` in API routes
+- **Fastify**: Create adapter similar to Express
+- **Remix**: Use `auth.handler` in route modules
+- **Bun.serve()**: Use `auth.handler` directly
+
+### Example: Hono
+
+```typescript
+import { Hono } from 'hono'
+import { auth } from './auth'
+
+const app = new Hono()
+
+app.all('/auth/*', async (c) => {
+  const response = await auth.handler(c.req.raw)
+  return response
+})
+```
+
+### Example: SvelteKit
+
+```typescript
+// src/routes/auth/[...bloom]/+server.ts
+import { auth } from '$lib/auth'
+
+export async function GET({ request }: { request: Request }) {
+  return await auth.handler(request)
+}
+
+export async function POST({ request }: { request: Request }) {
+  return await auth.handler(request)
+}
+
+export async function DELETE({ request }: { request: Request }) {
+  return await auth.handler(request)
+}
+```
+
+### Example: Bun.serve()
+
+```typescript
+import { auth } from './auth'
+
+Bun.serve({
+  port: 5003,
+  async fetch(request) {
+    const url = new URL(request.url)
+    if (url.pathname.startsWith('/auth/')) {
+      return auth.handler(request)
+    }
+    return new Response('Not Found', { status: 404 })
+  }
+})
+```
+
+## TypeScript
+
+This package exports only adapter functions, not types. For TypeScript types, import from `@bloom/core`:
+
+```typescript
+import type { BloomAuth, User, Session } from '@bloom/core'
+import { toNextJsHandler } from '@bloom/adapters/next'
+
+const auth: BloomAuth = bloomAuth({ /* ... */ })
+export const { GET, POST } = toNextJsHandler({ auth })
 ```
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0.
+GNU Affero General Public License v3.0

@@ -1,140 +1,59 @@
-<img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
+# Express Server
 
-# Bloom - Express Server Example
-
-Express server example with Bloom authentication, featuring session-based authentication with Redis storage.
-
-## Features
-
-- Express server with Bloom authentication
-- Session-based authentication with Redis storage
-- Argon2id password hashing
-- Email verification and password reset flows
-- Type-safe authentication with TypeScript
-- CORS and security middleware
-
-## Package Structure
-
-```
-apps/express-server/
-├── src/
-│   └── index.ts              # Server entry point
-```
+Express.js server with Bloom Auth and MongoDB.
 
 ## Setup
 
-Install dependencies:
-
 ```bash
-pnpm install
+bun install
 ```
 
-Configure environment variables:
+Start MongoDB (from project root):
 
 ```bash
-cp .env.example .env
-```
-
-Update `.env` with your values:
-
-```env
-DATABASE_URL=mongodb://bloom:bloom-dev-password@localhost:27017/bloom-auth?authSource=admin
-SESSION_SECRET=your-super-secret-session-key
-PORT=5000
-FRONTEND_URL=http://localhost:3000
-```
-
-Start MongoDB:
-
-```bash
-pnpm docker:up
+bun docker:up
 ```
 
 Run development server:
 
 ```bash
-pnpm dev
+bun dev
 ```
 
-Server runs on http://localhost:5000
+Server runs at `http://localhost:5002`
 
-## Usage
+Reset database:
 
-Basic Server Setup:
-
-```typescript
-import 'dotenv/config';
-import { bloomServer } from '@bloom/adapters/express';
-import type { AuthEventContext } from '@bloom/core';
-
-bloomServer({
-  database: {
-    uri: process.env.DATABASE_URL,
-  },
-  session: {
-    secret: process.env.SESSION_SECRET,
-    expiresIn: 7 * 24 * 60 * 60 * 1000,
-  },
-  emailAndPassword: {
-    requireEmailVerification: false,
-  },
-  callbacks: {
-    onAuthEvent: (ctx: AuthEventContext) => {
-      console.log(`[${ctx.action}] ${ctx.email || ctx.userId}`);
-    },
-  },
-}).start();
+```bash
+bun db:reset
 ```
 
-Adding Custom Routes:
+## Testing
 
-```typescript
-const server = bloomServer(config);
+Register a user:
 
-server.addRoute('/api/users', async (req, res) => {
-  res.json({ message: 'Custom route' });
-});
-
-server.addRoute('/api/protected', async (req, res) => {
-  res.json({ user: req.user });
-}, { protected: true });
-
-server.start();
+```bash
+curl -X POST http://localhost:5002/auth/register -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"password123","name":"Test User"}'
 ```
 
-Using Middleware Adapters:
+Login:
 
-```typescript
-import express from 'express';
-import { bloomAuth } from '@bloom/core';
-import { toExpressHandler, requireAuth } from '@bloom/adapters/express';
-
-const app = express();
-const auth = bloomAuth(config);
-
-app.all('/api/auth/*', toExpressHandler(auth));
-
-app.get('/api/protected', requireAuth(), (req, res) => {
-  res.json({ user: req.user });
-});
-
-app.listen(5000);
+```bash
+curl -X POST http://localhost:5002/auth/login -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"password123"}' -c cookies.txt
 ```
 
-## API Endpoints
+Get session:
 
-All endpoints are available under `/api/auth`:
+```bash
+curl http://localhost:5002/auth/session -b cookies.txt
+```
 
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
-- `GET /api/auth/me` - Get current session
-- `POST /api/auth/email/verify` - Verify email
-- `POST /api/auth/email/resend` - Resend verification email
-- `POST /api/auth/password/reset` - Request password reset
-- `POST /api/auth/password/update` - Update password
-- `DELETE /api/auth/account` - Delete account
+Logout:
+
+```bash
+curl -X POST http://localhost:5002/auth/logout -b cookies.txt
+```
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0.
+GNU Affero General Public License v3.0

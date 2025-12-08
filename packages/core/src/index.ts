@@ -1,11 +1,63 @@
-export { bloomAuth } from './auth';
-export type { BloomAuthConfig, BloomAuth, User, Session, BloomPlugin, BloomHandlerContext, GenericRequest, GenericResponse, AuthEventContext, SendVerificationContext, EmailVerificationContext, PasswordResetContext, SecondaryStorage, RedisStorageConfig, Logger, LoggerConfig, LogLevel } from './schemas';
-export type { BloomServerConfig, BloomServerInstance } from './schemas/server';
-export { RedisStorage } from './storage/redis';
-export { MemoryStorage } from './storage/memory';
-export { createLogger } from './utils/logger';
-export { sessions } from './plugins/sessions';
-export { autumn } from './plugins/autumn';
-export type { AutumnEntity, AutumnCheckResponse, AutumnTrackResponse, AutumnCheckoutResponse, AutumnAttachResponse, AutumnCancelResponse, AutumnBillingPortalResponse, AutumnEntityResponse, AutumnQueryResponse, AutumnCustomerResponse } from './plugins/autumn';
-export * from './utils/crypto';
-export * from './utils/cookies';
+export { bloomAuth } from '@/auth'
+export type { BloomAuthConfig } from '@/auth'
+
+export type {
+  User,
+  Session,
+  SessionCookieData,
+  ApiMethodParams,
+} from '@/schemas'
+
+export {
+  UserSchema,
+  SessionSchema,
+  SessionCookieDataSchema,
+  ApiMethodParamsSchema,
+} from '@/schemas'
+
+export type {
+  BloomAuth,
+  BloomAuthApi,
+  BloomPlugin,
+  PluginRoute,
+  PluginHooks,
+} from '@/types'
+
+export type { Context } from '@/handler/context'
+
+export type { RequestHeaders } from '@/utils/headers'
+export {
+  extractHeaders,
+  getHeader,
+  getCookie,
+  getAllCookies,
+} from '@/utils/headers'
+
+export type { CookieOptions } from '@/utils/cookies'
+export {
+  parseSessionCookie,
+  serializeSessionCookie,
+  createSessionCookie,
+  clearSessionCookie,
+} from '@/utils/cookies'
+
+export {
+  hashPassword,
+  verifyPassword,
+  generateSecureToken,
+  hashToken,
+  generateSessionId,
+  normalizeEmail,
+  isValidEmail,
+  checkPasswordStrength,
+} from '@/utils/crypto'
+
+export type { DatabaseAdapter } from '@/storage/adapter'
+
+export type { Storage } from '@/schemas/storage'
+export { memoryStorage } from '@/storage/memory'
+export { redisStorage } from '@/storage/redis'
+export type { RedisClient, RedisStorageOptions } from '@/storage/redis'
+
+export type { Logger, LoggerConfig, LogLevel } from '@/schemas/logger'
+export { createLogger } from '@/utils/logger'

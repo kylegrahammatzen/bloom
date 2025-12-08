@@ -1,37 +1,60 @@
-import type { SecondaryStorage } from '../schemas/storage';
+import type { Storage } from '@/schemas/storage'
 
 type StorageEntry = {
-  value: unknown;
-  expires?: number;
-};
+  value: string
+  expiresAt?: number
+}
 
-export class MemoryStorage implements SecondaryStorage {
-  private store = new Map<string, StorageEntry>();
+/**
+ * In-memory storage implementation
+ *
+ * WARNING: Only use for local development and traditional servers.
+ * Does NOT work in serverless environments (Vercel, Netlify, etc.)
+ * where each request gets a new instance.
+ *
+ * For production, use redisStorage() instead.
+ *
+ * @example
+ * ```ts
+ * import { memoryStorage } from '@bloom/core/storage/memory'
+ *
+ * const auth = bloomAuth({
+ *   adapter: drizzleAdapter(db),
+ *   storage: memoryStorage(),
+ * })
+ * ```
+ */
+export function memoryStorage(): Storage {
+  const store = new Map<string, StorageEntry>()
 
-  async get<T = unknown>(key: string): Promise<T | null> {
-    const entry = this.store.get(key);
-    if (!entry) return null;
+  return {
+    async get(key: string): Promise<string | null> {
+      const entry = store.get(key)
 
-    if (entry.expires && Date.now() > entry.expires) {
-      this.store.delete(key);
-      return null;
-    }
+      if (!entry) {
+        return null
+      }
 
-    return entry.value as T;
-  }
+      // Check if expired
+      if (entry.expiresAt && entry.expiresAt < Date.now()) {
+        store.delete(key)
+        return null
+      }
 
-  async set(key: string, value: unknown, ttl?: number): Promise<void> {
-    this.store.set(key, {
-      value,
-      expires: ttl ? Date.now() + ttl * 1000 : undefined,
-    });
-  }
+      return entry.value
+    },
 
-  async delete(key: string): Promise<void> {
-    this.store.delete(key);
-  }
+    async set(key: string, value: string, ttl?: number): Promise<void> {
+      const entry: StorageEntry = {
+        value,
+        expiresAt: ttl ? Date.now() + ttl * 1000 : undefined,
+      }
 
-  async disconnect(): Promise<void> {
-    this.store.clear();
+      store.set(key, entry)
+    },
+
+    async delete(key: string): Promise<void> {
+      store.delete(key)
+    },
   }
 }

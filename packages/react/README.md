@@ -1,12 +1,12 @@
 <img src="../../.github/banner.png" width="100%" alt="Bloom Banner" />
 
-# Bloom - React
+# @bloom/react
 
-React hooks and context provider for Bloom authentication, enabling seamless integration with React applications.
+React 19 hooks and context provider for Bloom Auth, with native support for the new `use()` hook for context consumption.
 
 ## Features
 
-- React 19 support
+- React 19 support with `use()` hook
 - `useAuth` hook for authentication state
 - `BloomProvider` context provider
 - Automatic session management
@@ -16,7 +16,7 @@ React hooks and context provider for Bloom authentication, enabling seamless int
 ## Installation
 
 ```bash
-pnpm add @bloom/react @bloom/client
+bun add @bloom/react @bloom/client
 ```
 
 ## Quick Start
@@ -71,13 +71,13 @@ const {
   user,
   session,
   isLoading,
+  isSignedIn,
   signIn,
   signUp,
   signOut,
-  deleteAccount,
-  verifyEmail,
+  getSessions,
+  revokeSession,
   requestEmailVerification,
-  resetPassword,
   requestPasswordReset,
   refetch,
 } = useAuth();
@@ -88,6 +88,7 @@ const {
 - `user`: Current user object or null
 - `session`: Current session object or null
 - `isLoading`: Boolean indicating if auth state is loading
+- `isSignedIn`: Boolean indicating if user is authenticated
 
 ### Methods
 
@@ -186,26 +187,6 @@ export function SignUpForm() {
 }
 ```
 
-## Delete Account
-
-```typescript
-export function DeleteAccountButton() {
-  const { deleteAccount } = useAuth();
-
-  const handleDelete = async () => {
-    if (confirm('Are you sure you want to delete your account?')) {
-      const result = await deleteAccount();
-
-      if (result.error) {
-        alert(result.error.message);
-      }
-    }
-  };
-
-  return <button onClick={handleDelete}>Delete Account</button>;
-}
-```
-
 ## Password Reset
 
 ```typescript
@@ -268,7 +249,7 @@ export function ProtectedRoute({ children }) {
 import type {
   User,
   Session,
-  AuthContextValue,
+  BloomProviderProps,
 } from '@bloom/react';
 ```
 
